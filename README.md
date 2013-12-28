@@ -14,6 +14,7 @@ Usage
 Reading from a capture file:
 ----------------------------
 
+```
 import pyshark
 cap = pyshark.FileCapture('/tmp/mycapture.cap')
 cap
@@ -38,16 +39,19 @@ Layer IP:
         Source: BLANKED
         Destination: BLANKED
   ...
+```
   
 Reading from a live interface:
 ------------------------------
 
+```
 capture = pyshark.LiveCapture(interface='eth0')
 capture.sniff(timeout=50)
 capture
 >>> <LiveCapture (5 packets)>
 capture[3]
 <UDP/HTTP Packet>
+```
 
 
 Accessing packet data:
@@ -58,9 +62,11 @@ Packets are divided into layers, first you have to reach the appropriate layer a
 
 All of the following work:
 
+```
 packet['ip'].dst
 >>> 192.168.0.1
 packet.ip.src
 >>> 192.168.0.100
 packet[2].src
 >>> 192.168.0.100
+```

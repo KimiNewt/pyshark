@@ -5,6 +5,7 @@ setup(
     version = "0.1",
     packages = find_packages(),
 
+    data_files = [('./pyshark', ['pyshark/config.ini'])],
     install_requires = ['lxml', 'py'],
 
     author = "Dor Green",

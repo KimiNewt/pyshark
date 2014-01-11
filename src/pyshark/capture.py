@@ -3,7 +3,7 @@ import subprocess
 import threading
 import sys
 from pyshark.tshark.tshark import get_tshark_path
-from pyshark.tshark.tshark_xml import packets_from_file, packets_from_xml
+from pyshark.tshark.tshark_xml import packets_from_file, packets_from_xml, packet_from_xml_packet
 
 
 class Capture(object):
@@ -102,10 +102,8 @@ class LiveCapture(Capture):
         :param packet_count: an amount of packets to capture, then stop.
         :param timeout: stop capturing after this given amount of time.
         """
-        p = subprocess.Popen([get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count),
-                     stdout=subprocess.PIPE,
-                     stderr=subprocess.PIPE)
-        sniff_thread = threading.Thread(target=self._sniff_in_thread, args=(p,))
+        p = self._get_tshark_process(packet_count=packet_count)
+        sniff_thread = threading.Thread(target=self._sniff_in_thread, args=(p, stop_event,))
         try:
             sniff_thread.start()
             if timeout is None:
@@ -121,8 +119,54 @@ class LiveCapture(Capture):
             p.terminate()
         sniff_thread.join()
 
-    def _sniff_in_thread(self, proc):
-        proc.wait()
+    def _sniff_in_thread(self, stop_event, proc):
+        for packet in self.sniff_continuously(existing_tshark=proc):
+            self.packets += [packet]
+
+    def _get_tshark_process(self, packet_count=None):
+        """
+        Gets a new tshark process with the previously-set paramaters.
+        """
+        return subprocess.Popen([get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count),
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    def sniff_continuously(self, packet_count=None, existing_tshark=None):
+        """
+        Captures from the set interface, returning a generator which returns packets continuously.
+
+        Can be used as follows:
+        for packet in capture.sniff_continuously();
+            print 'Woo, another packet:', packet
+
+        :param packet_count: an amount of packets to capture, then stop.
+        :param existing_tshark: an existing tshark subprocess (for internal use).
+        """
+        if existing_tshark:
+            proc = existing_tshark
+        else:
+            proc = self._get_tshark_process(packet_count=packet_count)
+        data = ''
+        packets_captured = 0
+        while True:
+            data += proc.stdout.read(100)
+            packet, data = self.extract_packet_from_data(data)
+
+            if packet:
+                packets_captured += 1
+                yield packet_from_xml_packet(packet)
+
+            if packet_count and packets_captured >= packet_count:
+                break
+
+        proc.terminate()
+
+    def extract_packet_from_data(self, data):
+        packet_end = data.find('</packet>')
+        if packet_end != -1:
+            packet_end += len('</packet>')
+            packet_start = data.find('<packet>')
+            return data[packet_start:packet_end], data[packet_end:]
+        return None, data
 
     def get_parameters(self, packet_count=None):
         """
@@ -136,5 +180,5 @@ class LiveCapture(Capture):
         if self.display_filter:
             params += ['-Y', self.display_filter]
         if packet_count:
-            params += ['-c', packet_count]
+            params += ['-c', str(packet_count)]
         return params

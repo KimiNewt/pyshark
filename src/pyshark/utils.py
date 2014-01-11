@@ -1,6 +1,6 @@
 import inspect
 import threading
-import
+import ctypes
 
 def file_or_path(func):
     """
@@ -17,7 +17,9 @@ def file_or_path(func):
 
 
 def _async_raise(tid, exctype):
-    '''Raises an exception in the threads with id tid'''
+    """
+    Raises an exception in the threads with id tid
+    """
     if not inspect.isclass(exctype):
         raise TypeError("Only types can be raised (not instances)")
     res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid,
@@ -30,36 +32,31 @@ def _async_raise(tid, exctype):
         ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
         raise SystemError("PyThreadState_SetAsyncExc failed")
 
-class ThreadWithExc(threading.Thread):
-    '''A thread class that supports raising exception in the thread from
-       another thread.
-    '''
+
+class StoppableThread(threading.Thread):
+    """
+    A thread class that supports raising exception in the thread from
+    another thread.
+
+    Taken from http://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
+    """
+
     def _get_my_tid(self):
-        """determines this (self's) thread id
+        """
+        Determines this (self's) thread id
 
         CAREFUL : this function is executed in the context of the caller
         thread, to get the identity of the thread represented by this
         instance.
         """
-        if not self.isAlive():
+        if not self.is_alive():
             raise threading.ThreadError("the thread is not active")
 
-        # do we have it cached?
-        if hasattr(self, "_thread_id"):
-            return self._thread_id
+        return self.ident
 
-        # no, look for it in the _active dict
-        for tid, tobj in threading._active.items():
-            if tobj is self:
-                self._thread_id = tid
-                return tid
-
-        # TODO: in python 2.6, there's a simpler way to do : self.ident
-
-        raise AssertionError("could not determine the thread's id")
-
-    def raiseExc(self, exctype):
-        """Raises the given exception type in the context of this thread.
+    def raise_exc(self, exctype):
+        """
+        Raises the given exception type in the context of this thread.
 
         If the thread is busy in a system call (time.sleep(),
         socket.accept(), ...), the exception is simply ignored.
@@ -81,4 +78,7 @@ class ThreadWithExc(threading.Thread):
         caller thread, to raise an excpetion in the context of the
         thread represented by this instance.
         """
-        _async_raise( self._get_my_tid(), exctype )
+        _async_raise(self._get_my_tid(), exctype)
+
+    def exit_thread(self):
+        self.raise_exc(SystemExit)

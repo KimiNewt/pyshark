@@ -4,6 +4,7 @@ import threading
 import sys
 from pyshark.tshark.tshark import get_tshark_path
 from pyshark.tshark.tshark_xml import packets_from_file, packets_from_xml, packet_from_xml_packet
+from pyshark.utils import StoppableThread
 
 
 class Capture(object):
@@ -102,26 +103,40 @@ class LiveCapture(Capture):
         :param packet_count: an amount of packets to capture, then stop.
         :param timeout: stop capturing after this given amount of time.
         """
-        p = self._get_tshark_process(packet_count=packet_count)
-        sniff_thread = threading.Thread(target=self._sniff_in_thread, args=(p, stop_event,))
+        sniff_thread = StoppableThread(target=self._sniff_in_thread, args=(packet_count,))
         try:
             sniff_thread.start()
             if timeout is None:
                 timeout = sys.maxint
             sniff_thread.join(timeout=timeout)
+            if sniff_thread.is_alive():
+                # Thread still alive after join, must have timed out.
+                sniff_thread.raise_exc(StopIteration)
         except KeyboardInterrupt:
             print 'Interrupted, stopping..'
-        except TimeoutError:
-            pass
+            sniff_thread.raise_exc(StopIteration)
 
-        self.packets += packets_from_xml(p.stdout.read())
-        if sniff_thread.is_alive() and p.poll():
-            p.terminate()
         sniff_thread.join()
 
-    def _sniff_in_thread(self, stop_event, proc):
-        for packet in self.sniff_continuously(existing_tshark=proc):
-            self.packets += [packet]
+    def _sniff_in_thread(self, packet_count=None):
+        """
+        Sniff until stopped and add all packets to the packet list.
+
+        :param proc: tshark process to use to sniff.
+        """
+        proc = self._get_tshark_process(packet_count)
+        try:
+            for packet in self.sniff_continuously(packet_count=packet_count,
+                                                  existing_tshark=proc):
+                self.packets += [packet]
+        except StopIteration:
+            try:
+                if proc.poll() is not None:
+                    # Process has not terminated yet
+                    proc.terminate()
+            except WindowsError:
+                # If process already terminated somehow.
+                pass
 
     def _get_tshark_process(self, packet_count=None):
         """
@@ -147,7 +162,9 @@ class LiveCapture(Capture):
             proc = self._get_tshark_process(packet_count=packet_count)
         data = ''
         packets_captured = 0
+
         while True:
+            # Read data until we get a packet, and yield it.
             data += proc.stdout.read(100)
             packet, data = self.extract_packet_from_data(data)
 
@@ -158,9 +175,22 @@ class LiveCapture(Capture):
             if packet_count and packets_captured >= packet_count:
                 break
 
-        proc.terminate()
+        try:
+            if proc.poll() is not None:
+                proc.terminate()
+        except WindowsError:
+            # On windows
+            pass
 
     def extract_packet_from_data(self, data):
+        """
+        Gets data containing a (part of) tshark xml.
+        If a packet is found in it, returns the packet and the remaining data.
+        Otherwise returns None and the same data.
+
+        :param data: string of a partial tshark xml.
+        :return: a tuple of (packet, data). packet will be None if none is found.
+        """
         packet_end = data.find('</packet>')
         if packet_end != -1:
             packet_end += len('</packet>')

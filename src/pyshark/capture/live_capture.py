@@ -58,7 +58,7 @@ class LiveCapture(Capture):
         try:
             for packet in self.sniff_continuously(packet_count=packet_count,
                                                   existing_tshark=proc):
-                self.packets += [packet]
+                self._packets += [packet]
         except StopIteration:
             try:
                 if proc.poll() is not None:

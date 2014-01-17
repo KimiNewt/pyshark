@@ -1,79 +1,9 @@
-from multiprocessing import TimeoutError
-import subprocess
-import threading
 import sys
+import subprocess
+
+from pyshark.capture.capture import Capture
 from pyshark.tshark.tshark import get_tshark_path
-from pyshark.tshark.tshark_xml import packets_from_file, packets_from_xml, packet_from_xml_packet
 from pyshark.utils import StoppableThread
-
-
-class Capture(object):
-    """
-    Base class for packet captures.
-    """
-
-    def __init__(self):
-        self.packets = []
-        self.current_packet = 0
-
-    def __getitem__(self, item):
-        return self.packets[item]
-
-    def next(self):
-        if self.current_packet >= len(self.packets):
-            raise StopIteration()
-        cur_packet = self.packets[self.current_packet]
-        self.current_packet += 1
-        return cur_packet
-
-    def clear(self):
-        """
-        Empties the capture of any saved packets.
-        """
-        self.packets = []
-        self.current_packet = 0
-
-    def __iter__(self):
-        for packet in self.packets:
-            yield packet
-
-    def __repr__(self):
-        return '<%s (%d packets)>' %(self.__class__.__name__, len(self.packets))
-
-
-class FileCapture(Capture):
-    """
-    A class representing a capture read from a file.
-    """
-
-    def __init__(self, input_file=None):
-        """
-        Creates a packet capture object by reading from file.
-
-        :param input_file: Either a path or a file-like object containing either a packet capture file (PCAP, PCAP-NG..)
-        or a TShark xml.
-        """
-        super(FileCapture, self).__init__()
-        if isinstance(input_file, basestring):
-            self.input_file = file(input_file, 'rb')
-        else:
-            self.input_file = input_file
-
-        self.xml_data, self.packets = packets_from_file(self.input_file)
-
-    def close(self):
-        if not self.input_file.closed:
-            self.input_file.close()
-
-    def __repr__(self):
-        return '<%s %s (%d packets)>' %(self.__class__.__name__, self.filename, len(self.packets))
-
-    @property
-    def filename(self):
-        """
-        Returns the filename of the capture file represented by this object.
-        """
-        return self.input_file.name
 
 
 class LiveCapture(Capture):
@@ -160,20 +90,9 @@ class LiveCapture(Capture):
             proc = existing_tshark
         else:
             proc = self._get_tshark_process(packet_count=packet_count)
-        data = ''
-        packets_captured = 0
 
-        while True:
-            # Read data until we get a packet, and yield it.
-            data += proc.stdout.read(100)
-            packet, data = self.extract_packet_from_data(data)
-
-            if packet:
-                packets_captured += 1
-                yield packet_from_xml_packet(packet)
-
-            if packet_count and packets_captured >= packet_count:
-                break
+        for packet in self._packets_from_fd(proc.stdout, packet_count=packet_count):
+            yield packet
 
         try:
             if proc.poll() is not None:
@@ -181,22 +100,6 @@ class LiveCapture(Capture):
         except WindowsError:
             # On windows
             pass
-
-    def extract_packet_from_data(self, data):
-        """
-        Gets data containing a (part of) tshark xml.
-        If a packet is found in it, returns the packet and the remaining data.
-        Otherwise returns None and the same data.
-
-        :param data: string of a partial tshark xml.
-        :return: a tuple of (packet, data). packet will be None if none is found.
-        """
-        packet_end = data.find('</packet>')
-        if packet_end != -1:
-            packet_end += len('</packet>')
-            packet_start = data.find('<packet>')
-            return data[packet_start:packet_end], data[packet_end:]
-        return None, data
 
     def get_parameters(self, packet_count=None):
         """

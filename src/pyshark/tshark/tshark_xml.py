@@ -4,24 +4,6 @@ This module contains functions to turn TShark XML parts into Packet objects.
 import lxml.objectify
 from pyshark.packet.layer import Layer
 from pyshark.packet.packet import Packet
-from pyshark.tshark.tshark import tshark_xml_from_pcap
-
-
-def packets_from_file(cap_or_xml):
-    """
-    Gets an xml file data and returns the raw xml and a list of packets.
-
-    :return tuple of (raw_xml_file, packets)
-    """
-    beginning = cap_or_xml.read(5)
-    if beginning == '<?xml':
-        # It's an xml file.
-        xml_data = beginning + cap_or_xml.read()
-    else:
-        # We assume it's a PCAP file and use tshark to get the XML.
-        xml_data = tshark_xml_from_pcap(cap_or_xml.name)
-
-    return xml_data, packets_from_xml(xml_data)
 
 
 def packet_from_xml_packet(xml_pkt):

@@ -1,7 +1,9 @@
 from setuptools import setup, find_packages
 
-with open('../README.txt') as f:
-    long_description = f.read()
+#with open('../README.txt') as f:
+#    long_description = f.read()
+
+long_description = ""
 
 setup(
     name = "pyshark",

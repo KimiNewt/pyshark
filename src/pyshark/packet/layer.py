@@ -24,7 +24,7 @@ class Layer(object):
         """
         Gets the XML field object of the given name.
         """
-        for field in self.xml_obj.field:
+        for field in self._all_fields:
             if name == self._sanitize_field_name(field.attrib['name']):
                 return field
 
@@ -65,6 +65,10 @@ class Layer(object):
         if self.layer_name == 'geninfo':
             return ''
         return self.layer_name + '.'
+        
+    @property
+    def _all_fields(self):
+        return self.xml_obj.findall('.//field')
 
     @property
     def _field_names(self):
@@ -73,7 +77,7 @@ class Layer(object):
         :return: list of strings
         """
         return [self._sanitize_field_name(field.attrib['name'])
-                for field in self.xml_obj.field]
+                for field in self._all_fields]
 
     @property
     def layer_name(self):
@@ -97,7 +101,7 @@ class Layer(object):
             return 'DATA'
 
         s = 'Layer %s:' % self.layer_name.upper() + os.linesep
-        for field in self.xml_obj.field:
+        for field in self._all_fields:
             if 'hide' in field.attrib and field.attrib['hide']:
                 continue
             if 'showname' in field.attrib:

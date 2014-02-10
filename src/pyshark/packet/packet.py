@@ -61,7 +61,7 @@ class Packet(object):
 
     @property
     def sniff_time(self):
-        return datetime.datetime.fromtimestamp(self.sniff_timestamp)
+        return datetime.datetime.fromtimestamp(float(self.sniff_timestamp))
 
     def __repr__(self):
         transport_protocol = ''

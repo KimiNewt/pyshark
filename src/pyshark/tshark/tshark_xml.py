@@ -18,7 +18,7 @@ def packet_from_xml_packet(xml_pkt):
     layers = [Layer(proto) for proto in xml_pkt.proto]
     geninfo, frame, layers = layers[0], layers[1], layers[2:]
     frame.raw_mode = True
-    return Packet(layers=layers, length=geninfo.get_field_value('len'), sniff_time=geninfo.get_field_value('timestamp'),
+    return Packet(layers=layers, length=geninfo.get_field_value('len'), sniff_time=geninfo.get_field_value('timestamp', raw=True),
                   captured_length=geninfo.get_field_value('caplen'), interface_captured=frame.get_field_value('interface_id'))
 
 

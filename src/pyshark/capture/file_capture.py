@@ -8,15 +8,17 @@ class FileCapture(Capture):
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, lazy=False):
+    def __init__(self, input_file=None, lazy=True, bpf_filter=None, display_filter=None):
         """
         Creates a packet capture object by reading from file.
 
         :param lazy: Whether to lazily get packets from the cap file or read all of them immediately.
         :param input_file: Either a path or a file-like object containing either a packet capture file (PCAP, PCAP-NG..)
         or a TShark xml.
+        :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
+        :param display_filter: A display (wireshark) filter to apply on the cap before reading it.
         """
-        super(FileCapture, self).__init__()
+        super(FileCapture, self).__init__(bpf_filter=bpf_filter, display_filter=display_filter)
         if isinstance(input_file, basestring):
             self.input_file = file(input_file, 'rb')
         else:
@@ -68,11 +70,7 @@ class FileCapture(Capture):
             return self._packets_from_fd(cap_or_xml, previous_data=beginning, wait_for_more_data=False)
         else:
             # We assume it's a PCAP file and use tshark to get the XML.
-            p = subprocess.Popen([get_tshark_path(),
-                      '-T', 'pdml',
-                      '-r', cap_or_xml.name],
-                     stdout=subprocess.PIPE,
-                     stderr=subprocess.PIPE)
+            p = self._get_tshark_process(extra_params=['-r', cap_or_xml.name])
             return self._packets_from_fd(p.stdout, previous_data=beginning, wait_for_more_data=False)
 
     def __repr__(self):

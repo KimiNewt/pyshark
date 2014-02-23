@@ -8,7 +8,6 @@ setup(
     version = "0.2.1",
     packages = find_packages(),
 
-    data_files = [('./pyshark', ['pyshark/config.ini'])],
     install_requires = ['lxml', 'py'],
 
     url = "https://github.com/KimiNewt/pyshark",

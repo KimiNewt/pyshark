@@ -8,10 +8,9 @@ class Capture(object):
     Base class for packet captures.
     """
 
-    def __init__(self, bpf_filter=None, display_filter=None):
+    def __init__(self, display_filter=None):
         self._packets = []
         self.current_packet = 0
-        self.bpf_filter = bpf_filter
         self.display_filter = display_filter
 
     def __getitem__(self, item):
@@ -89,7 +88,8 @@ class Capture(object):
         """
         Gets a new tshark process with the previously-set paramaters.
         """
-        return subprocess.Popen([get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count) + extra_params,
+        parameters = [get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count) + extra_params
+        return subprocess.Popen(parameters,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def get_parameters(self, packet_count=None):
@@ -97,10 +97,8 @@ class Capture(object):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = []
-        if self.bpf_filter:
-            params += ['-f', self.bpf_filter]
         if self.display_filter:
-            params += ['-Y', self.display_filter]
+            params += ['-R', self.display_filter]
         if packet_count:
             params += ['-c', str(packet_count)]
         return params

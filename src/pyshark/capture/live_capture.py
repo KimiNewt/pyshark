@@ -19,7 +19,8 @@ class LiveCapture(Capture):
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.
         """
-        super(LiveCapture, self).__init__(bpf_filter=bpf_filter, display_filter=display_filter)
+        super(LiveCapture, self).__init__(display_filter=display_filter)
+        self.bpf_filter = bpf_filter
         self.interface = interface
 
 
@@ -100,4 +101,6 @@ class LiveCapture(Capture):
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
         if self.interface:
             params += ['-i', self.interface]
+        if self.bpf_filter:
+            params += ['-f', self.bpf_filter]
         return params

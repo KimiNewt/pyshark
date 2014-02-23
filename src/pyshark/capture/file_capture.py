@@ -35,12 +35,10 @@ class FileCapture(Capture):
             self.input_file.close()
 
     def next(self):
-        if self._packet_generator:
+        if self._packet_generator and self.current_packet >= len(self._packets):
             packet = self._packet_generator.next()
             self._packets += [packet]
-            return packet
-        else:
-            return super(FileCapture, self).next()
+        return super(FileCapture, self).next()
 
     def __getitem__(self, packet_index):
         if self._packet_generator:

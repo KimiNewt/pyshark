@@ -36,6 +36,12 @@ class Capture(object):
         self._packets = []
         self.current_packet = 0
 
+    def reset(self):
+        """
+        Starts iterating packets from the first one.
+        """
+        self.current_packet = 0
+
     @staticmethod
     def _extract_packet_from_data(data):
         """

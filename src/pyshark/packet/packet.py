@@ -17,7 +17,7 @@ class Packet(object):
         :param layers: A list of Layer objects.
         :param length: Length of the actual packet.
         :param captured_length: The length of the packet that was actually captured (could be less then length)
-        :param sniff_time: The time the packet was captured (timestamp)
+        :param sniff_time: The time the packet was captured (string timestamp in epoch time format)
         :param interface_captured: The interface the packet was captured in.
         """
         if layers is None:

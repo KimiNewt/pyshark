@@ -37,7 +37,12 @@ class FileCapture(Capture):
     def next(self):
         if self._packet_generator and self.current_packet >= len(self._packets):
             packet = self._packet_generator.next()
-            self._packets += [packet]
+            if not self.lazy:
+                self._packets += [packet]
+            else:
+                # If we're in lazy mode we'd like to conserve memory and not save all seen packets,
+                # but simply iterate one-by-one
+                return packet
         return super(FileCapture, self).next()
 
     def __getitem__(self, packet_index):

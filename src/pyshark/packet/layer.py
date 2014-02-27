@@ -5,7 +5,8 @@ class LayerField(object):
     """
     Holds all data about a field of a layer, both its actual value and its name and nice representation.
     """
-    # Note: We use this object with slots and not just a dict because it's much more memory-efficient (cuts about a third of the memory).
+    # Note: We use this object with slots and not just a dict because
+    # it's much more memory-efficient (cuts about a third of the memory).
     __slots__ = ['name', 'showname', 'value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
 
     def __init__(self, name=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
@@ -17,6 +18,7 @@ class LayerField(object):
         self.pos = pos
         self.size = size
         self.unmaskedvalue = unmaskedvalue
+
 
 class Layer(object):
     """
@@ -31,7 +33,8 @@ class Layer(object):
         self._all_fields = {}
 
         # We copy over all the fields from the XML object
-        # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient so we'd rather not save them.
+        # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
+        # so we'd rather not save them.
         for field in xml_obj.findall('.//field'):
             self._all_fields[field.attrib['name']] = LayerField(**dict(field.attrib))
 
@@ -48,8 +51,8 @@ class Layer(object):
         """
         Gets the XML field object of the given name.
         """
-        for field_name, field in self._all_fields.iteritems():
-            if name == self._sanitize_field_name(field_name):
+        for field in self._all_fields:
+            if name == self._sanitize_field_name(field.name):
                 return field
 
     def get_raw_value(self, name):
@@ -96,8 +99,8 @@ class Layer(object):
         Gets all XML field names of this layer.
         :return: list of strings
         """
-        return [self._sanitize_field_name(field_name)
-                for field_name in self._all_fields]
+        return [self._sanitize_field_name(field.name)
+                for field in self._all_fields]
 
     @property
     def layer_name(self):
@@ -120,13 +123,13 @@ class Layer(object):
             return 'DATA'
 
         s = 'Layer %s:' % self.layer_name.upper() + os.linesep
-        for field in self._all_fields.values():
-            if 'hide' in field and field['hide']:
+        for field in self._all_fields:
+            if 'hide' in field and field.hide:
                 continue
             if 'showname' in field:
-                field_repr = field['showname']
+                field_repr = field.showname
             elif 'show' in field:
-                field_repr = field['show']
+                field_repr = field.show
             else:
                 continue
             s += '\t' + field_repr + os.linesep

@@ -6,11 +6,13 @@ class FileCapture(Capture):
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, lazy=True, display_filter=None):
+    def __init__(self, input_file=None, lazy=True, keep_packets=True, display_filter=None):
         """
         Creates a packet capture object by reading from file.
 
         :param lazy: Whether to lazily get packets from the cap file or read all of them immediately.
+        :param keep_packets: Whether to keep packets after reading them via next(). Used to conserve memory when reading
+        large caps (can only be used along with the "lazy" option!)
         :param input_file: Either a path or a file-like object containing either a packet capture file (PCAP, PCAP-NG..)
         or a TShark xml.
         :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
@@ -23,6 +25,7 @@ class FileCapture(Capture):
             self.input_file = input_file
 
         self.lazy = lazy
+        self.keep_packets = keep_packets
         if not lazy:
             self._packets = list(self.packets_from_file(self.input_file))
             self._packet_generator = None
@@ -35,13 +38,18 @@ class FileCapture(Capture):
             self.input_file.close()
 
     def next(self):
-        if self._packet_generator and self.current_packet >= len(self._packets):
-            packet = self._packet_generator.next()
-            self._packets += [packet]
+        if self.lazy:
+            if not self.keep_packets:
+                return self._packet_generator.next()
+            elif self.current_packet >= len(self._packets):
+                packet = self._packet_generator.next()
+                self._packets += [packet]
         return super(FileCapture, self).next()
 
     def __getitem__(self, packet_index):
-        if self._packet_generator:
+        if not self.keep_packets:
+            raise NotImplementedError("Cannot use getitem if packets are not kept")
+        if self.lazy:
             # We may not yet have this packet
             packet = None
             while packet_index >= len(self._packets):

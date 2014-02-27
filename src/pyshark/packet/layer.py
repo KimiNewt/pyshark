@@ -14,10 +14,14 @@ class LayerField(object):
         self.showname = showname
         self.value = value
         self.show = show
-        self.hide = hide
         self.pos = pos
         self.size = size
         self.unmaskedvalue = unmaskedvalue
+
+        if hide and hide == 'yes':
+            self.hide = True
+        else:
+            self.hide = False
 
 
 class Layer(object):
@@ -51,8 +55,8 @@ class Layer(object):
         """
         Gets the XML field object of the given name.
         """
-        for field in self._all_fields:
-            if name == self._sanitize_field_name(field.name):
+        for field_name, field in self._all_fields.iteritems():
+            if name == self._sanitize_field_name(field_name):
                 return field
 
     def get_raw_value(self, name):
@@ -99,8 +103,8 @@ class Layer(object):
         Gets all XML field names of this layer.
         :return: list of strings
         """
-        return [self._sanitize_field_name(field.name)
-                for field in self._all_fields]
+        return [self._sanitize_field_name(field_name)
+                for field_name in self._all_fields]
 
     @property
     def layer_name(self):
@@ -123,12 +127,12 @@ class Layer(object):
             return 'DATA'
 
         s = 'Layer %s:' % self.layer_name.upper() + os.linesep
-        for field in self._all_fields:
-            if 'hide' in field and field.hide:
+        for field in self._all_fields.values():
+            if field.hide:
                 continue
-            if 'showname' in field:
+            if field.showname:
                 field_repr = field.showname
-            elif 'show' in field:
+            elif field.show:
                 field_repr = field.show
             else:
                 continue

@@ -2,6 +2,10 @@ import os
 
 
 class LayerField(object):
+    """
+    Holds all data about a field of a layer, both its actual value and its name and nice representation.
+    """
+    # Note: We use this object with slots and not just a dict because it's much more memory-efficient (cuts about a third of the memory).
     __slots__ = ['name', 'showname', 'value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
 
     def __init__(self, name=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
@@ -21,14 +25,15 @@ class Layer(object):
     DATA_LAYER = 'data'
 
     def __init__(self, xml_obj=None, raw_mode=False):
-        #self.xml_obj = xml_obj
         self.raw_mode = raw_mode
 
         self._layer_name = xml_obj.attrib['name']
         self._all_fields = {}
+
+        # We copy over all the fields from the XML object
+        # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient so we'd rather not save them.
         for field in xml_obj.findall('.//field'):
             self._all_fields[field.attrib['name']] = LayerField(**dict(field.attrib))
-            #self._all_fields[field.attrib['name']] = dict(field.attrib)
 
     def __getattr__(self, item):
         val = self.get_field_value(item, raw=self.raw_mode)

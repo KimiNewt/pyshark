@@ -8,11 +8,12 @@ class FileCapture(Capture):
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, lazy=False):
+    def __init__(self, input_file=None, lazy=False, discard=False):
         """
         Creates a packet capture object by reading from file.
 
         :param lazy: Whether to lazily get packets from the cap file or read all of them immediately.
+        :param discard: Whether to discard packets from memory after interpreting them
         :param input_file: Either a path or a file-like object containing either a packet capture file (PCAP, PCAP-NG..)
         or a TShark xml.
         """
@@ -21,6 +22,8 @@ class FileCapture(Capture):
             self.input_file = file(input_file, 'rb')
         else:
             self.input_file = input_file
+
+        self.discard = discard
 
         if not lazy:
             self._packets = list(self.packets_from_file(self.input_file))
@@ -36,7 +39,8 @@ class FileCapture(Capture):
     def next(self):
         if self._packet_generator:
             packet = self._packet_generator.next()
-            self._packets += [packet]
+            if not self.discard:
+                self._packets += [packet]
             return packet
         else:
             return super(FileCapture, self).next()

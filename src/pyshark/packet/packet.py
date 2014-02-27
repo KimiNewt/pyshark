@@ -61,7 +61,13 @@ class Packet(object):
 
     @property
     def sniff_time(self):
-        return datetime.datetime.fromtimestamp(float(self.sniff_timestamp))
+        try:
+            timestamp = float(self.sniff_timestamp)
+        except ValueError:
+            # If the value after the decimal point is negative, discard it
+            # Google: wireshark fractional second
+            timestamp = float(self.sniff_timestamp.split(".")[0])
+        return datetime.datetime.fromtimestamp(timestamp)
 
     def __repr__(self):
         transport_protocol = ''

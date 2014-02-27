@@ -1,6 +1,19 @@
 import os
 
 
+class LayerField(object):
+    __slots__ = ['name', 'showname', 'value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
+
+    def __init__(self, name=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
+        self.name = name
+        self.showname = showname
+        self.value = value
+        self.show = show
+        self.hide = hide
+        self.pos = pos
+        self.size = size
+        self.unmaskedvalue = unmaskedvalue
+
 class Layer(object):
     """
     An object representing a Packet layer.
@@ -8,8 +21,14 @@ class Layer(object):
     DATA_LAYER = 'data'
 
     def __init__(self, xml_obj=None, raw_mode=False):
-        self.xml_obj = xml_obj
+        #self.xml_obj = xml_obj
         self.raw_mode = raw_mode
+
+        self._layer_name = xml_obj.attrib['name']
+        self._all_fields = {}
+        for field in xml_obj.findall('.//field'):
+            self._all_fields[field.attrib['name']] = LayerField(**dict(field.attrib))
+            #self._all_fields[field.attrib['name']] = dict(field.attrib)
 
     def __getattr__(self, item):
         val = self.get_field_value(item, raw=self.raw_mode)
@@ -24,8 +43,8 @@ class Layer(object):
         """
         Gets the XML field object of the given name.
         """
-        for field in self._all_fields:
-            if name == self._sanitize_field_name(field.attrib['name']):
+        for field_name, field in self._all_fields.iteritems():
+            if name == self._sanitize_field_name(field_name):
                 return field
 
     def get_raw_value(self, name):
@@ -48,13 +67,13 @@ class Layer(object):
             return
 
         if raw:
-            return field.attrib.get('value', None)
+            return field.value
 
-        val = field.attrib.get('show', None)
+        val = field.show
         if not val:
-            val = field.attrib.get('value', None)
+            val = field.value
         if not val:
-            val = field.attrib.get('showname', None)
+            val = field.showname
         return val
 
     @property
@@ -67,24 +86,19 @@ class Layer(object):
         return self.layer_name + '.'
         
     @property
-    def _all_fields(self):
-        return self.xml_obj.findall('.//field')
-
-    @property
     def _field_names(self):
         """
         Gets all XML field names of this layer.
         :return: list of strings
         """
-        return [self._sanitize_field_name(field.attrib['name'])
-                for field in self._all_fields]
+        return [self._sanitize_field_name(field_name)
+                for field_name in self._all_fields]
 
     @property
     def layer_name(self):
-        name = self.xml_obj.attrib['name']
-        if name == 'fake-field-wrapper':
+        if self._layer_name == 'fake-field-wrapper':
             return self.DATA_LAYER
-        return name
+        return self._layer_name
 
     def _sanitize_field_name(self, field_name):
         """
@@ -94,20 +108,20 @@ class Layer(object):
         return field_name.replace('.', '_')
 
     def __repr__(self):
-        return '<%s Layer>' %(self.layer_name.upper())
+        return '<%s Layer>' % self.layer_name.upper()
 
     def __str__(self):
         if self.layer_name == self.DATA_LAYER:
             return 'DATA'
 
         s = 'Layer %s:' % self.layer_name.upper() + os.linesep
-        for field in self._all_fields:
-            if 'hide' in field.attrib and field.attrib['hide']:
+        for field in self._all_fields.values():
+            if 'hide' in field and field['hide']:
                 continue
-            if 'showname' in field.attrib:
-                field_repr = field.attrib['showname']
-            elif 'show' in field.attrib:
-                field_repr = field.attrib['show']
+            if 'showname' in field:
+                field_repr = field['showname']
+            elif 'show' in field:
+                field_repr = field['show']
             else:
                 continue
             s += '\t' + field_repr + os.linesep

@@ -60,7 +60,7 @@ class Capture(object):
         return None, data
 
     @classmethod
-    def _packets_from_fd(cls, fd, previous_data='', packet_count=None, wait_for_more_data=True, batch_size=1000):
+    def _packets_from_fd(cls, fd, previous_data='', packet_count=None, wait_for_more_data=True, batch_size=4096):
         """
         Reads packets from a file-like object containing a TShark XML.
         Returns a generator.

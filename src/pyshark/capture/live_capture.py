@@ -11,7 +11,7 @@ class LiveCapture(Capture):
     Represents a live capture on a network interface.
     """
 
-    def __init__(self, interface=None, bpf_filter=None, display_filter=None):
+    def __init__(self, interface=None, bpf_filter=None, display_filter=None, monitor_mode=False):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
 
@@ -22,6 +22,7 @@ class LiveCapture(Capture):
         super(LiveCapture, self).__init__(display_filter=display_filter)
         self.bpf_filter = bpf_filter
         self.interface = interface
+        self.monitor_mode = monitor_mode
 
 
     def sniff(self, packet_count=None, timeout=None):
@@ -82,7 +83,10 @@ class LiveCapture(Capture):
         if existing_tshark:
             proc = existing_tshark
         else:
-            proc = self._get_tshark_process(packet_count=packet_count)
+            if self.monitor_mode:
+                proc = self._get_tshark_process(packet_count=packet_count, extra_params=['-I'])
+            else:
+                proc = self._get_tshark_process(packet_count=packet_count)
 
         for packet in self._packets_from_fd(proc.stdout, packet_count=packet_count):
             yield packet

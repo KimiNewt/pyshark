@@ -6,7 +6,7 @@ class FileCapture(Capture):
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, lazy=True, keep_packets=True, display_filter=None):
+    def __init__(self, input_file=None, lazy=True, keep_packets=False, display_filter=None):
         """
         Creates a packet capture object by reading from file.
 

@@ -55,6 +55,23 @@ class Field(object):
 			return field
 	return None
 
+    def find_all_by_name(self,name):
+	"""
+	Find all Fields that match a given name in a field recursively
+	
+ 	:param name: The name of the field
+        :return: List
+	"""
+	if self.layer_name == name:
+	    values=[self.get_field_value()]
+	else:
+	    values=[]
+	for field in self.fields:
+	    values+=field.find_all_by_name(name)
+	if self.layer_name == name:
+	    values.append(self.get_field_value())
+	return values
+
     def get_field_value(self,raw=False):
         """
         Tries getting the value of the given field.

@@ -70,7 +70,7 @@ class FileCapture(Capture):
         :return tuple of (raw_xml_file, packets)
         """
         beginning = cap_or_xml.read(5)
-        if beginning == '<?xml':
+        if beginning == b'<?xml':
             # It's an xml file.
             return self._packets_from_fd(cap_or_xml, previous_data=beginning, wait_for_more_data=False)
         else:

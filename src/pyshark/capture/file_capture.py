@@ -20,7 +20,7 @@ class FileCapture(Capture):
         """
         super(FileCapture, self).__init__(display_filter=display_filter)
         if isinstance(input_file, basestring):
-            self.input_file = file(input_file, 'rb')
+            self.input_file = open(input_file, 'rb')
         else:
             self.input_file = input_file
 

@@ -15,4 +15,5 @@ setup(
     author = "KimiNewt",
     description = "Python wrapper for tshark, allowing python packet parsing using wireshark dissectors",
     keywords = "wireshark capture packets parsing packet",
+    use_2to3=True,
 )

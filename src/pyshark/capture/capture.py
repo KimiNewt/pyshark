@@ -21,8 +21,13 @@ class Capture(object):
         :return: Packet object.
         """
         return self._packets[item]
-
+    
     def next(self):
+        return self.next_packet()
+    
+    # Allows for child classes to call next() from super() without 2to3 "fixing"
+    # the call
+    def next_packet(self):
         if self.current_packet >= len(self._packets):
             raise StopIteration()
         cur_packet = self._packets[self.current_packet]

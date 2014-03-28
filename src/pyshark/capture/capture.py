@@ -21,8 +21,13 @@ class Capture(object):
         :return: Packet object.
         """
         return self._packets[item]
-
+    
     def next(self):
+        return self.next_packet()
+    
+    # Allows for child classes to call next() from super() without 2to3 "fixing"
+    # the call
+    def next_packet(self):
         if self.current_packet >= len(self._packets):
             raise StopIteration()
         cur_packet = self._packets[self.current_packet]
@@ -52,15 +57,15 @@ class Capture(object):
         :param data: string of a partial tshark xml.
         :return: a tuple of (packet, data). packet will be None if none is found.
         """
-        packet_end = data.find('</packet>')
+        packet_end = data.find(b'</packet>')
         if packet_end != -1:
-            packet_end += len('</packet>')
-            packet_start = data.find('<packet>')
+            packet_end += len(b'</packet>')
+            packet_start = data.find(b'<packet>')
             return data[packet_start:packet_end], data[packet_end:]
         return None, data
 
     @classmethod
-    def _packets_from_fd(cls, fd, previous_data='', packet_count=None, wait_for_more_data=True, batch_size=4096):
+    def _packets_from_fd(cls, fd, previous_data=b'', packet_count=None, wait_for_more_data=True, batch_size=4096):
         """
         Reads packets from a file-like object containing a TShark XML.
         Returns a generator.

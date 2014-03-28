@@ -20,7 +20,7 @@ class FileCapture(Capture):
         """
         super(FileCapture, self).__init__(display_filter=display_filter)
         if isinstance(input_file, basestring):
-            self.input_file = file(input_file, 'rb')
+            self.input_file = open(input_file, 'rb')
         else:
             self.input_file = input_file
 
@@ -44,7 +44,7 @@ class FileCapture(Capture):
             elif self.current_packet >= len(self._packets):
                 packet = self._packet_generator.next()
                 self._packets += [packet]
-        return super(FileCapture, self).next()
+        return super(FileCapture, self).next_packet()
 
     def __getitem__(self, packet_index):
         if not self.keep_packets:
@@ -70,7 +70,7 @@ class FileCapture(Capture):
         :return tuple of (raw_xml_file, packets)
         """
         beginning = cap_or_xml.read(5)
-        if beginning == '<?xml':
+        if beginning == b'<?xml':
             # It's an xml file.
             return self._packets_from_fd(cap_or_xml, previous_data=beginning, wait_for_more_data=False)
         else:

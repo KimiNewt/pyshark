@@ -99,7 +99,7 @@ class Capture(object):
 
             if packet_count and packets_captured >= packet_count:
                 break
-
+    
     def _get_tshark_process(self, packet_count=None, extra_params=[]):
         """
         Gets a new tshark process with the previously-set paramaters.

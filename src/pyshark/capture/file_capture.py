@@ -65,9 +65,7 @@ class FileCapture(Capture):
 
     def packets_from_file(self, cap_or_xml):
         """
-        Gets an xml file data and returns the raw xml and a list of packets.
-
-        :return tuple of (raw_xml_file, packets)
+        Gets an xml file data and returns the packets.
         """
         beginning = cap_or_xml.read(5)
         if beginning == b'<?xml':

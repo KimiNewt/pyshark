@@ -67,8 +67,8 @@ class FileCapture(Capture):
         """
         Gets an xml file data and returns the packets.
         """
-        beginning = cap_or_xml.read(5)
-        if beginning == b'<?xml':
+        beginning = cap_or_xml.read(20)
+        if b'<?xml' in beginning:
             # It's an xml file.
             return self._packets_from_fd(cap_or_xml, previous_data=beginning, wait_for_more_data=False)
         else:

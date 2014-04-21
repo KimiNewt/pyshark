@@ -1,6 +1,11 @@
 import subprocess
+import time
 from pyshark.tshark.tshark import get_tshark_path
 from pyshark.tshark.tshark_xml import packet_from_xml_packet
+
+
+class TSharkCrashException(Exception):
+    pass
 
 
 class Capture(object):
@@ -100,8 +105,11 @@ class Capture(object):
         Gets a new tshark process with the previously-set paramaters.
         """
         parameters = [get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count) + extra_params
-        return subprocess.Popen(parameters,
+        proc = subprocess.Popen(parameters,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if proc.poll() is not None:
+            raise TSharkCrashException('TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
+        return proc
 
     def get_parameters(self, packet_count=None):
         """

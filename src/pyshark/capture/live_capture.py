@@ -1,8 +1,6 @@
 import sys
-import subprocess
 
 from pyshark.capture.capture import Capture
-from pyshark.tshark.tshark import get_tshark_path
 from pyshark.utils import StoppableThread
 
 

@@ -52,7 +52,10 @@ class StoppableThread(threading.Thread):
         if not self.is_alive():
             raise threading.ThreadError("the thread is not active")
 
-        return self.ident
+        for tid, tobj in threading._active.iteritems():
+            if tobj is self:
+                return tid
+        raise AssertionError('Could not determine thread ID')
 
     def raise_exc(self, exctype):
         """

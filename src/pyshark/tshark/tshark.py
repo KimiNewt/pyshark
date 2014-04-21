@@ -13,16 +13,27 @@ class TSharkNotFoundException(Exception):
 
 def get_tshark_path():
     """
-    Finds the path of the tshark executable according to the list in the configuration.
+    Finds the path of the tshark executable. If the user has specified a
+    location in config.ini it will be used. Otherwise default locations
+    will be searched.
 
     :raises TSharkNotFoundException in case TShark is not found in any location.
     """
     config = get_config()
-    if sys.platform.startswith('win'):
-        possible_paths = config.get('tshark', 'windows_paths').split(',')
-    else:
-        possible_paths = config.get('tshark', 'linux_paths').split(',')
 
+    if sys.platform.startswith('win'):
+        win32_progs = os.environ['ProgramFiles(x86)']
+        win64_progs = os.environ['ProgramFiles']
+        tshark_path = ('Wireshark', 'tshark.exe')
+        possible_paths = [config.get('tshark', 'tshark_path'),
+                          os.path.join(win32_progs, *tshark_path),
+                          os.path.join(win64_progs, *tshark_path)]
+    else:
+        possible_paths = [config.get('tshark', 'tshark_path'),
+                          '/usr/bin/tshark',
+                          '/usr/lib/tshark',
+                          '/usr/local/bin/tshark']
+    
     for path in possible_paths:
         if os.path.exists(path):
             return path

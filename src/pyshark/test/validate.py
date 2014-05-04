@@ -44,7 +44,10 @@ class TestFileCaptures(unittest.TestCase):
         """Test to make sure ICMP fields are being read properly by comparing
            packet dissection results to known values"""
         packet = self.cap[11]
-        resptime = packet.icmp.resptime
+        # The value returned by tshark is locale-dependent.
+        # Depending on the locale, a comma can be used instead of a dot
+        # as decimal separator.
+        resptime = packet.icmp.resptime.replace(',', '.')
         self.assertEqual(resptime, '1.667')
 
 if __name__ == '__main__':

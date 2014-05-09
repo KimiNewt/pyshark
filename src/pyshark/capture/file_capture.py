@@ -77,8 +77,7 @@ class FileCapture(Capture):
             self._set_tshark_process(extra_params=['-r', cap_or_xml.name])
             for packet in self._packets_from_fd(self.tshark_process.stdout, wait_for_more_data=False):
                 yield packet
-            self.tshark_process.stdout.close()
-            self.tshark_process.stderr.close()
+            self._cleanup_subprocess()
 
     def __repr__(self):
         if self.lazy:

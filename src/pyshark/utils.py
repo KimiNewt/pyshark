@@ -85,3 +85,7 @@ class StoppableThread(threading.Thread):
 
     def exit_thread(self):
         self.raise_exc(SystemExit)
+
+class StopSubprocess(Exception):
+    pass
+

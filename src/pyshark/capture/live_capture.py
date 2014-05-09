@@ -1,7 +1,7 @@
 import sys
 
 from pyshark.capture.capture import Capture
-from pyshark.utils import StoppableThread
+from pyshark.utils import StoppableThread, StopSubprocess
 
 
 class LiveCapture(Capture):
@@ -34,18 +34,14 @@ class LiveCapture(Capture):
         sniff_thread = StoppableThread(target=self._sniff_in_thread, args=(packet_count,))
         try:
             sniff_thread.start()
-            if timeout is None:
-                timeout = sys.maxint
             sniff_thread.join(timeout=timeout)
+            # If the thread is still alive after joining, then it timed out
             if sniff_thread.is_alive():
-                # Thread still alive after join, must have timed out.
-                sniff_thread.raise_exc(StopIteration)
+                sniff_thread.raise_exc(StopSubprocess)
         except KeyboardInterrupt:
             print 'Interrupted, stopping..'
-            sniff_thread.raise_exc(StopIteration)
-
-        sniff_thread.join()
-
+            sniff_thread.raise_exc(StopSubprocess)
+    
     def _sniff_in_thread(self, packet_count=None):
         """
         Sniff until stopped and add all packets to the packet list.
@@ -54,14 +50,8 @@ class LiveCapture(Capture):
         try:
             for packet in self.sniff_continuously(packet_count=packet_count):
                 self._packets += [packet]
-        except StopIteration:
-            try:
-                if self.tshark_process.poll() is None:
-                    # Process has not terminated yet
-                    self.tshark_process.terminate()
-            except OSError:
-                # If process already terminated somehow.
-                pass
+        except StopSubprocess:
+            self._cleanup_subprocess()
 
     def sniff_continuously(self, packet_count=None):
         """
@@ -74,18 +64,13 @@ class LiveCapture(Capture):
         :param packet_count: an amount of packets to capture, then stop.
         """
         if self.tshark_process is None:
-          self._set_tshark_process(packet_count=packet_count)
+            self._set_tshark_process(packet_count=packet_count)
         
         for packet in self._packets_from_fd(self.tshark_process.stdout, packet_count=packet_count):
             yield packet
         
-        try:
-            if self.tshark_process.poll() is None:
-                self.tshark_process.terminate()
-        except OSError:
-            # On windows, happens on termination.
-            if 'win' not in sys.platform:
-                raise
+        self._cleanup_subprocess()
+
     
     def get_parameters(self, packet_count=None):
         """

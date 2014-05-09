@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pyshark.tshark.tshark import get_tshark_path
 from pyshark.tshark.tshark_xml import packet_from_xml_packet
 
@@ -79,8 +80,8 @@ class Capture(object):
         :param fd: A file-like object containing a TShark XML
         :param previous_data: Any data to put before the file.
         :param packet_count: A maximum amount of packets to stop after.
-        :param wait_for_more_data: Whether to wait for more data or stop when none is available (i.e. when the fd is a
-        standard file)
+        :param wait_for_more_data: Whether to wait for more data or stop when
+            none is available (i.e. when the fd is a standard file)
         """
         data = previous_data
         packets_captured = 0
@@ -106,7 +107,9 @@ class Capture(object):
         Gets a new tshark process with the previously-set paramaters.
         """
         parameters = [get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count) + extra_params
+        # Re-direct TShark's stderr to the null device
         self.tshark_stderr = open(os.devnull, "wb")
+        # Start the TShark subprocess
         self.tshark_process = subprocess.Popen(parameters,
                                                stdout=subprocess.PIPE,
                                                stderr=self.tshark_stderr)
@@ -114,8 +117,15 @@ class Capture(object):
             raise TSharkCrashException('TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
     
     def _cleanup_subprocess(self):
+        try:
+            self.tshark_process.terminate()
+        except OSError:
+            if 'win' not in sys.platform:
+                raise
         self.tshark_process.stdout.close()
         self.tshark_stderr.close()
+        self.tshark_process = None
+        
     
     def get_parameters(self, packet_count=None):
         """

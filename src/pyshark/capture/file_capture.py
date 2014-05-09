@@ -74,11 +74,11 @@ class FileCapture(Capture):
                 yield packet
         else:
             # We assume it's a PCAP file and use tshark to get the XML.
-            p = self._get_tshark_process(extra_params=['-r', cap_or_xml.name])
-            for packet in self._packets_from_fd(p.stdout, previous_data=beginning, wait_for_more_data=False):
+            self._set_tshark_process(extra_params=['-r', cap_or_xml.name])
+            for packet in self._packets_from_fd(self.tshark_process.stdout, wait_for_more_data=False):
                 yield packet
-            p.stdout.close()
-            p.stderr.close()
+            self.tshark_process.stdout.close()
+            self.tshark_process.stderr.close()
 
     def __repr__(self):
         if self.lazy:

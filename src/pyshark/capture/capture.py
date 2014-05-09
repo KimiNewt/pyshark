@@ -17,6 +17,7 @@ class Capture(object):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
+        self.tshark_process = None
 
     def __getitem__(self, item):
         """
@@ -100,17 +101,17 @@ class Capture(object):
             if packet_count and packets_captured >= packet_count:
                 break
     
-    def _get_tshark_process(self, packet_count=None, extra_params=[]):
+    def _set_tshark_process(self, packet_count=None, extra_params=[]):
         """
         Gets a new tshark process with the previously-set paramaters.
         """
         parameters = [get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count) + extra_params
-        proc = subprocess.Popen(parameters,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if proc.poll() is not None:
+        self.tshark_process = subprocess.Popen(parameters,
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
+        if self.tshark_process.poll() is not None:
             raise TSharkCrashException('TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
-        return proc
-
+    
     def get_parameters(self, packet_count=None):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.

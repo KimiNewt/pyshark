@@ -49,24 +49,21 @@ class LiveCapture(Capture):
     def _sniff_in_thread(self, packet_count=None):
         """
         Sniff until stopped and add all packets to the packet list.
-
-        :param proc: tshark process to use to sniff.
         """
-        proc = self._get_tshark_process(packet_count)
+        self._set_tshark_process(packet_count)
         try:
-            for packet in self.sniff_continuously(packet_count=packet_count,
-                                                  existing_tshark=proc):
+            for packet in self.sniff_continuously(packet_count=packet_count):
                 self._packets += [packet]
         except StopIteration:
             try:
-                if proc.poll() is not None:
+                if self.tshark_process.poll() is None:
                     # Process has not terminated yet
-                    proc.terminate()
+                    self.tshark_process.terminate()
             except OSError:
                 # If process already terminated somehow.
                 pass
 
-    def sniff_continuously(self, packet_count=None, existing_tshark=None):
+    def sniff_continuously(self, packet_count=None):
         """
         Captures from the set interface, returning a generator which returns packets continuously.
 
@@ -75,24 +72,21 @@ class LiveCapture(Capture):
             print 'Woo, another packet:', packet
 
         :param packet_count: an amount of packets to capture, then stop.
-        :param existing_tshark: an existing tshark subprocess (for internal use).
         """
-        if existing_tshark:
-            proc = existing_tshark
-        else:
-            proc = self._get_tshark_process(packet_count=packet_count)
-
-        for packet in self._packets_from_fd(proc.stdout, packet_count=packet_count):
+        if self.tshark_process is None:
+          self._set_tshark_process(packet_count=packet_count)
+        
+        for packet in self._packets_from_fd(self.tshark_process.stdout, packet_count=packet_count):
             yield packet
-
+        
         try:
-            if proc.poll() is not None:
-                proc.terminate()
+            if self.tshark_process.poll() is None:
+                self.tshark_process.terminate()
         except OSError:
             # On windows, happens on termination.
             if 'win' not in sys.platform:
                 raise
-
+    
     def get_parameters(self, packet_count=None):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.

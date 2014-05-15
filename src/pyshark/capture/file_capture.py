@@ -65,12 +65,10 @@ class FileCapture(Capture):
 
     def packets_from_file(self, cap_or_xml):
         """
-        Gets an xml file data and returns the raw xml and a list of packets.
-
-        :return tuple of (raw_xml_file, packets)
+        Gets an xml file data and returns the packets.
         """
-        beginning = cap_or_xml.read(5)
-        if beginning == b'<?xml':
+        beginning = cap_or_xml.read(20)
+        if b'<?xml' in beginning:
             # It's an xml file.
             for packet in self._packets_from_fd(cap_or_xml, previous_data=beginning, wait_for_more_data=False):
                 yield packet

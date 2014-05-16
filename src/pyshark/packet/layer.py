@@ -40,8 +40,11 @@ class Layer(object):
         # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
         # so we'd rather not save them.
         for field in xml_obj.findall('.//field'):
-            self._all_fields[field.attrib['name']] = LayerField(**dict(field.attrib))
-
+            if not field.attrib['name'] in self._all_fields.keys():
+                self._all_fields[field.attrib['name']] = [LayerField(**dict(field.attrib))]
+            else:
+                self._all_fields[field.attrib['name']].append(LayerField(**dict(field.attrib)))
+                
     def __getattr__(self, item):
         val = self.get_field_value(item, raw=self.raw_mode)
         if val is None:
@@ -74,19 +77,26 @@ class Layer(object):
         :param raw: Only return raw value
         :return: str of value
         """
-        field = self.get_field(name)
-        if field is None:
+        value_list = []
+        field_list = self.get_field(name)
+
+        if field_list is None:
             return
 
-        if raw:
-            return field.value
+        for field in field_list:
+            if raw:
+                value_list.append(field.value)
 
-        val = field.show
-        if not val:
-            val = field.value
-        if not val:
-            val = field.showname
-        return val
+            else:
+                val = field.show
+                if not val:
+                    val = field.value
+                if not val:
+                    val = field.showname
+
+                value_list.append(val)
+
+        return value_list
 
     @property
     def _field_prefix(self):

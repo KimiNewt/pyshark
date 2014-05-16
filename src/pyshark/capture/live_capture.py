@@ -62,7 +62,7 @@ class LiveCapture(Capture):
                 if proc.poll() is not None:
                     # Process has not terminated yet
                     proc.terminate()
-            except WindowsError:
+            except OSError:
                 # If process already terminated somehow.
                 pass
 
@@ -88,9 +88,10 @@ class LiveCapture(Capture):
         try:
             if proc.poll() is not None:
                 proc.terminate()
-        except WindowsError:
-            # On windows
-            pass
+        except OSError:
+            # On windows, happens on termination.
+            if 'win' not in sys.platform:
+                raise
 
     def get_parameters(self, packet_count=None):
         """

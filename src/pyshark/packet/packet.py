@@ -77,10 +77,22 @@ class Packet(object):
         return '<%s%s Packet>' % (transport_protocol, self.highest_layer)
 
     def __str__(self):
-        s = 'Packet (Length: %s)%s' %(self.length, os.linesep)
+        s = self._packet_string
         for layer in self.layers:
             s += str(layer)
         return s
+
+    @property
+    def _packet_string(self):
+        """
+        A simple pretty string that represents the packet.
+        """
+        return 'Packet (Length: %s)%s' %(self.length, os.linesep)
+
+    def pretty_print(self):
+        print self._packet_string
+        for layer in self.layers:
+            layer.pretty_print()
 
     def __getattr__(self, item):
         """

@@ -1,4 +1,5 @@
 import os
+import py
 
 
 class LayerField(object):
@@ -127,6 +128,27 @@ class Layer(object):
             return 'DATA'
 
         s = 'Layer %s:' % self.layer_name.upper() + os.linesep
+        for field_line in self._get_all_field_lines():
+            s += field_line
+        return s
+
+    def pretty_print(self):
+        tw = py.io.TerminalWriter()
+        if self.layer_name == self.DATA_LAYER:
+            tw.write('DATA')
+            return
+
+        tw.write('Layer %s:' % self.layer_name.upper() + os.linesep, yellow=True, bold=True)
+        for field_line in self._get_all_field_lines():
+            if ':' in field_line:
+                field_name, field_line = field_line.split(':', 1)
+                tw.write(field_name + ':', green=True, bold=True)
+            tw.write(field_line, bold=True)
+
+    def _get_all_field_lines(self):
+        """
+        Returns all lines that represent the fields of the layer (both their names and values).
+        """
         for field in self._all_fields.values():
             if field.hide:
                 continue
@@ -136,5 +158,4 @@ class Layer(object):
                 field_repr = field.show
             else:
                 continue
-            s += '\t' + field_repr + os.linesep
-        return s
+            yield '\t' + field_repr + os.linesep

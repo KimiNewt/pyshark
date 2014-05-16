@@ -1,23 +1,3 @@
-import os
-import pytest
-
-import pyshark
-
-@pytest.fixture
-def caps_directory():
-    return os.path.join(os.path.dirname(__file__), 'caps')
-
-@pytest.fixture
-def simple_capture(request, caps_directory):
-    cap_path = os.path.join(caps_directory, 'capture_test.pcapng')
-    cap = pyshark.FileCapture(cap_path, lazy=False)
-
-    def finalizer():
-        cap.close()
-    request.addfinalizer(finalizer)
-    return cap
-
-
 def test_count_packets(simple_capture):
     """Test to make sure the right number of packets are read from a known
        capture"""
@@ -49,6 +29,7 @@ def test_ethernet(simple_capture):
     test_values = packet.eth.addr, packet.eth.dst
     known_values = ('00:00:bb:10:20:10', '00:00:bb:02:04:01')
     assert test_values == known_values
+
 
 def test_icmp(simple_capture):
     """Test to make sure ICMP fields are being read properly by comparing

@@ -104,7 +104,7 @@ class Capture(object):
     
     def _set_tshark_process(self, packet_count=None, extra_params=[]):
         """
-        Gets a new tshark process with the previously-set paramaters.
+        Sets the internal tshark to a new tshark process with the previously-set paramaters.
         """
         parameters = [get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count) + extra_params
         # Re-direct TShark's stderr to the null device
@@ -113,7 +113,8 @@ class Capture(object):
         self.tshark_process = subprocess.Popen(parameters,
                                                stdout=subprocess.PIPE,
                                                stderr=self.tshark_stderr)
-        if self.tshark_process.poll() is not None:
+        retcode = self.tshark_process.poll()
+        if retcode is not None and retcode != 0:
             raise TSharkCrashException('TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
     
     def _cleanup_subprocess(self):

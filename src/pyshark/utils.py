@@ -2,6 +2,7 @@ import inspect
 import threading
 import ctypes
 
+
 def file_or_path(func):
     """
     A decorator which checks whether the first parameter is a string or a file, if it is a string, replaces it with
@@ -86,6 +87,7 @@ class StoppableThread(threading.Thread):
     def exit_thread(self):
         self.raise_exc(SystemExit)
 
-class StopSubprocess(Exception):
+
+class StopThread(Exception):
     pass
 

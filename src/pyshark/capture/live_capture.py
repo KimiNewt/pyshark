@@ -1,7 +1,5 @@
-import sys
-
 from pyshark.capture.capture import Capture
-from pyshark.utils import StoppableThread, StopSubprocess
+from pyshark.utils import StoppableThread, StopThread
 
 
 class LiveCapture(Capture):
@@ -37,10 +35,10 @@ class LiveCapture(Capture):
             sniff_thread.join(timeout=timeout)
             # If the thread is still alive after joining, then it timed out
             if sniff_thread.is_alive():
-                sniff_thread.raise_exc(StopSubprocess)
+                sniff_thread.raise_exc(StopThread)
         except KeyboardInterrupt:
             print 'Interrupted, stopping..'
-            sniff_thread.raise_exc(StopSubprocess)
+            sniff_thread.raise_exc(StopThread)
     
     def _sniff_in_thread(self, packet_count=None):
         """
@@ -50,7 +48,7 @@ class LiveCapture(Capture):
         try:
             for packet in self.sniff_continuously(packet_count=packet_count):
                 self._packets += [packet]
-        except StopSubprocess:
+        except StopThread:
             self._cleanup_subprocess()
 
     def sniff_continuously(self, packet_count=None):

@@ -15,7 +15,7 @@ class RemoteCapture(LiveCapture):
 
         :param remote_host: The remote host to capture on (IP or hostname). Should be running rpcapd.
         :param remote_interface: The remote interface on the remote machine to capture on. Note that on windows it is
-        not the device display name but the true interface name (i.e. \Device\NPF_..).
+        not the device display name but the true interface name (i.e. \\Device\\NPF_..).
         :param remote_port: The remote port the rpcapd service is listening on
         :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
         """

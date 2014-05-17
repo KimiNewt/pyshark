@@ -1,7 +1,5 @@
-import sys
-
 from pyshark.capture.capture import Capture
-from pyshark.utils import StoppableThread
+from pyshark.utils import StoppableThread, StopThread
 
 
 class LiveCapture(Capture):
@@ -34,39 +32,26 @@ class LiveCapture(Capture):
         sniff_thread = StoppableThread(target=self._sniff_in_thread, args=(packet_count,))
         try:
             sniff_thread.start()
-            if timeout is None:
-                timeout = sys.maxint
             sniff_thread.join(timeout=timeout)
+            # If the thread is still alive after joining, then it timed out
             if sniff_thread.is_alive():
-                # Thread still alive after join, must have timed out.
-                sniff_thread.raise_exc(StopIteration)
+                sniff_thread.raise_exc(StopThread)
         except KeyboardInterrupt:
             print 'Interrupted, stopping..'
-            sniff_thread.raise_exc(StopIteration)
-
-        sniff_thread.join()
-
+            sniff_thread.raise_exc(StopThread)
+    
     def _sniff_in_thread(self, packet_count=None):
         """
         Sniff until stopped and add all packets to the packet list.
-
-        :param proc: tshark process to use to sniff.
         """
-        proc = self._get_tshark_process(packet_count)
+        self._set_tshark_process(packet_count)
         try:
-            for packet in self.sniff_continuously(packet_count=packet_count,
-                                                  existing_tshark=proc):
+            for packet in self.sniff_continuously(packet_count=packet_count):
                 self._packets += [packet]
-        except StopIteration:
-            try:
-                if proc.poll() is not None:
-                    # Process has not terminated yet
-                    proc.terminate()
-            except OSError:
-                # If process already terminated somehow.
-                pass
+        except StopThread:
+            self._cleanup_subprocess()
 
-    def sniff_continuously(self, packet_count=None, existing_tshark=None):
+    def sniff_continuously(self, packet_count=None):
         """
         Captures from the set interface, returning a generator which returns packets continuously.
 
@@ -75,24 +60,16 @@ class LiveCapture(Capture):
             print 'Woo, another packet:', packet
 
         :param packet_count: an amount of packets to capture, then stop.
-        :param existing_tshark: an existing tshark subprocess (for internal use).
         """
-        if existing_tshark:
-            proc = existing_tshark
-        else:
-            proc = self._get_tshark_process(packet_count=packet_count)
-
-        for packet in self._packets_from_fd(proc.stdout, packet_count=packet_count):
+        if self.tshark_process is None:
+            self._set_tshark_process(packet_count=packet_count)
+        
+        for packet in self._packets_from_fd(self.tshark_process.stdout, packet_count=packet_count):
             yield packet
+        
+        self._cleanup_subprocess()
 
-        try:
-            if proc.poll() is not None:
-                proc.terminate()
-        except OSError:
-            # On windows, happens on termination.
-            if 'win' not in sys.platform:
-                raise
-
+    
     def get_parameters(self, packet_count=None):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.

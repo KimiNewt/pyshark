@@ -1,6 +1,6 @@
 from pyshark.capture.capture import Capture
 from pyshark.utils import StoppableThread, StopThread
-
+from pyshark.tshark.tshark import get_tshark_interfaces
 
 class LiveCapture(Capture):
     """
@@ -17,9 +17,15 @@ class LiveCapture(Capture):
         """
         super(LiveCapture, self).__init__(display_filter=display_filter)
         self.bpf_filter = bpf_filter
-        self.interface = interface
-
-
+        
+        if interface is None:
+            self.interfaces = []
+        else:
+            if interface.lower() == "all":
+                self.interfaces = get_tshark_interfaces()
+            else:
+                self.interfaces = [interface]
+    
     def sniff(self, packet_count=None, timeout=None):
         """
         Captures from the set interface, until the given amount of packets is captured or the timeout is reached.
@@ -50,7 +56,7 @@ class LiveCapture(Capture):
                 self._packets += [packet]
         except StopThread:
             self._cleanup_subprocess()
-
+    
     def sniff_continuously(self, packet_count=None):
         """
         Captures from the set interface, returning a generator which returns packets continuously.
@@ -68,15 +74,14 @@ class LiveCapture(Capture):
             yield packet
         
         self._cleanup_subprocess()
-
     
     def get_parameters(self, packet_count=None):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
-        if self.interface:
-            params += ['-i', self.interface]
+        for interface in self.interfaces:
+            params += ['-i', interface]
         if self.bpf_filter:
             params += ['-f', self.bpf_filter]
         return params

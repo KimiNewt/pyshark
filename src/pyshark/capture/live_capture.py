@@ -19,12 +19,9 @@ class LiveCapture(Capture):
         self.bpf_filter = bpf_filter
         
         if interface is None:
-            self.interfaces = []
+            self.interfaces = get_tshark_interfaces()
         else:
-            if interface.lower() == "all":
-                self.interfaces = get_tshark_interfaces()
-            else:
-                self.interfaces = [interface]
+            self.interfaces = [interface]
     
     def sniff(self, packet_count=None, timeout=None):
         """

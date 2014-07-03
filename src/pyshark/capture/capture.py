@@ -29,6 +29,9 @@ class Capture(object):
         :return: Packet object.
         """
         return self._packets[item]
+
+    def __len__(self):
+        return len(self._packets)
     
     def next(self):
         return self.next_packet()

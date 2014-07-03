@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from pyshark.tshark.tshark import get_tshark_path

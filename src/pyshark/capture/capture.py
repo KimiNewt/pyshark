@@ -1,7 +1,7 @@
 import subprocess
 import time
 from pyshark.tshark.tshark import get_tshark_path
-from pyshark.tshark.tshark_xml import packet_from_xml_packet
+from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
 
 class TSharkCrashException(Exception):
@@ -13,10 +13,11 @@ class Capture(object):
     Base class for packet captures.
     """
 
-    def __init__(self, display_filter=None):
+    def __init__(self, display_filter=None, only_summaries=False):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
+        self.only_summaries = only_summaries
 
     def __getitem__(self, item):
         """
@@ -53,24 +54,24 @@ class Capture(object):
         self.current_packet = 0
 
     @staticmethod
-    def _extract_packet_from_data(data):
+    def _extract_tag_from_data(data, tag_name='packet'):
         """
         Gets data containing a (part of) tshark xml.
-        If a packet is found in it, returns the packet and the remaining data.
+        If the given tag is found in it, returns the tag data and the remaining data.
         Otherwise returns None and the same data.
 
         :param data: string of a partial tshark xml.
-        :return: a tuple of (packet, data). packet will be None if none is found.
+        :return: a tuple of (tag, data). tag will be None if none is found.
         """
-        packet_end = data.find(b'</packet>')
-        if packet_end != -1:
-            packet_end += len(b'</packet>')
-            packet_start = data.find(b'<packet>')
-            return data[packet_start:packet_end], data[packet_end:]
+        opening_tag, closing_tag = b'<%s>' % tag_name, b'</%s>' % tag_name
+        tag_end = data.find(closing_tag)
+        if tag_end != -1:
+            tag_end += len(closing_tag)
+            tag_start = data.find(opening_tag)
+            return data[tag_start:tag_end], data[tag_end:]
         return None, data
 
-    @classmethod
-    def _packets_from_fd(cls, fd, previous_data=b'', packet_count=None, wait_for_more_data=True, batch_size=4096):
+    def _packets_from_fd(self, fd, previous_data=b'', packet_count=None, wait_for_more_data=True, batch_size=4096):
         """
         Reads packets from a file-like object containing a TShark XML.
         Returns a generator.
@@ -83,18 +84,26 @@ class Capture(object):
         """
         data = previous_data
         packets_captured = 0
+        psml_struct = None
+
+        if self.only_summaries:
+            # If summaries are read, we need the psdml structure which appears on top of the file.
+            while not psml_struct:
+                data += fd.read(batch_size)
+                psml_struct, data = self._extract_tag_from_data(data, 'structure')
+                psml_struct = psml_structure_from_xml(psml_struct)
 
         while True:
             # Read data until we get a packet, and yield it.
             new_data = fd.read(batch_size)
             data += new_data
-            packet, data = cls._extract_packet_from_data(data)
+            packet, data = self._extract_tag_from_data(data)
 
             if packet:
                 packets_captured += 1
-                yield packet_from_xml_packet(packet)
+                yield packet_from_xml_packet(packet, psml_structure=psml_struct)
 
-            if not wait_for_more_data and len(new_data) < batch_size:
+            if packet is None and not wait_for_more_data and len(new_data) < batch_size:
                 break
 
             if packet_count and packets_captured >= packet_count:
@@ -102,9 +111,10 @@ class Capture(object):
     
     def _get_tshark_process(self, packet_count=None, extra_params=[]):
         """
-        Gets a new tshark process with the previously-set paramaters.
+        Gets a new tshark procerss with the previously-set paramaters.
         """
-        parameters = [get_tshark_path(), '-T', 'pdml'] + self.get_parameters(packet_count=packet_count) + extra_params
+        xml_type = 'psml' if self.only_summaries else 'pdml'
+        parameters = [get_tshark_path(), '-T', xml_type] + self.get_parameters(packet_count=packet_count) + extra_params
         proc = subprocess.Popen(parameters,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if proc.poll() is not None:

@@ -6,7 +6,7 @@ class FileCapture(Capture):
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, lazy=True, keep_packets=True, display_filter=None):
+    def __init__(self, input_file=None, lazy=True, keep_packets=True, display_filter=None, only_summaries=False):
         """
         Creates a packet capture object by reading from file.
 
@@ -17,8 +17,9 @@ class FileCapture(Capture):
         or a TShark xml.
         :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
         :param display_filter: A display (wireshark) filter to apply on the cap before reading it.
+        :param only_summaries: Only produce packet summaries, much faster but includes very little information
         """
-        super(FileCapture, self).__init__(display_filter=display_filter)
+        super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries)
         if isinstance(input_file, basestring):
             self.input_file = open(input_file, 'rb')
         else:

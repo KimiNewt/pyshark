@@ -2,6 +2,7 @@
 Module used for the actual running of TShark
 """
 import os
+import subprocess
 import sys
 
 from pyshark.config import get_config
@@ -39,3 +40,9 @@ def get_tshark_path():
             return path
     raise TSharkNotFoundException('TShark not found in the following locations: ' + ', '.join(possible_paths) +
                                   ' Either place tshark there or add more paths to the config file.')
+
+def get_tshark_interfaces():
+    parameters = [get_tshark_path(), '-D']
+    tshark_interfaces = subprocess.check_output(parameters).decode("ascii")
+    
+    return [line.split('.')[0] for line in tshark_interfaces.splitlines()]

@@ -23,8 +23,8 @@ def get_tshark_path():
     config = get_config()
 
     if sys.platform.startswith('win'):
-        win32_progs = os.environ['ProgramFiles(x86)']
-        win64_progs = os.environ['ProgramFiles']
+        win32_progs = os.environ.get('ProgramFiles(x86)', '')
+        win64_progs = os.environ.get('ProgramFiles', '')
         tshark_path = ('Wireshark', 'tshark.exe')
         possible_paths = [config.get('tshark', 'tshark_path'),
                           os.path.join(win32_progs, *tshark_path),

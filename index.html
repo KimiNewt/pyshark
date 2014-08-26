@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="PyShark : Python packet parser using wireshark&#39;s tshark">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>PyShark</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/KimiNewt/pyshark">View on GitHub</a>
+
+          <h1 id="project_title">PyShark</h1>
+          <h2 id="project_tagline">Python packet parser using wireshark&#39;s tshark</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/KimiNewt/pyshark/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/KimiNewt/pyshark/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="pyshark" class="anchor" href="#pyshark"><span class="octicon octicon-link"></span></a>pyshark</h1>
+
+<p>Python wrapper for tshark, allowing python packet parsing using wireshark dissectors.</p>
+
+<p>There are quite a few python packet parsing modules, this one is different because it doesn't actually parse any packets, it simply uses tshark's (wireshark command-line utility) ability to export XMLs to use its parsing.</p>
+
+<p>This package allows parsing from a capture file or a live capture, using all wireshark dissectors you have installed.
+Tested on windows/linux.</p>
+
+<h1>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h1>
+
+<p>Pyshark features a few "Capture" objects (Live, Remote, File). Each of those files read from their respective source and then can be used as an iterator to get their packets. Each capture object can also receive various filters so that only some of the incoming packets will be saved.</p>
+
+<h2>
+<a name="reading-from-a-capture-file" class="anchor" href="#reading-from-a-capture-file"><span class="octicon octicon-link"></span></a>Reading from a capture file:</h2>
+
+<pre><code>import pyshark
+cap = pyshark.FileCapture('/tmp/mycapture.cap')
+cap
+&gt;&gt;&gt; &lt;FileCapture /tmp/mycapture.cap (589 packets)&gt;
+print cap[0]
+Packet (Length: 698)
+Layer ETH:
+        Destination: BLANKED
+        Source: BLANKED
+        Type: IP (0x0800)
+Layer IP:
+        Version: 4
+        Header Length: 20 bytes
+        Differentiated Services Field: 0x00 (DSCP 0x00: Default; ECN: 0x00: Not-ECT (Not ECN-Capable Transport))
+        Total Length: 684
+        Identification: 0x254f (9551)
+        Flags: 0x00
+        Fragment offset: 0
+        Time to live: 1
+        Protocol: UDP (17)
+        Header checksum: 0xe148 [correct]
+        Source: BLANKED
+        Destination: BLANKED
+  ...
+</code></pre>
+
+<h2>
+<a name="reading-from-a-live-interface" class="anchor" href="#reading-from-a-live-interface"><span class="octicon octicon-link"></span></a>Reading from a live interface:</h2>
+
+<pre><code>capture = pyshark.LiveCapture(interface='eth0')
+capture.sniff(timeout=50)
+capture
+&gt;&gt;&gt; &lt;LiveCapture (5 packets)&gt;
+capture[3]
+&lt;UDP/HTTP Packet&gt;
+
+for packet in capture.sniff_continuously(packet_count=5):
+    print 'Just arrived:', packet
+</code></pre>
+
+<p>Capturing from a live interface can be done in two ways: either using the <em>sniff()</em> method to capture a given amount of packets (or for a given amount of time) and then read the packets from the capture object as a list, or use the <em>sniff_continously()</em> method as a generator and work on each packet as it arrives.</p>
+
+<p>The capture can also run on multiple interfaces if a list is providing, or all interfaces if no interface is provided. It can even be run through a remote interface using <em>RemoteCapture</em>.</p>
+
+<h2>
+<a name="filtering-packets" class="anchor" href="#filtering-packets"><span class="octicon octicon-link"></span></a>Filtering packets:</h2>
+
+<p>Filtering packets can be done with any capture object, like so:</p>
+
+<pre><code>filtered_cap = pyshark.FileCapture(bpf_filter='tcp port 80')
+filtered_cap2 = pyshark.LiveCapture(display_filter='http')
+</code></pre>
+
+<p>There are two types of filters, <strong>BPF filters</strong> and <strong>display filters</strong>. Generally, bpf filters are more limited but are faster while display filters can be used on pretty much any attribute of the packet but are much slower.</p>
+
+<p>See BPF syntax help <a href="http://biot.com/capstats/bpf.html">here</a> and display filters help <a href="http://wiki.wireshark.org/DisplayFilters">here</a>.</p>
+
+<h2>
+<a name="accessing-packet-data" class="anchor" href="#accessing-packet-data"><span class="octicon octicon-link"></span></a>Accessing packet data:</h2>
+
+<p>Data can be accessed in multiple ways. 
+Packets are divided into layers, first you have to reach the appropriate layer and then you can select your field.</p>
+
+<p>All of the following work:</p>
+
+<pre><code>packet['ip'].dst
+&gt;&gt;&gt; 192.168.0.1
+packet.ip.src
+&gt;&gt;&gt; 192.168.0.100
+packet[2].src
+&gt;&gt;&gt; 192.168.0.100
+</code></pre>
+
+<p>To easily view the different attributes of the layer, you can simply run <em>dir(packet.my_layer)</em> or even print it or use the special <em>pretty_print()</em> method both layer and packet have.
+Note that all attributes return as strings at the moment.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">PyShark maintained by <a href="https://github.com/KimiNewt">KimiNewt</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>

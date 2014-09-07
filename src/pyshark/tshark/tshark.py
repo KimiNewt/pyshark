@@ -41,6 +41,15 @@ def get_tshark_path():
     raise TSharkNotFoundException('TShark not found in the following locations: ' + ', '.join(possible_paths) +
                                   ' Either place tshark there or add more paths to the config file.')
 
+def get_tshark_version():
+    parameters = [get_tshark_path(), '-v']
+    version_output = subprocess.check_output(parameters).decode("ascii")
+    version_line = version_output.splitlines()[0]
+    version_string = version_line.split()[1]
+    version_tuple = tuple(int(x) for x in version_string.split('.'))
+
+    return version_tuple
+
 def get_tshark_interfaces():
     parameters = [get_tshark_path(), '-D']
     tshark_interfaces = subprocess.check_output(parameters).decode("ascii")

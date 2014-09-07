@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-from pyshark.tshark.tshark import get_tshark_path
+from pyshark.tshark.tshark import get_tshark_path, get_tshark_version
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
 
@@ -20,6 +20,7 @@ class Capture(object):
         self.display_filter = display_filter
         self.only_summaries = only_summaries
         self.tshark_process = None
+        self.tshark_version = get_tshark_version()
 
     def __getitem__(self, item):
         """
@@ -145,9 +146,11 @@ class Capture(object):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
+        display_filter_flag = '-Y' if self.tshark_version >= (1, 10, 0) else '-R'
+
         params = []
         if self.display_filter:
-            params += ['-R', self.display_filter]
+            params += [display_filter_flag, self.display_filter]
         if packet_count:
             params += ['-c', str(packet_count)]
         return params

@@ -46,9 +46,8 @@ def get_tshark_version():
     version_output = subprocess.check_output(parameters).decode("ascii")
     version_line = version_output.splitlines()[0]
     version_string = version_line.split()[1]
-    version_tuple = tuple(int(x) for x in version_string.split('.'))
 
-    return version_tuple
+    return version_string
 
 def get_tshark_interfaces():
     parameters = [get_tshark_path(), '-D']

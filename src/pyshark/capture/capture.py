@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 import os
 import subprocess
 import sys
@@ -20,7 +21,6 @@ class Capture(object):
         self.display_filter = display_filter
         self.only_summaries = only_summaries
         self.tshark_process = None
-        self.tshark_version = get_tshark_version()
 
     def __getitem__(self, item):
         """
@@ -146,7 +146,11 @@ class Capture(object):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
-        display_filter_flag = '-Y' if self.tshark_version >= (1, 10, 0) else '-R'
+        tshark_version = get_tshark_version()
+        if LooseVersion(tshark_version) >= LooseVersion("1.10.0"):
+            display_filter_flag = '-Y'
+        else:
+            display_filter_flag = '-R'
 
         params = []
         if self.display_filter:

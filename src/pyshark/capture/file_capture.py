@@ -9,7 +9,7 @@ class FileCapture(Capture):
 
     def __init__(self, input_file=None, lazy=True, keep_packets=True, 
                  display_filter=None, only_summaries=False,
-                 passkey=None, encryption_type='wpa-pwd', Debug=2):
+                 decryption_key=None, encryption_type='wpa-pwd'):
         """
         Creates a packet capture object by reading from file.
 
@@ -28,29 +28,13 @@ class FileCapture(Capture):
         includes very little information
         """
         super(FileCapture, self).__init__(display_filter=display_filter, 
-                                          only_summaries=only_summaries)
+                                          only_summaries=only_summaries,
+                                          decryption_key=decryption_key, 
+                                          encryption_type=encryption_type)
         if isinstance(input_file, basestring):
             self.input_file = open(input_file, 'rb')
         else:
             self.input_file = input_file
-        
-        ### If we have a passkey, create self.encryption=(passkey,encryption_type)
-        if passkey:
-            ### We also need to know the type...
-            if encryption_type:
-                ### ...and it needs to be valid
-                if encryption_type.lower() in ('wep', 'wpa-pwd', 'wpa-psk'):
-                    self.encryption=(passkey, encryption_type)
-                else:
-                    raise UnknownEncyptionStandardException()
-            ### Just a key doesn't do us any good
-            else:
-                ### Default to wpa-pwd
-                # self.encryption=(passkey, 'wpa-pwd')
-                raise MissingEncyptionStandardException()
-        ### No encryption
-        else:
-            self.encryption=None
 
         self.lazy = lazy
         self.keep_packets = keep_packets
@@ -103,16 +87,8 @@ class FileCapture(Capture):
                                                 wait_for_more_data=False):
                 yield packet
         else:
-
-            if self.encryption:
-                enc='wlan.enable_decryption:TRUE uat:80211_keys:'+\
-                    '\\"{k}\\",\\" Passphrase:{p}\\"'.format(k=self.encryption[1], 
-                                                          p=self.encryption[0])
-                extra_params=['-r', cap_or_xml.name, '-o', enc]
-            else:
-                extra_params=['-r', cap_or_xml.name]
             # We assume it's a PCAP file and use tshark to get the XML.
-            self._set_tshark_process(extra_params=extra_params)
+            self._set_tshark_process(extra_params=['-r', cap_or_xml.name])
             for packet in self._packets_from_fd(self.tshark_process.stdout, 
                                                 wait_for_more_data=False):
                 yield packet
@@ -131,9 +107,3 @@ class FileCapture(Capture):
         Returns the filename of the capture file represented by this object.
         """
         return self.input_file.name
-
-class UnknownEncyptionStandardException(Exception):
-    pass
-
-class MissingEncyptionStandardException(Exception):
-    pass

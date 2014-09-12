@@ -5,10 +5,10 @@ with open('README.txt') as f:
 
 setup(
     name="pyshark",
-    version="0.2.7",
+    version="0.3",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
-    install_requires=['lxml', 'py'],
+    install_requires=['lxml', 'py', 'trollius', 'logbook'],
     url="https://github.com/KimiNewt/pyshark",
     long_description=long_description,
     author="KimiNewt",

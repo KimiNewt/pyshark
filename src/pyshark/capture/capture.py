@@ -1,8 +1,17 @@
 import os
-import subprocess
-import sys
+import logbook
+import trollius
+from trollius import From, subprocess, Return
+from trollius.py33_exceptions import ProcessLookupError
+
 from pyshark.tshark.tshark import get_tshark_path
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
+
+if os.name == 'nt':
+    loop = trollius.ProactorEventLoop()
+    trollius.set_event_loop(loop)
+else:
+    loop = trollius.get_event_loop()
 
 
 class TSharkCrashException(Exception):
@@ -20,6 +29,7 @@ class Capture(object):
         self.display_filter = display_filter
         self.only_summaries = only_summaries
         self.tshark_process = None
+        self.log = logbook.Logger(self.__class__.__name__)
 
     def __getitem__(self, item):
         """
@@ -32,10 +42,10 @@ class Capture(object):
 
     def __len__(self):
         return len(self._packets)
-    
+
     def next(self):
         return self.next_packet()
-    
+
     # Allows for child classes to call next() from super() without 2to3 "fixing"
     # the call
     def next_packet(self):
@@ -58,6 +68,24 @@ class Capture(object):
         """
         self.current_packet = 0
 
+    def load_packets(self, packet_count=0, timeout=None):
+        """
+        Reads the packets from the source (cap, interface, etc.) and adds it to the internal list.
+        If 0 as the is given, reads forever
+
+        :param packet_count: The amount of packets to add to the packet list (0 to read forever)
+        :param timeout: If given, automatically stops after a given amount of time.
+        """
+        # TODO: Implement timeout
+        initial_packet_amount = len(self._packets)
+        def keep_packet(pkt):
+            self._packets.append(pkt)
+
+            if packet_count != 0 and len(self._packets) - initial_packet_amount >= packet_count:
+                raise Return()
+
+        self.apply_on_packets(keep_packet)
+
     @staticmethod
     def _extract_tag_from_data(data, tag_name='packet'):
         """
@@ -76,71 +104,137 @@ class Capture(object):
             return data[tag_start:tag_end], data[tag_end:]
         return None, data
 
-    def _packets_from_fd(self, fd, previous_data=b'', packet_count=None, wait_for_more_data=True, batch_size=4096):
+    def _packets_from_tshark_sync(self):
         """
-        Reads packets from a file-like object containing a TShark XML.
-        Returns a generator.
+        Returns a generator of packets.
+        """
+        # NOTE: This has code duplication with the async version, think about how to solve this
+        # TODO: Add packet summary stuff + handle parameters
+        tshark_process = loop.run_until_complete(self._get_tshark_process())
+        data = ''
 
-        :param fd: A file-like object containing a TShark XML
-        :param previous_data: Any data to put before the file.
-        :param packet_count: A maximum amount of packets to stop after.
-        :param wait_for_more_data: Whether to wait for more data or stop when
-            none is available (i.e. when the fd is a standard file)
+        try:
+            while True:
+                try:
+                    packet, data = loop.run_until_complete(self._get_packet_from_stream(tshark_process.stdout, data))
+                except EOFError:
+                    self.log.debug('EOF reached (sync)')
+                    break
+                if packet:
+                    yield packet
+        finally:
+            self._cleanup_subprocess(tshark_process)
+
+    def apply_on_packets(self, callback):
+        """
+        Runs through all packets and calls the given callback (a function) with each one as it is read.
+        If the capture is infinite (i.e. a live capture), it will run forever, otherwise it will complete after all
+        packets have been read.
+
+        Example usage:
+        def print_callback(pkt):
+            print pkt
+        capture.apply_on_packets(print_callback)
+        """
+        return loop.run_until_complete(self._packets_from_tshark(callback))
+
+    @trollius.coroutine
+    def _packets_from_tshark(self, packet_callback, packet_count=None, batch_size=4096):
+        """
+        A coroutine which creates a tshark process, runs the given callback on each packet that is received from it and
+        closes the process when it is done.
+        """
+        tshark_process = yield From(self._get_tshark_process(packet_count=packet_count))
+        try:
+            yield From(self._go_through_packets_from_fd(tshark_process.stdout, packet_callback,
+                                                        packet_count=packet_count, batch_size=batch_size))
+        finally:
+            self._cleanup_subprocess(tshark_process)
+
+    @trollius.coroutine
+    def _go_through_packets_from_fd(self, fd, packet_callback, previous_data=b'', packet_count=None, batch_size=4096):
+        """
+        A coroutine which goes through a stream and calls a given callback for each XML packet seen in it.
         """
         data = previous_data
         packets_captured = 0
         psml_struct = None
+        self.log.debug('Starting to go through packets')
 
         if self.only_summaries:
             # If summaries are read, we need the psdml structure which appears on top of the file.
             while not psml_struct:
-                data += fd.read(batch_size)
+                data += yield From(fd.read(batch_size))
                 psml_struct, data = self._extract_tag_from_data(data, 'structure')
                 psml_struct = psml_structure_from_xml(psml_struct)
 
         while True:
-            # Read data until we get a packet, and yield it.
-            new_data = fd.read(batch_size)
-            data += new_data
-            packet, data = self._extract_tag_from_data(data)
+            try:
+                packet, data = yield From(self._get_packet_from_stream(fd, data,
+                                                                batch_size=batch_size, psml_structure=psml_struct))
+            except EOFError:
+                self.log.debug('EOF reached')
+                break
 
             if packet:
+                self.log.debug('Packet captured')
                 packets_captured += 1
-                yield packet_from_xml_packet(packet, psml_structure=psml_struct)
-
-            if packet is None and not wait_for_more_data and len(new_data) < batch_size:
-                break
+                packet_callback(packet)
 
             if packet_count and packets_captured >= packet_count:
                 break
-    
-    def _set_tshark_process(self, packet_count=None, extra_params=[]):
+
+    @trollius.coroutine
+    def _get_packet_from_stream(self, stream, existing_data, batch_size=4096, psml_structure=None):
         """
-        Sets the internal tshark to a new tshark process with the previously-set paramaters.
+        A coroutine which returns a single packet if it can be read from the given StreamReader.
+        :return a tuple of (packet, remaining_data). The packet will be None if there was not enough XML data to create
+        a packet. remaining_data is the leftover data which was not enough to create a packet from.
+        :raises EOFError if EOF was reached.
+        """
+        # Read data until we get a packet, and yield it.
+        new_data = yield From(stream.read(batch_size))
+        existing_data += new_data
+        packet, existing_data = self._extract_tag_from_data(existing_data)
+
+        if not new_data:
+            # Reached EOF
+            raise EOFError()
+
+        if packet:
+            self.log.debug('Packet captured')
+            packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
+            raise Return(packet, existing_data)
+        raise Return(None, existing_data)
+
+    @trollius.coroutine
+    def _get_tshark_process(self, packet_count=None):
+        """
+        Returns a new tshark process with previously-set parameters.
         """
         xml_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(), '-T', xml_type] + self.get_parameters(packet_count=packet_count) + extra_params
-        # Re-direct TShark's stderr to the null device
-        self.tshark_stderr = open(os.devnull, "wb")
-        # Start the TShark subprocess
-        self.tshark_process = subprocess.Popen(parameters,
-                                               stdout=subprocess.PIPE,
-                                               stderr=self.tshark_stderr)
-        retcode = self.tshark_process.poll()
-        if retcode is not None and retcode != 0:
-            raise TSharkCrashException('TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
-    
-    def _cleanup_subprocess(self):
+        parameters = [get_tshark_path(), '-T', xml_type] + self.get_parameters(packet_count=packet_count)
+
+        self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
+        tshark_process = yield From(trollius.create_subprocess_exec(*parameters,
+                                                                    stdout=subprocess.PIPE,
+                                                                    stderr=open(os.devnull, "wb")))
+        self.log.debug('TShark subprocess created')
+
+        if tshark_process.returncode is not None and self.tshark_process.returncode != 0:
+            raise TSharkCrashException(
+                'TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
+        raise Return(tshark_process)
+
+    def _cleanup_subprocess(self, process):
+        """
+        Kill the given process and properly closes any pipes connected to it.
+        """
         try:
-            self.tshark_process.terminate()
-        except OSError:
-            if 'win' not in sys.platform:
-                raise
-        self.tshark_process.stdout.close()
-        self.tshark_stderr.close()
-        self.tshark_process = None
-        
-    
+            process.kill()
+        except ProcessLookupError:
+            pass
+
     def get_parameters(self, packet_count=None):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.
@@ -153,8 +247,7 @@ class Capture(object):
         return params
 
     def __iter__(self):
-        while True:
-            yield self.next()
+        return self._packets_from_tshark_sync
 
     def __repr__(self):
-        return '<%s (%d packets)>' %(self.__class__.__name__, len(self._packets))
+        return '<%s (%d packets)>' % (self.__class__.__name__, len(self._packets))

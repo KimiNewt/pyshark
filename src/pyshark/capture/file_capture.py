@@ -1,4 +1,5 @@
 from pyshark.capture.capture import Capture
+# from pyshark.capture.capture_exceptions import *
 
 
 class FileCapture(Capture):
@@ -6,24 +7,50 @@ class FileCapture(Capture):
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, lazy=True, keep_packets=True, display_filter=None, only_summaries=False):
+    def __init__(self, input_file=None, lazy=True, keep_packets=True, 
+                 display_filter=None, only_summaries=False,
+                 passkey=None, encryption_type='wpa-pwd', Debug=2):
         """
         Creates a packet capture object by reading from file.
 
-        :param lazy: Whether to lazily get packets from the cap file or read all of them immediately.
-        :param keep_packets: Whether to keep packets after reading them via next(). Used to conserve memory when reading
-        large caps (can only be used along with the "lazy" option!)
-        :param input_file: Either a path or a file-like object containing either a packet capture file (PCAP, PCAP-NG..)
-        or a TShark xml.
-        :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
-        :param display_filter: A display (wireshark) filter to apply on the cap before reading it.
-        :param only_summaries: Only produce packet summaries, much faster but includes very little information
+        :param lazy: Whether to lazily get packets from the cap file or read 
+        all of them immediately.
+        :param keep_packets: Whether to keep packets after reading them via 
+        next(). Used to conserve memory when reading large caps (can only be 
+        used along with the "lazy" option!)
+        :param input_file: Either a path or a file-like object containing 
+        either a packet capture file (PCAP, PCAP-NG..) or a TShark xml.
+        :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before 
+        reading.
+        :param display_filter: A display (wireshark) filter to apply on the 
+        cap before reading it.
+        :param only_summaries: Only produce packet summaries, much faster but 
+        includes very little information
         """
-        super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries)
+        super(FileCapture, self).__init__(display_filter=display_filter, 
+                                          only_summaries=only_summaries)
         if isinstance(input_file, basestring):
             self.input_file = open(input_file, 'rb')
         else:
             self.input_file = input_file
+        
+        ### If we have a passkey, create self.encryption=(passkey,encryption_type)
+        if passkey:
+            ### We also need to know the type...
+            if encryption_type:
+                ### ...and it needs to be valid
+                if encryption_type.lower() in ('wep', 'wpa-pwd', 'wpa-psk'):
+                    self.encryption=(passkey, encryption_type)
+                else:
+                    raise UnknownEncyptionStandardException()
+            ### Just a key doesn't do us any good
+            else:
+                ### Default to wpa-pwd
+                # self.encryption=(passkey, 'wpa-pwd')
+                raise MissingEncyptionStandardException()
+        ### No encryption
+        else:
+            self.encryption=None
 
         self.lazy = lazy
         self.keep_packets = keep_packets
@@ -71,12 +98,23 @@ class FileCapture(Capture):
         beginning = cap_or_xml.read(20)
         if b'<?xml' in beginning:
             # It's an xml file.
-            for packet in self._packets_from_fd(cap_or_xml, previous_data=beginning, wait_for_more_data=False):
+            for packet in self._packets_from_fd(cap_or_xml, 
+                                                previous_data=beginning, 
+                                                wait_for_more_data=False):
                 yield packet
         else:
+
+            if self.encryption:
+                enc='wlan.enable_decryption:TRUE uat:80211_keys:'+\
+                    '\\"{k}\\",\\" Passphrase:{p}\\"'.format(k=self.encryption[1], 
+                                                          p=self.encryption[0])
+                extra_params=['-r', cap_or_xml.name, '-o', enc]
+            else:
+                extra_params=['-r', cap_or_xml.name]
             # We assume it's a PCAP file and use tshark to get the XML.
-            self._set_tshark_process(extra_params=['-r', cap_or_xml.name])
-            for packet in self._packets_from_fd(self.tshark_process.stdout, wait_for_more_data=False):
+            self._set_tshark_process(extra_params=extra_params)
+            for packet in self._packets_from_fd(self.tshark_process.stdout, 
+                                                wait_for_more_data=False):
                 yield packet
             self._cleanup_subprocess()
 
@@ -84,7 +122,8 @@ class FileCapture(Capture):
         if self.lazy:
             return '<%s %s>' %(self.__class__.__name__, self.filename)
         else:
-            return '<%s %s (%d packets)>' %(self.__class__.__name__, self.filename, len(self._packets))
+            return '<%s %s (%d packets)>' %(self.__class__.__name__, 
+                                            self.filename, len(self._packets))
 
     @property
     def filename(self):
@@ -92,3 +131,9 @@ class FileCapture(Capture):
         Returns the filename of the capture file represented by this object.
         """
         return self.input_file.name
+
+class UnknownEncyptionStandardException(Exception):
+    pass
+
+class MissingEncyptionStandardException(Exception):
+    pass

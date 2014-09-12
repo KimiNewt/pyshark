@@ -98,8 +98,8 @@ Tested on windows/linux.</p>
 
 <p>Filtering packets can be done with any capture object, like so:</p>
 
-<div class="highlight highlight-python"><pre><span class="n">filtered_cap</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">FileCapture</span><span class="p">(</span><span class="n">bpf_filter</span><span class="o">=</span><span class="s">'tcp port 80'</span><span class="p">)</span>
-<span class="n">filtered_cap2</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">LiveCapture</span><span class="p">(</span><span class="n">display_filter</span><span class="o">=</span><span class="s">'http'</span><span class="p">)</span>
+<div class="highlight highlight-python"><pre><span class="n">filtered_cap</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">FileCapture</span><span class="p">(</span><span class="n">path_to_file</span><span class="p">,</span> <span class="n">bpf_filter</span><span class="o">=</span><span class="s">'tcp port 80'</span><span class="p">)</span>
+<span class="n">filtered_cap2</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">LiveCapture</span><span class="p">(</span><span class="s">'eth0'</span><span class="p">,</span> <span class="n">display_filter</span><span class="o">=</span><span class="s">'http'</span><span class="p">)</span>
 </pre></div>
 
 <p>There are two types of filters, <strong>BPF filters</strong> and <strong>display filters</strong>. Generally, bpf filters are more limited but are faster while display filters can be used on pretty much any attribute of the packet but are much slower.</p>

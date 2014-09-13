@@ -19,7 +19,8 @@ class Capture(object):
     Base class for packet captures.
     """
     DEFAULT_BATCH_SIZE = 4096
-    SUMMARIES_BATCH_SIZE = 32
+    SUMMARIES_BATCH_SIZE = 64
+    DEFAULT_LOG_LEVEL = logbook.CRITICAL
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None):
         self._packets = []
@@ -28,7 +29,7 @@ class Capture(object):
         self.only_summaries = only_summaries
         self.tshark_process = None
         self.running_processes = set()
-        self.log = logbook.Logger(self.__class__.__name__)
+        self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
 
         self.eventloop = eventloop
         if self.eventloop is None:
@@ -84,7 +85,7 @@ class Capture(object):
     def load_packets(self, packet_count=0, timeout=None):
         """
         Reads the packets from the source (cap, interface, etc.) and adds it to the internal list.
-        If 0 as the is given, reads forever
+        If 0 as the packet_count is given, reads forever
 
         :param packet_count: The amount of packets to add to the packet list (0 to read forever)
         :param timeout: If given, automatically stops after a given amount of time.
@@ -129,7 +130,7 @@ class Capture(object):
         """
         # NOTE: This has code duplication with the async version, think about how to solve this
         tshark_process = self.eventloop.run_until_complete(self._get_tshark_process())
-        psml_structure = self.eventloop.run_until_complete(self._get_psml_struct(tshark_process.stdout))
+        psml_structure, data = self.eventloop.run_until_complete(self._get_psml_struct(tshark_process.stdout))
         packets_captured = 0
 
         data = ''
@@ -191,11 +192,10 @@ class Capture(object):
         """
         A coroutine which goes through a stream and calls a given callback for each XML packet seen in it.
         """
-        data = ''
         packets_captured = 0
         self.log.debug('Starting to go through packets')
 
-        psml_struct = yield From(self._get_psml_struct(fd))
+        psml_struct, data = yield From(self._get_psml_struct(fd))
 
         while True:
             try:
@@ -214,21 +214,24 @@ class Capture(object):
     @trollius.coroutine
     def _get_psml_struct(self, fd):
         """
-        Gets the current PSML (packet summary xml) structure, if the capture is configured to return it, else
-        returns None.
+        Gets the current PSML (packet summary xml) structure in a tuple ((None, leftover_data)),
+        only if the capture is configured to return it, else returns (None, leftover_data).
 
         A coroutine.
         """
+        data = ''
         psml_struct = None
+
         if self.only_summaries:
             # If summaries are read, we need the psdml structure which appears on top of the file.
             while not psml_struct:
                 data += yield From(fd.read(self.SUMMARIES_BATCH_SIZE))
                 psml_struct, data = self._extract_tag_from_data(data, 'structure')
-                psml_struct = psml_structure_from_xml(psml_struct)
-            raise Return(psml_struct)
+                if psml_struct:
+                    psml_struct = psml_structure_from_xml(psml_struct)
+            raise Return(psml_struct, data)
         else:
-            raise Return(None)
+            raise Return(None, data)
 
     @trollius.coroutine
     def _get_packet_from_stream(self, stream, existing_data, psml_structure=None):

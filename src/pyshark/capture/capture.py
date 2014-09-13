@@ -309,7 +309,7 @@ class Capture(object):
         return params
 
     def __iter__(self):
-        return self._packets_from_tshark_sync
+        return self._packets_from_tshark_sync()
 
     def __repr__(self):
         return '<%s (%d packets)>' % (self.__class__.__name__, len(self._packets))

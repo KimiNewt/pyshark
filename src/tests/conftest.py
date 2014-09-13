@@ -10,9 +10,11 @@ def caps_directory():
 @pytest.fixture
 def simple_capture(request, caps_directory):
     cap_path = os.path.join(caps_directory, 'capture_test.pcapng')
-    cap = pyshark.FileCapture(cap_path, lazy=False)
+    cap = pyshark.FileCapture(cap_path)
+    cap.load_packets()
 
     def finalizer():
         cap.close()
+        cap.eventloop.stop()
     request.addfinalizer(finalizer)
     return cap

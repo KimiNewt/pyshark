@@ -18,9 +18,9 @@ class FileCapture(Capture):
         :param only_summaries: Only produce packet summaries, much faster but includes very little information
         """
         super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries)
-        self.input_file = input_file
+        self.input_filename = input_file
         if not isinstance(input_file, basestring):
-            self.input_file = input_file.name
+            self.input_filename = input_file.name
 
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
@@ -50,17 +50,10 @@ class FileCapture(Capture):
         return super(FileCapture, self).__getitem__(packet_index)
 
     def get_parameters(self, packet_count=None):
-        return super(FileCapture, self).get_parameters(packet_count=packet_count) + ['-r', self.input_file]
+        return super(FileCapture, self).get_parameters(packet_count=packet_count) + ['-r', self.input_filename]
 
     def __repr__(self):
         if self.keep_packets:
-            return '<%s %s>' %(self.__class__.__name__, self.filename)
+            return '<%s %s>' %(self.__class__.__name__, self.input_filename)
         else:
-            return '<%s %s (%d packets)>' %(self.__class__.__name__, self.filename, len(self._packets))
-
-    @property
-    def filename(self):
-        """
-        Returns the filename of the capture file represented by this object.
-        """
-        return self.input_file.name
+            return '<%s %s (%d packets)>' %(self.__class__.__name__, self.input_filename, len(self._packets))

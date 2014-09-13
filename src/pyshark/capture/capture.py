@@ -1,10 +1,11 @@
+from distutils.version import LooseVersion
 import os
 import logbook
 import trollius
 from trollius import From, subprocess, Return
 from trollius.py33_exceptions import ProcessLookupError
 
-from pyshark.tshark.tshark import get_tshark_path
+from pyshark.tshark.tshark import get_tshark_path, get_tshark_version
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
 if os.name == 'nt':
@@ -239,9 +240,15 @@ class Capture(object):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
+        tshark_version = get_tshark_version()
+        if LooseVersion(tshark_version) >= LooseVersion("1.10.0"):
+            display_filter_flag = '-Y'
+        else:
+            display_filter_flag = '-R'
+
         params = []
         if self.display_filter:
-            params += ['-R', self.display_filter]
+            params += [display_filter_flag, self.display_filter]
         if packet_count:
             params += ['-c', str(packet_count)]
         return params

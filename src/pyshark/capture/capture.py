@@ -23,9 +23,9 @@ class Capture(object):
         self.display_filter = display_filter
         self.only_summaries = only_summaries
         self.tshark_process = None
-        if encryption_type and encryption_type in ('wep', 'wpa-pwd', 
+        if encryption_type and encryption_type.lower() in ('wep', 'wpa-pwd', 
                                                    'wpa-psk'):
-            self.encryption=(decryption_key, encryption_type)
+            self.encryption=(decryption_key, encryption_type.lower())
         else:
             raise UnknownEncyptionStandardException
 

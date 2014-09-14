@@ -28,6 +28,11 @@ class RemoteCapture(LiveCapture):
         reading.
         :param only_summaries: Only produce packet summaries, much faster but 
         includes very little information
+        :param decryption_key: Key used to encrypt and decrypt captured 
+        traffic.
+        :param encryption_type: Standard of encryption used in captured 
+        traffic (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to 
+        WPA-PWK.
         """
         interface = 'rpcap://%s:%d/%s' % (remote_host, remote_port, 
                                           remote_interface)

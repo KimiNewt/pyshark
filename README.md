@@ -58,6 +58,15 @@ for packet in capture.sniff_continuously(packet_count=5):
     print 'Just arrived:', packet
 ```
 
+Reading from a live remote interface:
+-------------------------------------
+
+```
+capture = pyshark.RemoteCapture('192.168.1.101', 'eth0')
+capture.sniff(timeout=50)
+capture
+```
+
 
 Accessing packet data:
 ----------------------
@@ -75,3 +84,17 @@ packet.ip.src
 packet[2].src
 >>> 192.168.0.100
 ```
+
+
+Decrypting packet captures
+--------------------------
+
+Pyshark supports automatic decryption of traces using the WEP, WPA-PWD, and WPA-PSK standards (WPA-PWD is the default). 
+
+```
+cap1 = pyshark.FileCapture('/tmp/capture1.cap', decryption_key='password')
+cap2 = pyshark.LiveCapture(interface='wi0', decryption_key='password', encryption_type='wpa-psk')
+```
+
+
+

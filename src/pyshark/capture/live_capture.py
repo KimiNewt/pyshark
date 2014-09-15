@@ -24,7 +24,7 @@ class LiveCapture(Capture):
         traffic.
         :param encryption_type: Standard of encryption used in captured 
         traffic (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to 
-        WPA-PWK.
+        WPA-PWK).
         """
         super(LiveCapture, self).__init__(display_filter=display_filter, 
                                           only_summaries=only_summaries,

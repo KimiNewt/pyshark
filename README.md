@@ -14,10 +14,10 @@ Tested on windows/linux.
 ###Reading from a capture file:
 
 ```python
-import pyshark
-cap = pyshark.FileCapture('/tmp/mycapture.cap')
-cap
->>> <FileCapture /tmp/mycapture.cap (589 packets)>
+>>> import pyshark
+>>> cap = pyshark.FileCapture('/tmp/mycapture.cap')
+>>> cap
+<FileCapture /tmp/mycapture.cap (589 packets)>
 print cap[0]
 Packet (Length: 698)
 Layer ETH:
@@ -61,11 +61,11 @@ be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK.
 ###Reading from a live interface:
 
 ```python
-capture = pyshark.LiveCapture(interface='eth0')
-capture.sniff(timeout=50)
-capture
->>> <LiveCapture (5 packets)>
-capture[3]
+>>> capture = pyshark.LiveCapture(interface='eth0')
+>>> capture.sniff(timeout=50)
+>>> capture
+<LiveCapture (5 packets)>
+>>> capture[3]
 <UDP/HTTP Packet>
 
 for packet in capture.sniff_continuously(packet_count=5):
@@ -87,9 +87,9 @@ includes very little information
 ###Reading from a live remote interface:
 
 ```python
-capture = pyshark.RemoteCapture('192.168.1.101', 'eth0')
-capture.sniff(timeout=50)
-capture
+>>> capture = pyshark.RemoteCapture('192.168.1.101', 'eth0')
+>>> capture.sniff(timeout=50)
+>>> capture
 ```
 
 #### Other options
@@ -116,12 +116,12 @@ Packets are divided into layers, first you have to reach the appropriate layer a
 All of the following work:
 
 ```python
-packet['ip'].dst
->>> 192.168.0.1
-packet.ip.src
->>> 192.168.0.100
-packet[2].src
->>> 192.168.0.100
+>>> packet['ip'].dst
+192.168.0.1
+>>> packet.ip.src
+192.168.0.100
+>>> packet[2].src
+192.168.0.100
 ```
 
 ###Decrypting packet captures
@@ -129,6 +129,16 @@ packet[2].src
 Pyshark supports automatic decryption of traces using the WEP, WPA-PWD, and WPA-PSK standards (WPA-PWD is the default). 
 
 ```python
-cap1 = pyshark.FileCapture('/tmp/capture1.cap', decryption_key='password')
-cap2 = pyshark.LiveCapture(interface='wi0', decryption_key='password', encryption_type='wpa-psk')
+>>> cap1 = pyshark.FileCapture('/tmp/capture1.cap', decryption_key='password')
+>>> cap2 = pyshark.LiveCapture(interface='wi0', decryption_key='password', encryption_type='wpa-psk')
+```
+
+A tuple of supported encryption standards, SUPPORTED_ENCRYPTION_STANDARDS, 
+exists in each capture class.
+
+```python
+>>> pyshark.FileCapture.SUPPORTED_ENCRYPTION_STANDARDS
+('wep', 'wpa-pwd', 'wpa-psk')
+>>> pyshark.LiveCapture.SUPPORTED_ENCRYPTION_STANDARDS
+('wep', 'wpa-pwd', 'wpa-psk')
 ```

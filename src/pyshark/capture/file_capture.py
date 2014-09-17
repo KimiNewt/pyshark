@@ -1,6 +1,4 @@
 from pyshark.capture.capture import Capture
-# from pyshark.capture.capture_exceptions import *
-
 
 class FileCapture(Capture):
     """

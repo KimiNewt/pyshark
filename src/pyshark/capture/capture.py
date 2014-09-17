@@ -27,7 +27,8 @@ class Capture(object):
                                                    'wpa-psk'):
             self.encryption=(decryption_key, encryption_type.lower())
         else:
-            raise UnknownEncyptionStandardException
+            raise UnknownEncyptionStandardException("please choose between "+\
+                                            "'wep', 'wpa-pwd', and 'wpa-psk'.")
 
     def __getitem__(self, item):
         """

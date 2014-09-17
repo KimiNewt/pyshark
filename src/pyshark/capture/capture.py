@@ -15,6 +15,7 @@ class Capture(object):
     """
     Base class for packet captures.
     """
+    SUPPORTED_ENCRYPTION_STANDARDS=('wep', 'wpa-pwd', 'wpa-psk')
 
     def __init__(self, display_filter=None, only_summaries=False, 
                  decryption_key=None, encryption_type='wpa-pwd'):
@@ -23,12 +24,11 @@ class Capture(object):
         self.display_filter = display_filter
         self.only_summaries = only_summaries
         self.tshark_process = None
-        if encryption_type and encryption_type.lower() in ('wep', 'wpa-pwd', 
-                                                   'wpa-psk'):
+        if encryption_type and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS:
             self.encryption=(decryption_key, encryption_type.lower())
         else:
-            raise UnknownEncyptionStandardException("please choose between "+\
-                                            "'wep', 'wpa-pwd', and 'wpa-psk'.")
+            encryption_standards = "', '".join(self.SUPPORTED_ENCRYPTION_STANDARDS[:-1]) + "', and '" + self.SUPPORTED_ENCRYPTION_STANDARDS[-1]
+            raise UnknownEncyptionStandardException("please choose between '" + encryption_standards + "'.")
 
     def __getitem__(self, item):
         """

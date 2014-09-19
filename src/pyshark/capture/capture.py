@@ -130,9 +130,8 @@ class Capture(object):
         previously-set paramaters.
         """
         if self.encryption:
-            extra_params+='-o', 'wlan.enable_decryption:TRUE uat:80211_keys'+\
-                ':\\"{k}\\",\\" Passphrase:{p}\\"'.format(k=self.encryption[1],
-                                                          p=self.encryption[0])
+            extra_params+=['-o', 'wlan.enable_decryption:TRUE', '-o', 
+                'uat:80211_keys:"'+self.encryption[1]+'","'+self.encryption[0]+'"']
         xml_type = 'psml' if self.only_summaries else 'pdml'
         parameters = [get_tshark_path(), '-T', xml_type] +\
                      self.get_parameters(packet_count=packet_count) +\

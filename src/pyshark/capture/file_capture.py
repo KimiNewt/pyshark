@@ -1,25 +1,39 @@
 from pyshark.capture.capture import Capture
 
-
 class FileCapture(Capture):
     """
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, lazy=True, keep_packets=True, display_filter=None, only_summaries=False):
+    def __init__(self, input_file=None, lazy=True, keep_packets=True, 
+                 display_filter=None, only_summaries=False,
+                 decryption_key=None, encryption_type='wpa-pwd'):
         """
         Creates a packet capture object by reading from file.
 
-        :param lazy: Whether to lazily get packets from the cap file or read all of them immediately.
-        :param keep_packets: Whether to keep packets after reading them via next(). Used to conserve memory when reading
-        large caps (can only be used along with the "lazy" option!)
-        :param input_file: Either a path or a file-like object containing either a packet capture file (PCAP, PCAP-NG..)
-        or a TShark xml.
-        :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
-        :param display_filter: A display (wireshark) filter to apply on the cap before reading it.
-        :param only_summaries: Only produce packet summaries, much faster but includes very little information
+        :param lazy: Whether to lazily get packets from the cap file or read 
+        all of them immediately.
+        :param keep_packets: Whether to keep packets after reading them via 
+        next(). Used to conserve memory when reading large caps (can only be 
+        used along with the "lazy" option!)
+        :param input_file: Either a path or a file-like object containing 
+        either a packet capture file (PCAP, PCAP-NG..) or a TShark xml.
+        :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before 
+        reading.
+        :param display_filter: A display (wireshark) filter to apply on the 
+        cap before reading it.
+        :param only_summaries: Only produce packet summaries, much faster but 
+        includes very little information
+        :param decryption_key: Key used to encrypt and decrypt captured 
+        traffic.
+        :param encryption_type: Standard of encryption used in captured 
+        traffic (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to 
+        WPA-PWK).
         """
-        super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries)
+        super(FileCapture, self).__init__(display_filter=display_filter, 
+                                          only_summaries=only_summaries,
+                                          decryption_key=decryption_key, 
+                                          encryption_type=encryption_type)
         if isinstance(input_file, basestring):
             self.input_file = open(input_file, 'rb')
         else:
@@ -71,12 +85,15 @@ class FileCapture(Capture):
         beginning = cap_or_xml.read(20)
         if b'<?xml' in beginning:
             # It's an xml file.
-            for packet in self._packets_from_fd(cap_or_xml, previous_data=beginning, wait_for_more_data=False):
+            for packet in self._packets_from_fd(cap_or_xml, 
+                                                previous_data=beginning, 
+                                                wait_for_more_data=False):
                 yield packet
         else:
             # We assume it's a PCAP file and use tshark to get the XML.
             self._set_tshark_process(extra_params=['-r', cap_or_xml.name])
-            for packet in self._packets_from_fd(self.tshark_process.stdout, wait_for_more_data=False):
+            for packet in self._packets_from_fd(self.tshark_process.stdout, 
+                                                wait_for_more_data=False):
                 yield packet
             self._cleanup_subprocess()
 
@@ -84,7 +101,8 @@ class FileCapture(Capture):
         if self.lazy:
             return '<%s %s>' %(self.__class__.__name__, self.filename)
         else:
-            return '<%s %s (%d packets)>' %(self.__class__.__name__, self.filename, len(self._packets))
+            return '<%s %s (%d packets)>' %(self.__class__.__name__, 
+                                            self.filename, len(self._packets))
 
     @property
     def filename(self):

@@ -9,18 +9,27 @@ from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_fro
 class TSharkCrashException(Exception):
     pass
 
+class UnknownEncyptionStandardException(Exception):
+    pass
 
 class Capture(object):
     """
     Base class for packet captures.
     """
+    SUPPORTED_ENCRYPTION_STANDARDS=('wep', 'wpa-pwd', 'wpa-psk')
 
-    def __init__(self, display_filter=None, only_summaries=False):
+    def __init__(self, display_filter=None, only_summaries=False, 
+                 decryption_key=None, encryption_type='wpa-pwd'):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
         self.only_summaries = only_summaries
         self.tshark_process = None
+        if encryption_type and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS:
+            self.encryption=(decryption_key, encryption_type.lower())
+        else:
+            encryption_standards = "', '".join(self.SUPPORTED_ENCRYPTION_STANDARDS[:-1]) + "', and '" + self.SUPPORTED_ENCRYPTION_STANDARDS[-1]
+            raise UnknownEncyptionStandardException("please choose between '" + encryption_standards + "'.")
 
     def __getitem__(self, item):
         """
@@ -115,12 +124,19 @@ class Capture(object):
             if packet_count and packets_captured >= packet_count:
                 break
     
-    def _set_tshark_process(self, packet_count=None, extra_params=[]):
+    def _set_tshark_process(self, packet_count=None, encryption=None, 
+                            extra_params=[]):
         """
-        Sets the internal tshark to a new tshark process with the previously-set paramaters.
+        Sets the internal tshark to a new tshark process with the 
+        previously-set paramaters.
         """
+        if self.encryption:
+            extra_params+=['-o', 'wlan.enable_decryption:TRUE', '-o', 
+                'uat:80211_keys:"'+self.encryption[1]+'","'+self.encryption[0]+'"']
         xml_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(), '-T', xml_type] + self.get_parameters(packet_count=packet_count) + extra_params
+        parameters = [get_tshark_path(), '-T', xml_type] +\
+                     self.get_parameters(packet_count=packet_count) +\
+                     extra_params
         # Re-direct TShark's stderr to the null device
         self.tshark_stderr = open(os.devnull, "wb")
         # Start the TShark subprocess
@@ -129,7 +145,8 @@ class Capture(object):
                                                stderr=self.tshark_stderr)
         retcode = self.tshark_process.poll()
         if retcode is not None and retcode != 0:
-            raise TSharkCrashException('TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
+            raise TSharkCrashException('TShark seems to have crashed. Try '+\
+                    'updating it. (command ran: "%s")' % ' '.join(parameters))
     
     def _cleanup_subprocess(self):
         try:
@@ -144,7 +161,8 @@ class Capture(object):
     
     def get_parameters(self, packet_count=None):
         """
-        Returns the special tshark parameters to be used according to the configuration of this class.
+        Returns the special tshark parameters to be used according to the 
+        configuration of this class.
         """
         tshark_version = get_tshark_version()
         if LooseVersion(tshark_version) >= LooseVersion("1.10.0"):

@@ -6,7 +6,8 @@ class FileCapture(Capture):
     A class representing a capture read from a file.
     """
 
-    def __init__(self, input_file=None, keep_packets=True, display_filter=None, only_summaries=False):
+    def __init__(self, input_file=None, keep_packets=True, display_filter=None, only_summaries=False,
+                 decryption_key=None, encryption_type='wpa-pwk'):
         """
         Creates a packet capture object by reading from file.
 
@@ -15,9 +16,13 @@ class FileCapture(Capture):
         :param input_file: File path of the capture (PCAP, PCAPNG)
         :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
         :param display_filter: A display (wireshark) filter to apply on the cap before reading it.
-        :param only_summaries: Only produce packet summaries, much faster but includes very little information
+        :param only_summaries: Only produce packet summaries, much faster but includes very little information.
+        :param decryption_key: Optional key used to encrypt and decrypt captured traffic.
+        :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD', or
+        'WPA-PWK'. Defaults to WPA-PWK).
         """
-        super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries)
+        super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
+                                          decryption_key=decryption_key, encryption_type=encryption_type)
         self.input_filename = input_file
         if not isinstance(input_file, basestring):
             self.input_filename = input_file.name
@@ -40,7 +45,7 @@ class FileCapture(Capture):
     def __getitem__(self, packet_index):
         if not self.keep_packets:
             raise NotImplementedError("Cannot use getitem if packets are not kept")
-        # We may not yet have this packet
+            # We may not yet have this packet
         while packet_index >= len(self._packets):
             try:
                 self.next()
@@ -54,6 +59,6 @@ class FileCapture(Capture):
 
     def __repr__(self):
         if self.keep_packets:
-            return '<%s %s>' %(self.__class__.__name__, self.input_filename)
+            return '<%s %s>' % (self.__class__.__name__, self.input_filename)
         else:
-            return '<%s %s (%d packets)>' %(self.__class__.__name__, self.input_filename, len(self._packets))
+            return '<%s %s (%d packets)>' % (self.__class__.__name__, self.input_filename, len(self._packets))

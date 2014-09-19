@@ -7,7 +7,8 @@ class LiveCapture(Capture):
     Represents a live capture on a network interface.
     """
 
-    def __init__(self, interface=None, bpf_filter=None, display_filter=None, only_summaries=False):
+    def __init__(self, interface=None, bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
+                 encryption_type='wpa-pwk'):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
 
@@ -15,8 +16,12 @@ class LiveCapture(Capture):
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.
         :param only_summaries: Only produce packet summaries, much faster but includes very little information
+        :param decryption_key: Optional key used to encrypt and decrypt captured traffic.
+        :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD', or
+        'WPA-PWK'. Defaults to WPA-PWK).
         """
-        super(LiveCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries)
+        super(LiveCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
+                                          decryption_key=decryption_key, encryption_type=encryption_type)
         self.bpf_filter = bpf_filter
         
         if interface is None:

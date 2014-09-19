@@ -15,7 +15,8 @@ class LinkTypes(object):
 
 class InMemCapture(Capture):
 
-    def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False):
+    def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
+                  decryption_key=None, encryption_type='wpa-pwk'):
         """
         Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
         Currently opens a new instance of tshark for every packet buffer,
@@ -24,8 +25,12 @@ class InMemCapture(Capture):
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.
         :param only_summaries: Only produce packet summaries, much faster but includes very little information
+        :param decryption_key: Key used to encrypt and decrypt captured traffic.
+        :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD',
+        or 'WPA-PWK'. Defaults to WPA-PWK).
         """
-        super(InMemCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries)
+        super(InMemCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
+                                           decryption_key=decryption_key, encryption_type=encryption_type)
         self.bpf_filter = bpf_filter
         self._packets_to_write = None
         self._current_linktype = None

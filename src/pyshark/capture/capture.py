@@ -14,6 +14,10 @@ class TSharkCrashException(Exception):
     pass
 
 
+class UnknownEncyptionStandardException(Exception):
+    pass
+
+
 class Capture(object):
     """
     Base class for packet captures.
@@ -21,8 +25,10 @@ class Capture(object):
     DEFAULT_BATCH_SIZE = 4096
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logbook.CRITICAL
+    SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwd', 'wpa-psk']
 
-    def __init__(self, display_filter=None, only_summaries=False, eventloop=None):
+    def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
+                 decryption_key=None, encryption_type='wpa-pwd'):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
@@ -33,6 +39,11 @@ class Capture(object):
         self.eventloop = eventloop
         if self.eventloop is None:
             self.setup_eventloop()
+        if encryption_type and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS:
+            self.encryption = (decryption_key, encryption_type.lower())
+        else:
+            raise UnknownEncyptionStandardException("Only the following standards are supported: %s."
+                                                    % ', '.join(self.SUPPORTED_ENCRYPTION_STANDARDS))
 
     def __getitem__(self, item):
         """
@@ -315,6 +326,9 @@ class Capture(object):
             params += [display_filter_flag, self.display_filter]
         if packet_count:
             params += ['-c', str(packet_count)]
+        if self.encryption:
+            params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + ' ","' +
+                                                                  self.encryption[0]+'"']
         return params
 
     def __iter__(self):

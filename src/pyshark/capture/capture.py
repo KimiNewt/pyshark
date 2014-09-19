@@ -27,23 +27,12 @@ class Capture(object):
         self.current_packet = 0
         self.display_filter = display_filter
         self.only_summaries = only_summaries
-        self.tshark_process = None
         self.running_processes = set()
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
 
         self.eventloop = eventloop
         if self.eventloop is None:
             self.setup_eventloop()
-
-    def setup_eventloop(self):
-        """
-        Sets up a new eventloop as the current one according to the OS.
-        """
-        if os.name == 'nt':
-            self.eventloop = trollius.ProactorEventLoop()
-            trollius.set_event_loop(self.eventloop)
-        else:
-            self.eventloop = trollius.get_event_loop()
 
     def __getitem__(self, item):
         """
@@ -102,6 +91,22 @@ class Capture(object):
         except TimeoutError:
             pass
 
+    def set_debug(self):
+        """
+        Sets the capture to debug mode.
+        """
+        self.log.level = logbook.DEBUG
+
+    def setup_eventloop(self):
+        """
+        Sets up a new eventloop as the current one according to the OS.
+        """
+        if os.name == 'nt':
+            self.eventloop = trollius.ProactorEventLoop()
+            trollius.set_event_loop(self.eventloop)
+        else:
+            self.eventloop = trollius.get_event_loop()
+
     @staticmethod
     def _extract_tag_from_data(data, tag_name='packet'):
         """
@@ -120,7 +125,7 @@ class Capture(object):
             return data[tag_start:tag_end], data[tag_end:]
         return None, data
 
-    def _packets_from_tshark_sync(self, packet_count=None):
+    def _packets_from_tshark_sync(self, packet_count=None, existing_process=None):
         """
         Returns a generator of packets.
         This is the sync version of packets_from_tshark. It wait for the completion of each coroutine and
@@ -129,7 +134,7 @@ class Capture(object):
         :param packet_count: If given, stops after this amount of packets is captured.
         """
         # NOTE: This has code duplication with the async version, think about how to solve this
-        tshark_process = self.eventloop.run_until_complete(self._get_tshark_process())
+        tshark_process = existing_process or self.eventloop.run_until_complete(self._get_tshark_process())
         psml_structure, data = self.eventloop.run_until_complete(self._get_psml_struct(tshark_process.stdout))
         packets_captured = 0
 
@@ -256,17 +261,18 @@ class Capture(object):
         raise Return(None, existing_data)
 
     @trollius.coroutine
-    def _get_tshark_process(self, packet_count=None):
+    def _get_tshark_process(self, packet_count=None, stdin=None):
         """
         Returns a new tshark process with previously-set parameters.
         """
         xml_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(), '-T', xml_type, '-Q'] + self.get_parameters(packet_count=packet_count)
+        parameters = [get_tshark_path(), '-T', xml_type] + self.get_parameters(packet_count=packet_count)
 
         self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
         tshark_process = yield From(trollius.create_subprocess_exec(*parameters,
                                                                     stdout=subprocess.PIPE,
-                                                                    stderr=open(os.devnull, "w")))
+                                                                    stderr=open(os.devnull, "w"),
+                                                                    stdin=stdin))
         self.log.debug('TShark subprocess created')
 
         if tshark_process.returncode is not None and self.tshark_process.returncode != 0:

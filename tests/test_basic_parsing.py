@@ -1,7 +1,7 @@
 def test_count_packets(simple_capture):
     """Test to make sure the right number of packets are read from a known
        capture"""
-    packet_count = sum(1 for packet in simple_capture)
+    packet_count = sum(1 for _ in simple_capture)
     assert packet_count == 24
 
 

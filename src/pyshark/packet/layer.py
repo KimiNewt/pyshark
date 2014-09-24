@@ -56,7 +56,7 @@ class Layer(object):
         """
         Gets the XML field object of the given name.
         """
-        for field_name, field in self._all_fields.iteritems():
+        for field_name, field in self._all_fields.items():
             if name == self._sanitize_field_name(field_name):
                 return field
 

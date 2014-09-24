@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import datetime
 import os
 
@@ -90,7 +92,7 @@ class Packet(object):
         return 'Packet (Length: %s)%s' %(self.length, os.linesep)
 
     def pretty_print(self):
-        print self._packet_string
+        print('self._packet_string')
         for layer in self.layers:
             layer.pretty_print()
 

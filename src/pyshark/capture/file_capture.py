@@ -1,5 +1,10 @@
 from pyshark.capture.capture import Capture
 
+try:
+    # Define basestring as str if we're in python3.
+    basestring = str
+except:
+    pass
 
 class FileCapture(Capture):
     """
@@ -36,9 +41,9 @@ class FileCapture(Capture):
         If the capture's keep_packets flag is True, will also keep it in the internal packet list.
         """
         if not self.keep_packets:
-            return self._packet_generator.next()
+            return self._packet_generator.send(None)
         elif self.current_packet >= len(self._packets):
-            packet = self._packet_generator.next()
+            packet = self._packet_generator.send(None)
             self._packets += [packet]
         return super(FileCapture, self).next_packet()
 

@@ -1,7 +1,10 @@
+from __future__ import unicode_literals
 from distutils.version import LooseVersion
 import os
 import logbook
-import trollius
+import sys
+
+import trollius as asyncio
 from trollius import From, subprocess, Return
 from trollius.executor import TimeoutError
 from trollius.py33_exceptions import ProcessLookupError
@@ -113,13 +116,18 @@ class Capture(object):
         Sets up a new eventloop as the current one according to the OS.
         """
         if os.name == 'nt':
-            self.eventloop = trollius.ProactorEventLoop()
-            trollius.set_event_loop(self.eventloop)
+            self.eventloop = asyncio.ProactorEventLoop()
+            asyncio.set_event_loop(self.eventloop)
+            if sys.version_info <= (3, 0):
+                # FIXME: There appears to be a bug in the 2.7 version of trollius, wherein the selector retrieves an
+                # object of value 0 and attempts to look for it in the weakref set, which raises an exception.
+                # This hack sidesteps this issue, but does not solve it. If a proper fix is found, apply it!
+                self.eventloop._selector._stopped_serving = set()
         else:
-            self.eventloop = trollius.get_event_loop()
+            self.eventloop = asyncio.get_event_loop()
 
     @staticmethod
-    def _extract_tag_from_data(data, tag_name='packet'):
+    def _extract_tag_from_data(data, tag_name=b'packet'):
         """
         Gets data containing a (part of) tshark xml.
         If the given tag is found in it, returns the tag data and the remaining data.
@@ -128,7 +136,8 @@ class Capture(object):
         :param data: string of a partial tshark xml.
         :return: a tuple of (tag, data). tag will be None if none is found.
         """
-        opening_tag, closing_tag = b'<%s>' % tag_name, b'</%s>' % tag_name
+        opening_tag = b'<' + tag_name + b'>'
+        closing_tag = opening_tag.replace(b'<', b'</')
         tag_end = data.find(closing_tag)
         if tag_end != -1:
             tag_end += len(closing_tag)
@@ -149,7 +158,7 @@ class Capture(object):
         psml_structure, data = self.eventloop.run_until_complete(self._get_psml_struct(tshark_process.stdout))
         packets_captured = 0
 
-        data = ''
+        data = b''
         try:
             while True:
                 try:
@@ -181,14 +190,11 @@ class Capture(object):
         """
         coro = self.packets_from_tshark(callback)
         if timeout is not None:
-            coro = trollius.wait_for(coro, timeout)
-        try:
-            return self.eventloop.run_until_complete(coro)
-        finally:
-            self.eventloop.stop()
-            self.setup_eventloop()
+            coro = asyncio.wait_for(coro, timeout)
+        return self.eventloop.run_until_complete(coro)
 
-    @trollius.coroutine
+
+    @asyncio.coroutine
     def packets_from_tshark(self, packet_callback, packet_count=None):
         """
         A coroutine which creates a tshark process, runs the given callback on each packet that is received from it and
@@ -203,7 +209,7 @@ class Capture(object):
         finally:
             self._cleanup_subprocess(tshark_process)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
         """
         A coroutine which goes through a stream and calls a given callback for each XML packet seen in it.
@@ -227,7 +233,7 @@ class Capture(object):
             if packet_count and packets_captured >= packet_count:
                 break
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def _get_psml_struct(self, fd):
         """
         Gets the current PSML (packet summary xml) structure in a tuple ((None, leftover_data)),
@@ -235,21 +241,21 @@ class Capture(object):
 
         A coroutine.
         """
-        data = ''
+        data = b''
         psml_struct = None
 
         if self.only_summaries:
             # If summaries are read, we need the psdml structure which appears on top of the file.
             while not psml_struct:
                 data += yield From(fd.read(self.SUMMARIES_BATCH_SIZE))
-                psml_struct, data = self._extract_tag_from_data(data, 'structure')
+                psml_struct, data = self._extract_tag_from_data(data, b'structure')
                 if psml_struct:
                     psml_struct = psml_structure_from_xml(psml_struct)
             raise Return(psml_struct, data)
         else:
             raise Return(None, data)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def _get_packet_from_stream(self, stream, existing_data, psml_structure=None):
         """
         A coroutine which returns a single packet if it can be read from the given StreamReader.
@@ -271,7 +277,7 @@ class Capture(object):
             raise Return(packet, existing_data)
         raise Return(None, existing_data)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def _get_tshark_process(self, packet_count=None, stdin=None):
         """
         Returns a new tshark process with previously-set parameters.
@@ -280,13 +286,13 @@ class Capture(object):
         parameters = [get_tshark_path(), '-T', xml_type] + self.get_parameters(packet_count=packet_count)
 
         self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
-        tshark_process = yield From(trollius.create_subprocess_exec(*parameters,
+        tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,
                                                                     stdout=subprocess.PIPE,
                                                                     stderr=open(os.devnull, "w"),
                                                                     stdin=stdin))
         self.log.debug('TShark subprocess created')
 
-        if tshark_process.returncode is not None and self.tshark_process.returncode != 0:
+        if tshark_process.returncode is not None and tshark_process.returncode != 0:
             raise TSharkCrashException(
                 'TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
         self.running_processes.add(tshark_process)

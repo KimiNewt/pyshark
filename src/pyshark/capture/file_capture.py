@@ -1,10 +1,11 @@
+import os
+import sys
 from pyshark.capture.capture import Capture
 
-try:
-    # Define basestring as str if we're in python3.
+# Define basestring as str if we're in python3.
+if sys.version_info >= (3, 0):
     basestring = str
-except:
-    pass
+
 
 class FileCapture(Capture):
     """
@@ -31,7 +32,8 @@ class FileCapture(Capture):
         self.input_filename = input_file
         if not isinstance(input_file, basestring):
             self.input_filename = input_file.name
-
+        if not os.path.exists(self.input_filename):
+            raise Exception('File not found: ' + str(self.input_filename))
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
 

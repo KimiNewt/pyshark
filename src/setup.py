@@ -5,7 +5,7 @@ with open('README.txt') as f:
 
 setup(
     name="pyshark",
-    version="0.3",
+    version="0.3.1",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
     install_requires=['lxml', 'py', 'trollius', 'logbook'],

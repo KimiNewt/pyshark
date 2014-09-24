@@ -41,7 +41,8 @@ class Layer(object):
         # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
         # so we'd rather not save them.
         for field in xml_obj.findall('.//field'):
-            self._all_fields[field.attrib['name']] = LayerField(**dict(field.attrib))
+            attributes = dict(field.attrib)
+            self._all_fields[attributes['name']] = LayerField(**attributes)
 
     def __getattr__(self, item):
         val = self.get_field_value(item, raw=self.raw_mode)

@@ -25,7 +25,7 @@ class Capture(object):
     """
     Base class for packet captures.
     """
-    DEFAULT_BATCH_SIZE = 4096
+    DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logbook.CRITICAL
     SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-psk']
@@ -283,7 +283,7 @@ class Capture(object):
         Returns a new tshark process with previously-set parameters.
         """
         xml_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(), '-T', xml_type] + self.get_parameters(packet_count=packet_count)
+        parameters = [get_tshark_path(), '-n', '-T', xml_type] + self.get_parameters(packet_count=packet_count)
 
         self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
         tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,

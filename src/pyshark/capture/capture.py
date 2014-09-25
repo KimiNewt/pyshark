@@ -37,6 +37,7 @@ class Capture(object):
         self.display_filter = display_filter
         self.only_summaries = only_summaries
         self.running_processes = set()
+        self.loaded = False
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
 
         self.eventloop = eventloop
@@ -102,6 +103,7 @@ class Capture(object):
 
         try:
             self.apply_on_packets(keep_packet, timeout=timeout)
+            self.loaded = True
         except TimeoutError:
             pass
 
@@ -338,7 +340,10 @@ class Capture(object):
         return params
 
     def __iter__(self):
-        return self._packets_from_tshark_sync()
+        if self.loaded:
+            return iter(self._packets)
+        else:
+            return self._packets_from_tshark_sync()
 
     def __repr__(self):
         return '<%s (%d packets)>' % (self.__class__.__name__, len(self._packets))

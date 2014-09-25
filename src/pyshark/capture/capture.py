@@ -117,14 +117,14 @@ class Capture(object):
         """
         if os.name == 'nt':
             self.eventloop = asyncio.ProactorEventLoop()
-            asyncio.set_event_loop(self.eventloop)
             if sys.version_info <= (3, 0):
                 # FIXME: There appears to be a bug in the 2.7 version of trollius, wherein the selector retrieves an
                 # object of value 0 and attempts to look for it in the weakref set, which raises an exception.
                 # This hack sidesteps this issue, but does not solve it. If a proper fix is found, apply it!
                 self.eventloop._selector._stopped_serving = set()
         else:
-            self.eventloop = asyncio.get_event_loop()
+            self.eventloop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.eventloop)
 
     @staticmethod
     def _extract_tag_from_data(data, tag_name=b'packet'):
@@ -268,13 +268,13 @@ class Capture(object):
         existing_data += new_data
         packet, existing_data = self._extract_tag_from_data(existing_data)
 
-        if not new_data:
-            # Reached EOF
-            raise EOFError()
-
         if packet:
             packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
             raise Return(packet, existing_data)
+
+        if not new_data:
+            # Reached EOF
+            raise EOFError()
         raise Return(None, existing_data)
 
     @asyncio.coroutine

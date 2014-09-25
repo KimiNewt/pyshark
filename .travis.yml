@@ -8,6 +8,8 @@ before_install:
   - sudo apt-get install -y tshark
 script:
   - pip install -r requirements.txt
-  - python src/setup.py install
-  - py.test tests/
+  - cd src/
+  - python setup.py install
+  - cd ../tests
+  - py.test
   

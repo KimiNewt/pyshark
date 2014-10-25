@@ -1,4 +1,6 @@
+import binascii
 import pytest
+
 
 @pytest.fixture
 def icmp_packet(simple_capture):
@@ -16,7 +18,7 @@ def test_layer_access(icmp_packet, access_func):
     Tests that layer access in various ways works the same way.
     """
     assert access_func(icmp_packet).layer_name.upper() == 'ICMP'
-    assert access_func(icmp_packet).data == 'abcdefghijklmnopqrstuvwabcdefghi'.encode('hex')
+    assert binascii.unhexlify(access_func(icmp_packet).data) == b'abcdefghijklmnopqrstuvwabcdefghi'
 
 
 def test_packet_contains_layer(icmp_packet):

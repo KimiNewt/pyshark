@@ -1,16 +1,19 @@
+import binascii
 import pytest
 import pyshark
+
 
 @pytest.fixture
 def inmem_capture():
     return pyshark.InMemCapture()
+
 
 def arp_packet(last_byte='f'):
     """
     Returns an ARP packet from aa:bb:cc:dd:ee:fX
     """
     p = "ffffffffffffaabbccddeef%s0806000108000604000104a151c32ad10a0000020000000000000a000001" % last_byte
-    return p.decode('hex')
+    return binascii.unhexlify(p)
 
 
 def test_can_read_binary_packet(inmem_capture):

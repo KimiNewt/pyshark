@@ -1,5 +1,7 @@
 #pyshark
 
+[![Build Status](https://travis-ci.org/KimiNewt/pyshark.svg)](https://travis-ci.org/KimiNewt/pyshark)
+
 Python wrapper for tshark, allowing python packet parsing using wireshark dissectors.
 
 Extended documentation: http://kiminewt.github.io/pyshark

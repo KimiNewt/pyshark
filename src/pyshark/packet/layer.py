@@ -58,7 +58,7 @@ class Layer(object):
         Gets the XML field object of the given name.
         """
         for field_name, field in self._all_fields.items():
-            if name == self._sanitize_field_name(field_name):
+            if self._sanitize_field_name(name) == self._sanitize_field_name(field_name):
                 return field
 
     def get_raw_value(self, name):
@@ -119,7 +119,7 @@ class Layer(object):
         Sanitizes an XML field name (since it might have characters which would make it inaccessible as a python attribute).
         """
         field_name = field_name.replace(self._field_prefix, '')
-        return field_name.replace('.', '_')
+        return field_name.replace('.', '_').replace('-', '_').lower()
 
     def __repr__(self):
         return '<%s Layer>' % self.layer_name.upper()

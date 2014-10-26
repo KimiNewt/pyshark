@@ -51,7 +51,9 @@ class LiveCapture(Capture):
         for packet in capture.sniff_continuously();
             print 'Woo, another packet:', packet
 
+        Note: you can also call capture.apply_on_packets(packet_callback) which should have a slight performance boost.
+
         :param packet_count: an amount of packets to capture, then stop.
         """
         # Retained for backwards compatibility and to add documentation.
-        return self.packets_from_tshark(packet_count=packet_count)
+        return self._packets_from_tshark_sync(packet_count=packet_count)

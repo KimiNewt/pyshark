@@ -31,3 +31,8 @@ def test_raw_mode(icmp_packet):
     icmp_packet.ip.raw_mode = True
     assert icmp_packet.ip.src != original
     assert icmp_packet.ip.src == raw
+
+
+def test_frame_info_access(icmp_packet):
+    assert icmp_packet.frame_info.protocols == 'eth:ip:icmp:data'
+    assert icmp_packet.frame_info.number == '8'

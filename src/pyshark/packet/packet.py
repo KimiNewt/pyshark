@@ -12,11 +12,13 @@ class Packet(object):
     Layers can be accessed via index or name.
     """
 
-    def __init__(self, layers=None, length=None, captured_length=None, sniff_time=None, interface_captured=None):
+    def __init__(self, layers=None, frame_info=None,
+                 length=None, captured_length=None, sniff_time=None, interface_captured=None):
         """
         Creates a Packet object with the given layers and info.
 
         :param layers: A list of Layer objects.
+        :param frame_info: Layer object for the entire packet frame (information like frame length, packet number, etc.
         :param length: Length of the actual packet.
         :param captured_length: The length of the packet that was actually captured (could be less then length)
         :param sniff_time: The time the packet was captured (timestamp)
@@ -26,6 +28,7 @@ class Packet(object):
             self.layers = []
         else:
             self.layers = layers
+        self.frame_info = frame_info
         self.interface_captured = interface_captured
         self.captured_length = captured_length
         self.length = length

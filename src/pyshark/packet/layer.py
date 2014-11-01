@@ -9,12 +9,12 @@ class LayerField(object):
     """
     # Note: We use this object with slots and not just a dict because
     # it's much more memory-efficient (cuts about a third of the memory).
-    __slots__ = ['name', 'showname', 'value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
+    __slots__ = ['name', 'showname', 'raw_value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
 
     def __init__(self, name=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
         self.name = name
         self.showname = showname
-        self.value = value
+        self.raw_value = value
         self.show = show
         self.pos = pos
         self.size = size
@@ -34,24 +34,24 @@ class LayerField(object):
         """
         val = self.show
         if not val:
-            val = self.value
+            val = self.raw_value
         if not val:
             val = self.showname
         return val
 
     @property
-    def raw_value(self):
+    def binary_value(self):
         """
         Returns the raw value of this field (as a binary string)
         """
-        return binascii.unhexlify(self.value)
+        return binascii.unhexlify(self.raw_value)
 
     @property
-    def raw_int_value(self):
+    def int_value(self):
         """
         Returns the raw value of this field (as an integer).
         """
-        return int(self.value, 16)
+        return int(self.raw_value, 16)
 
 
 class LayerFieldsContainer(str):
@@ -109,9 +109,11 @@ class Layer(object):
                 self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
 
     def __getattr__(self, item):
-        val = self.get_field_value(item, raw=self.raw_mode)
+        val = self.get_field(item)
         if val is None:
             raise AttributeError()
+        if self.raw_mode:
+            return val.raw_value
         return val
 
     def __dir__(self):
@@ -124,12 +126,6 @@ class Layer(object):
         for field_name, field in self._all_fields.items():
             if self._sanitize_field_name(name) == self._sanitize_field_name(field_name):
                 return field
-
-    def get_raw_value(self, name):
-        """
-        Returns the raw value of a given field
-        """
-        return self.get_field_value(name, raw=True)
 
     def get_field_value(self, name, raw=False):
         """
@@ -145,7 +141,7 @@ class Layer(object):
             return
 
         if raw:
-            return field.value
+            return field.raw_value
 
         return field
 

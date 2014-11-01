@@ -27,7 +27,7 @@ def test_packet_contains_layer(icmp_packet):
 
 def test_raw_mode(icmp_packet):
     original = icmp_packet.ip.src
-    raw = icmp_packet.ip.get_raw_value('src')
+    raw = icmp_packet.ip.src.raw_value
     icmp_packet.ip.raw_mode = True
     assert icmp_packet.ip.src != original
     assert icmp_packet.ip.src == raw

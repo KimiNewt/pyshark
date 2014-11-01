@@ -1,4 +1,5 @@
 import os
+import binascii
 import py
 
 
@@ -24,6 +25,64 @@ class LayerField(object):
         else:
             self.hide = False
 
+    def __repr__(self):
+        return '<LayerField %s: %s>' % (self.name, self.get_default_value())
+
+    def get_default_value(self):
+        """
+        Gets the best 'value' string this field has.
+        """
+        val = self.show
+        if not val:
+            val = self.value
+        if not val:
+            val = self.showname
+        return val
+
+    @property
+    def raw_value(self):
+        """
+        Returns the raw value of this field (as a binary string)
+        """
+        return binascii.unhexlify(self.value)
+
+    @property
+    def raw_int_value(self):
+        """
+        Returns the raw value of this field (as an integer).
+        """
+        return int(self.value, 16)
+
+
+class LayerFieldsContainer(str):
+    """
+    An object which contains one or more fields (of the same name).
+    When accessing member, such as showname, raw_value, etc. the appropriate member of the main (first) field saved
+    in this container will be shown.
+    """
+
+    def __new__(cls, main_field, *args, **kwargs):
+        obj = str.__new__(cls, main_field.get_default_value(), *args, **kwargs)
+        obj.fields = [main_field]
+        return obj
+
+    def add_field(self, field):
+        self.fields.append(field)
+
+    @property
+    def main_field(self):
+        return self.fields[0]
+
+    @property
+    def alternate_fields(self):
+        """
+        Return the alternate values of this field containers (non-main ones).
+        """
+        return self.fields[1:]
+
+    def __getattr__(self, item):
+        return getattr(self.main_field, item)
+
 
 class Layer(object):
     """
@@ -42,7 +101,12 @@ class Layer(object):
         # so we'd rather not save them.
         for field in xml_obj.findall('.//field'):
             attributes = dict(field.attrib)
-            self._all_fields[attributes['name']] = LayerField(**attributes)
+            field_obj = LayerField(**attributes)
+            if attributes['name'] in self._all_fields:
+                # Field name already exists, add this field to the container.
+                self._all_fields[attributes['name']].add_field(field_obj)
+            else:
+                self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
 
     def __getattr__(self, item):
         val = self.get_field_value(item, raw=self.raw_mode)
@@ -51,7 +115,7 @@ class Layer(object):
         return val
 
     def __dir__(self):
-        return dir(type(self)) + self.__dict__.keys() + self._field_names
+        return dir(type(self)) + self.__dict__.keys() + self.field_names
 
     def get_field(self, name):
         """
@@ -83,12 +147,7 @@ class Layer(object):
         if raw:
             return field.value
 
-        val = field.show
-        if not val:
-            val = field.value
-        if not val:
-            val = field.showname
-        return val
+        return field
 
     @property
     def _field_prefix(self):
@@ -100,7 +159,7 @@ class Layer(object):
         return self.layer_name + '.'
         
     @property
-    def _field_names(self):
+    def field_names(self):
         """
         Gets all XML field names of this layer.
         :return: list of strings

@@ -80,6 +80,13 @@ class LayerFieldsContainer(str):
         """
         return self.fields[1:]
 
+    @property
+    def all_fields(self):
+        """
+        Returns all fields in a list, the main field followed by the alternate fields.
+        """
+        return self.fields
+
     def __getattr__(self, item):
         return getattr(self.main_field, item)
 

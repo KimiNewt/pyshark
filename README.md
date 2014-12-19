@@ -44,11 +44,8 @@ Layer IP:
 
 #### Other options
 
-* **lazy**: Whether to lazily get packets from the cap file or read all of them
-immediately.
 * **param keep_packets**: Whether to keep packets after reading them via next().
-Used to conserve memory when reading large caps (can only be used along with
-the "lazy" option!)
+Used to conserve memory when reading large caps.
 * **param input_file**: Either a path or a file-like object containing either a
 packet capture file (PCAP, PCAP-NG..) or a TShark xml.
 * **param bpf_filter**: A BPF (tcpdump) filter to apply on the cap before reading.
@@ -125,6 +122,20 @@ All of the following work:
 >>> packet[2].src
 192.168.0.100
 ```
+
+
+You can also get the original binary data of a field, or a pretty description of it:
+
+```python
+>>> p.ip.addr.showname
+Source or Destination Address: 10.0.0.10 (10.0.0.10)
+# And some new attributes as well:
+>>> p.ip.addr.int_value
+167772170
+>>> p.ip.addr.binary_value
+'\n\x00\x00\n'
+```
+
 
 ###Decrypting packet captures
 

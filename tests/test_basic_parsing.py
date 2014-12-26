@@ -26,7 +26,7 @@ def test_ethernet(simple_capture):
     """Test to make sure Ethernet fields are being read properly by comparing
        packet dissection results to known values"""
     packet = simple_capture[0]
-    test_values = packet.eth.addr, packet.eth.dst
+    test_values = packet.eth.src, packet.eth.dst
     known_values = ('00:00:bb:10:20:10', '00:00:bb:02:04:01')
     assert test_values == known_values
 

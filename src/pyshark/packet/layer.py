@@ -1,4 +1,5 @@
 import os
+import binascii
 import py
 
 
@@ -8,12 +9,12 @@ class LayerField(object):
     """
     # Note: We use this object with slots and not just a dict because
     # it's much more memory-efficient (cuts about a third of the memory).
-    __slots__ = ['name', 'showname', 'value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
+    __slots__ = ['name', 'showname', 'raw_value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
 
     def __init__(self, name=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
         self.name = name
         self.showname = showname
-        self.value = value
+        self.raw_value = value
         self.show = show
         self.pos = pos
         self.size = size
@@ -23,6 +24,71 @@ class LayerField(object):
             self.hide = True
         else:
             self.hide = False
+
+    def __repr__(self):
+        return '<LayerField %s: %s>' % (self.name, self.get_default_value())
+
+    def get_default_value(self):
+        """
+        Gets the best 'value' string this field has.
+        """
+        val = self.show
+        if not val:
+            val = self.raw_value
+        if not val:
+            val = self.showname
+        return val
+
+    @property
+    def binary_value(self):
+        """
+        Returns the raw value of this field (as a binary string)
+        """
+        return binascii.unhexlify(self.raw_value)
+
+    @property
+    def int_value(self):
+        """
+        Returns the raw value of this field (as an integer).
+        """
+        return int(self.raw_value, 16)
+
+
+class LayerFieldsContainer(str):
+    """
+    An object which contains one or more fields (of the same name).
+    When accessing member, such as showname, raw_value, etc. the appropriate member of the main (first) field saved
+    in this container will be shown.
+    """
+
+    def __new__(cls, main_field, *args, **kwargs):
+        obj = str.__new__(cls, main_field.get_default_value(), *args, **kwargs)
+        obj.fields = [main_field]
+        return obj
+
+    def add_field(self, field):
+        self.fields.append(field)
+
+    @property
+    def main_field(self):
+        return self.fields[0]
+
+    @property
+    def alternate_fields(self):
+        """
+        Return the alternate values of this field containers (non-main ones).
+        """
+        return self.fields[1:]
+
+    @property
+    def all_fields(self):
+        """
+        Returns all fields in a list, the main field followed by the alternate fields.
+        """
+        return self.fields
+
+    def __getattr__(self, item):
+        return getattr(self.main_field, item)
 
 
 class Layer(object):
@@ -42,16 +108,23 @@ class Layer(object):
         # so we'd rather not save them.
         for field in xml_obj.findall('.//field'):
             attributes = dict(field.attrib)
-            self._all_fields[attributes['name']] = LayerField(**attributes)
+            field_obj = LayerField(**attributes)
+            if attributes['name'] in self._all_fields:
+                # Field name already exists, add this field to the container.
+                self._all_fields[attributes['name']].add_field(field_obj)
+            else:
+                self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
 
     def __getattr__(self, item):
-        val = self.get_field_value(item, raw=self.raw_mode)
+        val = self.get_field(item)
         if val is None:
             raise AttributeError()
+        if self.raw_mode:
+            return val.raw_value
         return val
 
     def __dir__(self):
-        return dir(type(self)) + self.__dict__.keys() + self._field_names
+        return dir(type(self)) + self.__dict__.keys() + self.field_names
 
     def get_field(self, name):
         """
@@ -60,12 +133,6 @@ class Layer(object):
         for field_name, field in self._all_fields.items():
             if self._sanitize_field_name(name) == self._sanitize_field_name(field_name):
                 return field
-
-    def get_raw_value(self, name):
-        """
-        Returns the raw value of a given field
-        """
-        return self.get_field_value(name, raw=True)
 
     def get_field_value(self, name, raw=False):
         """
@@ -81,14 +148,9 @@ class Layer(object):
             return
 
         if raw:
-            return field.value
+            return field.raw_value
 
-        val = field.show
-        if not val:
-            val = field.value
-        if not val:
-            val = field.showname
-        return val
+        return field
 
     @property
     def _field_prefix(self):
@@ -100,7 +162,7 @@ class Layer(object):
         return self.layer_name + '.'
         
     @property
-    def _field_names(self):
+    def field_names(self):
         """
         Gets all XML field names of this layer.
         :return: list of strings

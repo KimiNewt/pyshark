@@ -53,4 +53,4 @@ def get_tshark_interfaces():
     parameters = [get_tshark_path(), '-D']
     tshark_interfaces = subprocess.check_output(parameters).decode("ascii")
     
-    return [line.split('.')[0] for line in tshark_interfaces.splitlines()]
+    return [line.split('.')[1] for line in tshark_interfaces.splitlines()]

@@ -10,6 +10,7 @@ setup(
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
     install_requires=['lxml', 'py', 'trollius', 'logbook'],
+    tests_require=['mock', 'pytest'],
     url="https://github.com/KimiNewt/pyshark",
     long_description=long_description,
     author="KimiNewt",

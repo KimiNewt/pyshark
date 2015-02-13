@@ -1,6 +1,7 @@
 """
 Module used for the actual running of TShark
 """
+from distutils.version import LooseVersion
 import os
 import subprocess
 import sys
@@ -49,7 +50,21 @@ def get_tshark_version():
 
     return version_string
 
+def get_tshark_display_filter_flag():
+    """
+    Returns '-Y' for tshark versions >= 1.10.0 and '-R' for older versions.
+    """
+    tshark_version = get_tshark_version()
+    if LooseVersion(tshark_version) >= LooseVersion("1.10.0"):
+        return '-Y'
+    else:
+        return '-R'
+
 def get_tshark_interfaces():
+    """
+    Returns a list of interface numbers from the output tshark -D. Used
+    internally to capture on multiple interfaces.
+    """
     parameters = [get_tshark_path(), '-D']
     tshark_interfaces = subprocess.check_output(parameters).decode("ascii")
     

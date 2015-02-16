@@ -30,10 +30,9 @@ def get_tshark_path():
                           os.path.join(win32_progs, *tshark_path),
                           os.path.join(win64_progs, *tshark_path)]
     else:
-        possible_paths = [config.get('tshark', 'tshark_path'),
-                          '/usr/bin/tshark',
-                          '/usr/lib/tshark',
-                          '/usr/local/bin/tshark']
+        path = os.getenv('PATH','/usr/local/bin:/usr/bin:/usr/lib')
+        possible_paths = [ p+'/tshark' for p in path.split(':') ]
+        possible_paths.insert(0,config.get('tshark', 'tshark_path'))
     
     for path in possible_paths:
         if os.path.exists(path):

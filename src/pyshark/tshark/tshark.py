@@ -27,29 +27,16 @@ def get_tshark_path():
     # Windows search order: configuration file's path, common paths.
     if sys.platform.startswith('win'):
         for env in ('ProgramFiles(x86)', 'ProgramFiles'):
-            program_files = os.environ.get(env)
+            program_files = os.getenv(env)
             if program_files is not None:
                 possible_paths.append(
                     os.path.join(program_files, 'Wireshark', 'tshark.exe')
                 )
-    # Linux, etc. search order: configuration file's path, output of
-    # `which tshark`, common paths.
+    # Linux, etc. search order: configuration file's path, the system's path
     else:
-        try:
-            which_tshark = (
-                subprocess
-                .check_output(['which', 'tshark'])
-                .decode('ascii')
-                .strip()
-            )
-        except subprocess.CalledProcessError:
-            pass
-        else:
-            possible_paths.append(which_tshark)
-
-        possible_paths.extend(
-            ['/usr/bin/tshark', '/usr/lib/tshark', '/usr/local/bin/tshark']
-        )
+        os_path = os.getenv('PATH', '/usr/bin:/usr/lib/tshark:/usr/local/bin')
+        for path in os_path.split(':'):
+            possible_paths.append(os.path.join(path, 'tshark'))
 
     for path in possible_paths:
         if os.path.exists(path):

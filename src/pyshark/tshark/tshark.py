@@ -36,7 +36,12 @@ def get_tshark_path():
     # `which tshark`, common paths.
     else:
         try:
-            which_tshark = check_output(['which', 'tshark']).decode('ascii')
+            which_tshark = (
+                subprocess
+                .check_output(['which', 'tshark'])
+                .decode('ascii')
+                .strip()
+            )
         except subprocess.CalledProcessError:
             pass
         else:

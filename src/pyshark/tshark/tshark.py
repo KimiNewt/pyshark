@@ -1,6 +1,7 @@
 """
 Module used for the actual running of TShark
 """
+from distutils.version import LooseVersion
 import os
 import subprocess
 import sys
@@ -21,25 +22,29 @@ def get_tshark_path():
     :raises TSharkNotFoundException in case TShark is not found in any location.
     """
     config = get_config()
+    possible_paths = [config.get('tshark', 'tshark_path')]
 
+    # Windows search order: configuration file's path, common paths.
     if sys.platform.startswith('win'):
-        win32_progs = os.environ.get('ProgramFiles(x86)', '')
-        win64_progs = os.environ.get('ProgramFiles', '')
-        tshark_path = ('Wireshark', 'tshark.exe')
-        possible_paths = [config.get('tshark', 'tshark_path'),
-                          os.path.join(win32_progs, *tshark_path),
-                          os.path.join(win64_progs, *tshark_path)]
+        for env in ('ProgramFiles(x86)', 'ProgramFiles'):
+            program_files = os.getenv(env)
+            if program_files is not None:
+                possible_paths.append(
+                    os.path.join(program_files, 'Wireshark', 'tshark.exe')
+                )
+    # Linux, etc. search order: configuration file's path, the system's path
     else:
-        possible_paths = [config.get('tshark', 'tshark_path'),
-                          '/usr/bin/tshark',
-                          '/usr/lib/tshark',
-                          '/usr/local/bin/tshark']
-    
+        os_path = os.getenv('PATH', '/usr/bin:/usr/lib/tshark:/usr/local/bin')
+        for path in os_path.split(':'):
+            possible_paths.append(os.path.join(path, 'tshark'))
+
     for path in possible_paths:
         if os.path.exists(path):
             return path
-    raise TSharkNotFoundException('TShark not found in the following locations: ' + ', '.join(possible_paths) +
-                                  ' Either place tshark there or add more paths to the config file.')
+    raise TSharkNotFoundException(
+        'TShark not found. Try adding its location to the configuration file. '
+        'Search these paths: {}'.format(possible_paths)
+    )
 
 def get_tshark_version():
     parameters = [get_tshark_path(), '-v']
@@ -49,7 +54,21 @@ def get_tshark_version():
 
     return version_string
 
+def get_tshark_display_filter_flag():
+    """
+    Returns '-Y' for tshark versions >= 1.10.0 and '-R' for older versions.
+    """
+    tshark_version = get_tshark_version()
+    if LooseVersion(tshark_version) >= LooseVersion("1.10.0"):
+        return '-Y'
+    else:
+        return '-R'
+
 def get_tshark_interfaces():
+    """
+    Returns a list of interface numbers from the output tshark -D. Used
+    internally to capture on multiple interfaces.
+    """
     parameters = [get_tshark_path(), '-D']
     tshark_interfaces = subprocess.check_output(parameters).decode("ascii")
     

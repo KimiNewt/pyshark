@@ -284,7 +284,7 @@ class Capture(object):
         Returns a new tshark process with previously-set parameters.
         """
         xml_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(), '-n', '-T', xml_type] + self.get_parameters(packet_count=packet_count)
+        parameters = [get_tshark_path(), '-l', '-n', '-T', xml_type] + self.get_parameters(packet_count=packet_count)
 
         self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
         tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,

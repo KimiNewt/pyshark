@@ -40,6 +40,19 @@ class LayerField(object):
             val = self.showname
         return val
 
+    @property
+    def showname_value(self):
+        """
+        For fields which do not contain a normal value, we attempt to take their value from the showname.
+        """
+        if self.showname and ': ' in self.showname:
+            return self.showname.split(': ')[1]
+
+    @property
+    def showname_key(self):
+        if self.showname and ': ' in self.showname:
+            return self.showname.split(': ')[0]
+
     def __getstate__(self):
         return {slot: getattr(self, slot) for slot in self.__slots__}
 
@@ -216,11 +229,16 @@ class Layer(Pickleable):
                 tw.write(field_name + ':', green=True, bold=True)
             tw.write(field_line, bold=True)
 
+    def _get_all_fields_with_alternates(self):
+        all_fields = self._all_fields.values()
+        all_fields += sum([field.alternate_fields for field in all_fields], [])
+        return all_fields
+
     def _get_all_field_lines(self):
         """
         Returns all lines that represent the fields of the layer (both their names and values).
         """
-        for field in self._all_fields.values():
+        for field in self._get_all_fields_with_alternates():
             if field.hide:
                 continue
             if field.showname:
@@ -230,3 +248,16 @@ class Layer(Pickleable):
             else:
                 continue
             yield '\t' + field_repr + os.linesep
+
+    def get_field_by_showname(self, showname):
+        """
+        Gets a field by its "showname"
+        (the name that appears in Wireshark's detailed display i.e. in 'User-Agent: Mozilla...', 'User-Agent' is the
+         showname)
+
+         Returns None if not found.
+        """
+        for field in self._get_all_fields_with_alternates():
+            if field.showname_key == showname:
+                # Return it if "XXX: whatever == XXX"
+                return field

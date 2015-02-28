@@ -1,6 +1,7 @@
 import os
 import binascii
 import py
+from pyshark.packet.common import Pickleable
 
 
 class LayerField(object):
@@ -39,6 +40,13 @@ class LayerField(object):
             val = self.showname
         return val
 
+    def __getstate__(self):
+        return {slot: getattr(self, slot) for slot in self.__slots__}
+
+    def __setstate__(self, data):
+        for key, val in data.iteritems():
+            setattr(self, key, val)
+
     @property
     def binary_value(self):
         """
@@ -54,7 +62,7 @@ class LayerField(object):
         return int(self.raw_value, 16)
 
 
-class LayerFieldsContainer(str):
+class LayerFieldsContainer(str, Pickleable):
     """
     An object which contains one or more fields (of the same name).
     When accessing member, such as showname, raw_value, etc. the appropriate member of the main (first) field saved
@@ -91,7 +99,7 @@ class LayerFieldsContainer(str):
         return getattr(self.main_field, item)
 
 
-class Layer(object):
+class Layer(Pickleable):
     """
     An object representing a Packet layer.
     """

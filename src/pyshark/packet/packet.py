@@ -4,9 +4,10 @@ import datetime
 import os
 
 from pyshark.packet import consts
+from pyshark.packet.common import Pickleable
 
 
-class Packet(object):
+class Packet(Pickleable):
     """
     A packet object which contains layers.
     Layers can be accessed via index or name.

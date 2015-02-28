@@ -34,7 +34,10 @@ def get_tshark_path():
                 )
     # Linux, etc. search order: configuration file's path, the system's path
     else:
-        os_path = os.getenv('PATH', '/usr/bin:/usr/lib/tshark:/usr/local/bin')
+        os_path = os.getenv(
+            'PATH',
+            '/usr/bin:/usr/sbin:/usr/lib/tshark:/usr/local/bin'
+        )
         for path in os_path.split(':'):
             possible_paths.append(os.path.join(path, 'tshark'))
 

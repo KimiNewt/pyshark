@@ -13,7 +13,7 @@ class FileCapture(Capture):
     """
 
     def __init__(self, input_file=None, keep_packets=True, display_filter=None, only_summaries=False,
-                 decryption_key=None, encryption_type='wpa-pwk'):
+                 decryption_key=None, encryption_type='wpa-pwk', tshark_path=None):
         """
         Creates a packet capture object by reading from file.
 
@@ -26,9 +26,11 @@ class FileCapture(Capture):
         :param decryption_key: Optional key used to encrypt and decrypt captured traffic.
         :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD', or
         'WPA-PWK'. Defaults to WPA-PWK).
+        :param tshark_path: Path of the tshark binary
         """
         super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
-                                          decryption_key=decryption_key, encryption_type=encryption_type)
+                                          decryption_key=decryption_key, encryption_type=encryption_type,
+                                          tshark_path=tshark_path)
         self.input_filename = input_file
         if not isinstance(input_file, basestring):
             self.input_filename = input_file.name

@@ -13,16 +13,21 @@ class TSharkNotFoundException(Exception):
     pass
 
 
-def get_tshark_path():
+def get_tshark_path(tshark_path=None):
     """
-    Finds the path of the tshark executable. If the user has specified a
-    location in config.ini it will be used. Otherwise default locations
-    will be searched.
+    Finds the path of the tshark executable. If the user has provided a path
+    or specified a location in config.ini it will be used. Otherwise default
+    locations will be searched.
 
+    :param tshark_path: Path of the tshark binary
     :raises TSharkNotFoundException in case TShark is not found in any location.
     """
     config = get_config()
     possible_paths = [config.get('tshark', 'tshark_path')]
+
+    # Add the user provided path to the search list
+    if tshark_path is not None:
+        possible_paths.insert(0, tshark_path)
 
     # Windows search order: configuration file's path, common paths.
     if sys.platform.startswith('win'):
@@ -49,30 +54,30 @@ def get_tshark_path():
         'Search these paths: {}'.format(possible_paths)
     )
 
-def get_tshark_version():
-    parameters = [get_tshark_path(), '-v']
+def get_tshark_version(tshark_path=None):
+    parameters = [get_tshark_path(tshark_path), '-v']
     version_output = subprocess.check_output(parameters).decode("ascii")
     version_line = version_output.splitlines()[0]
     version_string = version_line.split()[1]
 
     return version_string
 
-def get_tshark_display_filter_flag():
+def get_tshark_display_filter_flag(tshark_path=None):
     """
     Returns '-Y' for tshark versions >= 1.10.0 and '-R' for older versions.
     """
-    tshark_version = get_tshark_version()
+    tshark_version = get_tshark_version(tshark_path)
     if LooseVersion(tshark_version) >= LooseVersion("1.10.0"):
         return '-Y'
     else:
         return '-R'
 
-def get_tshark_interfaces():
+def get_tshark_interfaces(tshark_path=None):
     """
     Returns a list of interface numbers from the output tshark -D. Used
     internally to capture on multiple interfaces.
     """
-    parameters = [get_tshark_path(), '-D']
+    parameters = [get_tshark_path(tshark_path), '-D']
     tshark_interfaces = subprocess.check_output(parameters).decode("ascii")
     
     return [line.split('.')[0] for line in tshark_interfaces.splitlines()]

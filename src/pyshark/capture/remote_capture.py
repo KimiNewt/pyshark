@@ -7,7 +7,7 @@ class RemoteCapture(LiveCapture):
     """
 
     def __init__(self, remote_host, remote_interface, remote_port=2002, bpf_filter=None, only_summaries=False,
-                 decryption_key=None, encryption_type='wpa-pwk'):
+                 decryption_key=None, encryption_type='wpa-pwk', tshark_path=None):
         """
         Creates a new remote capture which will connect to a remote machine which is running rpcapd. Use the sniff() method
         to get packets.
@@ -23,7 +23,9 @@ class RemoteCapture(LiveCapture):
         :param decryption_key: Key used to encrypt and decrypt captured traffic.
         :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD',
         or 'WPA-PWK'. Defaults to WPA-PWK).
+        :param tshark_path: Path of the tshark binary
         """
         interface = 'rpcap://%s:%d/%s' % (remote_host, remote_port, remote_interface)
         super(RemoteCapture, self).__init__(interface, bpf_filter=bpf_filter, only_summaries=only_summaries,
-                                            decryption_key=decryption_key, encryption_type=encryption_type)
+                                            decryption_key=decryption_key, encryption_type=encryption_type,
+                                            tshark_path=tshark_path)

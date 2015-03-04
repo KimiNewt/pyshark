@@ -8,7 +8,7 @@ class LiveCapture(Capture):
     """
 
     def __init__(self, interface=None, bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
-                 encryption_type='wpa-pwk'):
+                 encryption_type='wpa-pwk', output_file=None):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
 
@@ -19,9 +19,10 @@ class LiveCapture(Capture):
         :param decryption_key: Optional key used to encrypt and decrypt captured traffic.
         :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD', or
         'WPA-PWK'. Defaults to WPA-PWK).
+        :param output_file: Additionally save live captured packets to this file.
         """
         super(LiveCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
-                                          decryption_key=decryption_key, encryption_type=encryption_type)
+                                          decryption_key=decryption_key, encryption_type=encryption_type, output_file=output_file)
         self.bpf_filter = bpf_filter
         
         if interface is None:

@@ -30,11 +30,12 @@ class Capture(object):
     SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-psk']
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
-                 decryption_key=None, encryption_type='wpa-pwd'):
+                 decryption_key=None, encryption_type='wpa-pwd', output_file=None):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
         self.only_summaries = only_summaries
+        self.output_file = output_file
         self.running_processes = set()
         self.loaded = False
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
@@ -248,10 +249,13 @@ class Capture(object):
         if self.only_summaries:
             # If summaries are read, we need the psdml structure which appears on top of the file.
             while not psml_struct:
-                data += yield From(fd.read(self.SUMMARIES_BATCH_SIZE))
+                new_data = yield From(fd.read(self.SUMMARIES_BATCH_SIZE))
+                data += new_data
                 psml_struct, data = self._extract_tag_from_data(data, b'structure')
                 if psml_struct:
                     psml_struct = psml_structure_from_xml(psml_struct)
+                elif not new_data:
+                    raise Return(None, data)
             raise Return(psml_struct, data)
         else:
             raise Return(None, data)
@@ -330,6 +334,8 @@ class Capture(object):
         if all(self.encryption):
             params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + ' ","' +
                                                                   self.encryption[0] + '"']
+        if self.output_file:
+            params += ['-w', self.output_file]
         return params
 
     def __iter__(self):

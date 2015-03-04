@@ -22,7 +22,8 @@ class LiveCapture(Capture):
         :param output_file: Additionally save live captured packets to this file.
         """
         super(LiveCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
-                                          decryption_key=decryption_key, encryption_type=encryption_type, output_file=output_file)
+                                          decryption_key=decryption_key, encryption_type=encryption_type,
+                                          output_file=output_file)
         self.bpf_filter = bpf_filter
         
         if interface is None:

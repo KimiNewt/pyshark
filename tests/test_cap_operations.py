@@ -2,6 +2,8 @@ import mock
 import time
 import pytest
 from trollius import TimeoutError
+from multiprocessing import Process, Queue
+from multiprocessing.queues import Empty
 from pyshark.packet.packet_summary import PacketSummary
 
 
@@ -46,3 +48,24 @@ def test_getting_packet_summary(lazy_simple_capture):
     # Since we cannot check the exact fields since they're dependent on wireshark configuration, we'll at least
     # make sure some data is in.
     assert lazy_simple_capture[0]._fields
+
+def _iterate_capture_object(cap_obj, q):
+    try:
+        cap_obj.next()
+    except StopIteration as e:
+        q.put(e)
+
+def test_iterate_empty_psml_capture(lazy_simple_capture):
+    lazy_simple_capture.only_summaries = True
+    lazy_simple_capture.display_filter = "frame.len == 1"
+    q = Queue()
+    p = Process(target=_iterate_capture_object, args=(lazy_simple_capture, q))
+    p.start()
+    p.join(2)
+    try:
+        actual_result = q.get_nowait()
+    except Empty:
+        actual_result = None
+    if p.is_alive():
+        p.terminate()
+    assert isinstance(actual_result, StopIteration)

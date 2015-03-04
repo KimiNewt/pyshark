@@ -50,10 +50,9 @@ def test_getting_packet_summary(lazy_simple_capture):
     assert lazy_simple_capture[0]._fields
 
 def _iterate_capture_object(cap_obj, q):
-    try:
-        cap_obj.next()
-    except StopIteration as e:
-        q.put(e)
+    for packet in cap_obj:
+        pass
+    q.put(True)
 
 def test_iterate_empty_psml_capture(lazy_simple_capture):
     lazy_simple_capture.only_summaries = True
@@ -63,9 +62,9 @@ def test_iterate_empty_psml_capture(lazy_simple_capture):
     p.start()
     p.join(2)
     try:
-        actual_result = q.get_nowait()
+        no_hang = q.get_nowait()
     except Empty:
-        actual_result = None
+        no_hang = False
     if p.is_alive():
         p.terminate()
-    assert isinstance(actual_result, StopIteration)
+    assert no_hang

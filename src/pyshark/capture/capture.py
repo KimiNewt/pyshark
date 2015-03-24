@@ -27,7 +27,7 @@ class Capture(object):
     DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logbook.CRITICAL
-    SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-psk']
+    SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-pwd']
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd'):
@@ -328,7 +328,7 @@ class Capture(object):
         if packet_count:
             params += ['-c', str(packet_count)]
         if all(self.encryption):
-            params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + ' ","' +
+            params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + '","' +
                                                                   self.encryption[0] + '"']
         return params
 

@@ -13,7 +13,7 @@ class Packet(Pickleable):
     Layers can be accessed via index or name.
     """
 
-    def __init__(self, layers=None, frame_info=None,
+    def __init__(self, layers=None, frame_info=None, number=None,
                  length=None, captured_length=None, sniff_time=None, interface_captured=None):
         """
         Creates a Packet object with the given layers and info.
@@ -30,10 +30,10 @@ class Packet(Pickleable):
         else:
             self.layers = layers
         self.frame_info = frame_info
+        self.number = number
         self.interface_captured = interface_captured
         self.captured_length = captured_length
         self.length = length
-        self.captured_length = captured_length
         self.sniff_timestamp = sniff_time
 
     def __getitem__(self, item):

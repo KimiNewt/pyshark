@@ -32,7 +32,7 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
         <h1>
-<a name="pyshark" class="anchor" href="#pyshark"><span class="octicon octicon-link"></span></a>pyshark</h1>
+<a id="pyshark" class="anchor" href="#pyshark" aria-hidden="true"><span class="octicon octicon-link"></span></a>pyshark</h1>
 
 <p>Python wrapper for tshark, allowing python packet parsing using wireshark dissectors.</p>
 
@@ -42,85 +42,85 @@
 Tested on windows/linux.</p>
 
 <h1>
-<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h1>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h1>
 
-<p>Pyshark features a few "Capture" objects (Live, Remote, File). Each of those files read from their respective source and then can be used as an iterator to get their packets. Each capture object can also receive various filters so that only some of the incoming packets will be saved.</p>
-
-<h2>
-<a name="reading-from-a-capture-file" class="anchor" href="#reading-from-a-capture-file"><span class="octicon octicon-link"></span></a>Reading from a capture file:</h2>
-
-<div class="highlight highlight-python"><pre><span class="kn">import</span> <span class="nn">pyshark</span>
-<span class="n">cap</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">FileCapture</span><span class="p">(</span><span class="s">'/tmp/mycapture.cap'</span><span class="p">)</span>
-<span class="n">cap</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="o">&lt;</span><span class="n">FileCapture</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">mycapture</span><span class="o">.</span><span class="n">cap</span> <span class="p">(</span><span class="mi">589</span> <span class="n">packets</span><span class="p">)</span><span class="o">&gt;</span>
-<span class="k">print</span> <span class="n">cap</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">Packet</span> <span class="p">(</span><span class="n">Length</span><span class="p">:</span> <span class="mi">698</span><span class="p">)</span>
-<span class="n">Layer</span> <span class="n">ETH</span><span class="p">:</span>
-        <span class="n">Destination</span><span class="p">:</span> <span class="n">BLANKED</span>
-        <span class="n">Source</span><span class="p">:</span> <span class="n">BLANKED</span>
-        <span class="n">Type</span><span class="p">:</span> <span class="n">IP</span> <span class="p">(</span><span class="mh">0x0800</span><span class="p">)</span>
-<span class="n">Layer</span> <span class="n">IP</span><span class="p">:</span>
-        <span class="n">Version</span><span class="p">:</span> <span class="mi">4</span>
-        <span class="n">Header</span> <span class="n">Length</span><span class="p">:</span> <span class="mi">20</span> <span class="nb">bytes</span>
-        <span class="n">Differentiated</span> <span class="n">Services</span> <span class="n">Field</span><span class="p">:</span> <span class="mh">0x00</span> <span class="p">(</span><span class="n">DSCP</span> <span class="mh">0x00</span><span class="p">:</span> <span class="n">Default</span><span class="p">;</span> <span class="n">ECN</span><span class="p">:</span> <span class="mh">0x00</span><span class="p">:</span> <span class="n">Not</span><span class="o">-</span><span class="n">ECT</span> <span class="p">(</span><span class="n">Not</span> <span class="n">ECN</span><span class="o">-</span><span class="n">Capable</span> <span class="n">Transport</span><span class="p">))</span>
-        <span class="n">Total</span> <span class="n">Length</span><span class="p">:</span> <span class="mi">684</span>
-        <span class="n">Identification</span><span class="p">:</span> <span class="mh">0x254f</span> <span class="p">(</span><span class="mi">9551</span><span class="p">)</span>
-        <span class="n">Flags</span><span class="p">:</span> <span class="mh">0x00</span>
-        <span class="n">Fragment</span> <span class="n">offset</span><span class="p">:</span> <span class="mi">0</span>
-        <span class="n">Time</span> <span class="n">to</span> <span class="n">live</span><span class="p">:</span> <span class="mi">1</span>
-        <span class="n">Protocol</span><span class="p">:</span> <span class="n">UDP</span> <span class="p">(</span><span class="mi">17</span><span class="p">)</span>
-        <span class="n">Header</span> <span class="n">checksum</span><span class="p">:</span> <span class="mh">0xe148</span> <span class="p">[</span><span class="n">correct</span><span class="p">]</span>
-        <span class="n">Source</span><span class="p">:</span> <span class="n">BLANKED</span>
-        <span class="n">Destination</span><span class="p">:</span> <span class="n">BLANKED</span>
-  <span class="o">...</span>
-</pre></div>
+<p>Pyshark features a few "Capture" objects (Live, Remote, File, InMem). Each of those files read from their respective source and then can be used as an iterator to get their packets. Each capture object can also receive various filters so that only some of the incoming packets will be saved.</p>
 
 <h2>
-<a name="reading-from-a-live-interface" class="anchor" href="#reading-from-a-live-interface"><span class="octicon octicon-link"></span></a>Reading from a live interface:</h2>
+<a id="reading-from-a-capture-file" class="anchor" href="#reading-from-a-capture-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reading from a capture file:</h2>
 
-<div class="highlight highlight-python"><pre><span class="n">capture</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">LiveCapture</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="s">'eth0'</span><span class="p">)</span>
-<span class="n">capture</span><span class="o">.</span><span class="n">sniff</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">capture</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="o">&lt;</span><span class="n">LiveCapture</span> <span class="p">(</span><span class="mi">5</span> <span class="n">packets</span><span class="p">)</span><span class="o">&gt;</span>
-<span class="n">capture</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
-<span class="o">&lt;</span><span class="n">UDP</span><span class="o">/</span><span class="n">HTTP</span> <span class="n">Packet</span><span class="o">&gt;</span>
-
-<span class="k">for</span> <span class="n">packet</span> <span class="ow">in</span> <span class="n">capture</span><span class="o">.</span><span class="n">sniff_continuously</span><span class="p">(</span><span class="n">packet_count</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">'Just arrived:'</span><span class="p">,</span> <span class="n">packet</span>
-</pre></div>
-
-<p>Capturing from a live interface can be done in two ways: either using the <em>sniff()</em> method to capture a given amount of packets (or for a given amount of time) and then read the packets from the capture object as a list, or use the <em>sniff_continously()</em> method as a generator and work on each packet as it arrives.</p>
-
-<p>The capture can also run on multiple interfaces if a list is providing, or all interfaces if no interface is provided. It can even be run through a remote interface using <em>RemoteCapture</em>.</p>
+<div class="highlight highlight-python"><pre><span class="pl-k">import</span> pyshark
+cap <span class="pl-k">=</span> pyshark.FileCapture(<span class="pl-s"><span class="pl-pds">'</span>/tmp/mycapture.cap<span class="pl-pds">'</span></span>)
+cap
+<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-k">&lt;</span>FileCapture <span class="pl-k">/</span>tmp<span class="pl-k">/</span>mycapture.cap<span class="pl-k">&gt;</span>
+<span class="pl-k">print</span> cap[<span class="pl-c1">0</span>]
+Packet (Length: <span class="pl-c1">698</span>)
+Layer ETH:
+        Destination: aa:bb:cc:dd:ee:ff
+        Source: <span class="pl-c1">00</span>:de:ad:be:ef:<span class="pl-c1">00</span>
+        Type: IP (<span class="pl-c1">0x</span>0800)
+Layer IP:
+        Version: <span class="pl-c1">4</span>
+        Header Length: <span class="pl-c1">20</span> <span class="pl-c1">bytes</span>
+        Differentiated Services Field: <span class="pl-c1">0x</span>00 (DSCP <span class="pl-c1">0x</span>00: Default; ECN: <span class="pl-c1">0x</span>00: Not<span class="pl-k">-</span>ECT (Not ECN<span class="pl-k">-</span>Capable Transport))
+        Total Length: <span class="pl-c1">684</span>
+        Identification: <span class="pl-c1">0x</span>254f (<span class="pl-c1">9551</span>)
+        Flags: <span class="pl-c1">0x</span>00
+        Fragment offset: <span class="pl-c1">0</span>
+        Time to live: <span class="pl-c1">1</span>
+        Protocol: UDP (<span class="pl-c1">17</span>)
+        Header checksum: <span class="pl-c1">0x</span>e148 [correct]
+        Source: <span class="pl-c1">192.168</span>.<span class="pl-c1">0.1</span>
+        Destination: <span class="pl-c1">192.168</span>.<span class="pl-c1">0.2</span>
+  ...</pre></div>
 
 <h2>
-<a name="filtering-packets" class="anchor" href="#filtering-packets"><span class="octicon octicon-link"></span></a>Filtering packets:</h2>
+<a id="reading-from-a-live-interface" class="anchor" href="#reading-from-a-live-interface" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reading from a live interface:</h2>
+
+<div class="highlight highlight-python"><pre>capture <span class="pl-k">=</span> pyshark.LiveCapture(<span class="pl-smi">interface</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>eth0<span class="pl-pds">'</span></span>)
+capture.sniff(<span class="pl-smi">timeout</span><span class="pl-k">=</span><span class="pl-c1">50</span>)
+capture
+<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-k">&lt;</span>LiveCapture (<span class="pl-c1">5</span> packets)<span class="pl-k">&gt;</span>
+capture[<span class="pl-c1">3</span>]
+<span class="pl-k">&lt;</span>UDP<span class="pl-k">/</span>HTTP Packet<span class="pl-k">&gt;</span>
+
+<span class="pl-k">for</span> packet <span class="pl-k">in</span> capture.sniff_continuously(<span class="pl-smi">packet_count</span><span class="pl-k">=</span><span class="pl-c1">5</span>):
+    <span class="pl-k">print</span> <span class="pl-s"><span class="pl-pds">'</span>Just arrived:<span class="pl-pds">'</span></span>, packet</pre></div>
+
+<p>Capturing from a live interface can be done in two ways: either using the <em>sniff()</em> method to capture a given amount of packets (or for a given amount of time) and then read the packets from the capture object as a list, or use the <em>sniff_continously()</em> method as a generator and work on each packet as it arrives. Another alternative is defining a callback for each received packet:</p>
+
+<div class="highlight highlight-python"><pre><span class="pl-k">def</span> <span class="pl-en">print_callback</span>(<span class="pl-smi">pkt</span>):
+    <span class="pl-k">print</span> <span class="pl-s"><span class="pl-pds">'</span>Just arrived:<span class="pl-pds">'</span></span>, pkt
+capture.apply_on_packets(print_callback, <span class="pl-smi">timeout</span><span class="pl-k">=</span><span class="pl-c1">5</span>)</pre></div>
+
+<p>The capture can also run on multiple interfaces if a list is provided, or all interfaces if no interface is provided. It can even be run through a remote interface using <em>RemoteCapture</em>.</p>
+
+<h2>
+<a id="filtering-packets" class="anchor" href="#filtering-packets" aria-hidden="true"><span class="octicon octicon-link"></span></a>Filtering packets:</h2>
 
 <p>Filtering packets can be done with any capture object, like so:</p>
 
-<div class="highlight highlight-python"><pre><span class="n">filtered_cap</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">FileCapture</span><span class="p">(</span><span class="n">path_to_file</span><span class="p">,</span> <span class="n">bpf_filter</span><span class="o">=</span><span class="s">'tcp port 80'</span><span class="p">)</span>
-<span class="n">filtered_cap2</span> <span class="o">=</span> <span class="n">pyshark</span><span class="o">.</span><span class="n">LiveCapture</span><span class="p">(</span><span class="s">'eth0'</span><span class="p">,</span> <span class="n">display_filter</span><span class="o">=</span><span class="s">'http'</span><span class="p">)</span>
-</pre></div>
+<div class="highlight highlight-python"><pre>filtered_cap <span class="pl-k">=</span> pyshark.FileCapture(path_to_file, <span class="pl-smi">bpf_filter</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>tcp port 80<span class="pl-pds">'</span></span>)
+filtered_cap2 <span class="pl-k">=</span> pyshark.LiveCapture(<span class="pl-s"><span class="pl-pds">'</span>eth0<span class="pl-pds">'</span></span>, <span class="pl-smi">display_filter</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>http<span class="pl-pds">'</span></span>)</pre></div>
 
 <p>There are two types of filters, <strong>BPF filters</strong> and <strong>display filters</strong>. Generally, bpf filters are more limited but are faster while display filters can be used on pretty much any attribute of the packet but are much slower.</p>
 
 <p>See BPF syntax help <a href="http://biot.com/capstats/bpf.html">here</a> and display filters help <a href="http://wiki.wireshark.org/DisplayFilters">here</a>.</p>
 
 <h2>
-<a name="accessing-packet-data" class="anchor" href="#accessing-packet-data"><span class="octicon octicon-link"></span></a>Accessing packet data:</h2>
+<a id="accessing-packet-data" class="anchor" href="#accessing-packet-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Accessing packet data:</h2>
 
 <p>Data can be accessed in multiple ways. 
 Packets are divided into layers, first you have to reach the appropriate layer and then you can select your field.</p>
 
 <p>All of the following work:</p>
 
-<div class="highlight highlight-python"><pre><span class="n">packet</span><span class="p">[</span><span class="s">'ip'</span><span class="p">]</span><span class="o">.</span><span class="n">dst</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="mf">192.168</span><span class="o">.</span><span class="mf">0.1</span>
-<span class="n">packet</span><span class="o">.</span><span class="n">ip</span><span class="o">.</span><span class="n">src</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="mf">192.168</span><span class="o">.</span><span class="mf">0.100</span>
-<span class="n">packet</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">src</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="mf">192.168</span><span class="o">.</span><span class="mf">0.100</span>
-</pre></div>
+<div class="highlight highlight-python"><pre>packet[<span class="pl-s"><span class="pl-pds">'</span>ip<span class="pl-pds">'</span></span>].dst <span class="pl-c"># By protocol string</span>
+<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-c1">192.168</span>.<span class="pl-c1">0.1</span>
+packet.ip.src <span class="pl-c"># By protocol attribute</span>
+<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-c1">192.168</span>.<span class="pl-c1">0.100</span>
+packet[<span class="pl-c1">2</span>].src <span class="pl-c"># By layer index</span>
+<span class="pl-k">&gt;&gt;&gt;</span> <span class="pl-c1">192.168</span>.<span class="pl-c1">0.100</span></pre></div>
 
 <p>To easily view the different attributes of the layer, you can simply run <em>dir(packet.my_layer)</em> or even print it or use the special <em>pretty_print()</em> method both layer and packet have.
 Note that all attributes return as strings at the moment.</p>
@@ -131,7 +131,7 @@ Note that all attributes return as strings at the moment.</p>
     <div id="footer_wrap" class="outer">
       <footer class="inner">
         <p class="copyright">PyShark maintained by <a href="https://github.com/KimiNewt">KimiNewt</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
 

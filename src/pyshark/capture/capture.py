@@ -271,14 +271,16 @@ class Capture(object):
         a packet. remaining_data is the leftover data which was not enough to create a packet from.
         :raises EOFError if EOF was reached.
         """
-        # Read data until we get a packet, and yield it.
-        new_data = yield From(stream.read(self.DEFAULT_BATCH_SIZE))
-        existing_data += new_data
+        #yield each packet in existing_data
+        #Maybe there is already a packet in our buffer
         packet, existing_data = self._extract_tag_from_data(existing_data)
 
         if packet:
             packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
             raise Return(packet, existing_data)
+
+        new_data = yield From(stream.read(self.DEFAULT_BATCH_SIZE))
+        existing_data += new_data
 
         if not new_data:
             # Reached EOF

@@ -56,6 +56,7 @@ very little information
 * **param decryption_key**: Key used to encrypt and decrypt captured traffic.
 * **param encryption_type**: Standard of encryption used in captured traffic (must
 be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK.
+* **param tshark_path**: Path of the tshark binary
 
 ###Reading from a live interface:
 
@@ -82,6 +83,7 @@ includes very little information
 * **param decryption_key**: Key used to encrypt and decrypt captured traffic.
 * **param encryption_type**: Standard of encryption used in captured traffic
 (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK).
+* **param tshark_path**: Path of the tshark binary
 * **param output_file**: Additionally save captured packets to this file.
 
 ###Reading from a live remote interface:
@@ -107,6 +109,7 @@ includes very little information
 * **param decryption_key**: Key used to encrypt and decrypt captured traffic.
 * **param encryption_type**: Standard of encryption used in captured traffic
 (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK).
+* **param tshark_path**: Path of the tshark binary
 
 ###Accessing packet data:
 

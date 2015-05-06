@@ -27,11 +27,11 @@ class Capture(object):
     DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logbook.CRITICAL
-    SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-pwd']
+    SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-pwd', 'wpa-psk']
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
-                 decode_as=None):
+                 decode_as=None, tshark_path=None):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
@@ -41,6 +41,7 @@ class Capture(object):
         self.loaded = False
         self.decode_as = decode_as
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
+        self.tshark_path = tshark_path
 
         self.eventloop = eventloop
         if self.eventloop is None:
@@ -290,7 +291,7 @@ class Capture(object):
         Returns a new tshark process with previously-set parameters.
         """
         xml_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(), '-l', '-n', '-T', xml_type] + self.get_parameters(packet_count=packet_count)
+        parameters = [get_tshark_path(self.tshark_path), '-l', '-n', '-T', xml_type] + self.get_parameters(packet_count=packet_count)
 
         self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
         tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,
@@ -330,7 +331,7 @@ class Capture(object):
         """
         params = []
         if self.display_filter:
-            params += [get_tshark_display_filter_flag(), self.display_filter]
+            params += [get_tshark_display_filter_flag(self.tshark_path), self.display_filter]
         if packet_count:
             params += ['-c', str(packet_count)]
         if all(self.encryption):

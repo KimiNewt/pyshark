@@ -30,7 +30,8 @@ class Capture(object):
     SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-pwd']
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
-                 decryption_key=None, encryption_type='wpa-pwd', output_file=None):
+                 decryption_key=None, encryption_type='wpa-pwd', output_file=None,
+                 decode_as=None):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
@@ -38,6 +39,7 @@ class Capture(object):
         self.output_file = output_file
         self.running_processes = set()
         self.loaded = False
+        self.decode_as = decode_as
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
 
         self.eventloop = eventloop
@@ -336,6 +338,10 @@ class Capture(object):
                                                                   self.encryption[0] + '"']
         if self.output_file:
             params += ['-w', self.output_file]
+
+        if self.decode_as:
+            for criterion, decode_as_proto in self.decode_as.items():
+                params += ['-d', ','.join([criterion.strip(), decode_as_proto.strip()])]
         return params
 
     def __iter__(self):

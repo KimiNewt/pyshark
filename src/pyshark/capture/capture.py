@@ -42,6 +42,7 @@ class Capture(object):
         self.decode_as = decode_as
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self.tshark_path = tshark_path
+        self.debug = False
 
         self.eventloop = eventloop
         if self.eventloop is None:
@@ -115,6 +116,7 @@ class Capture(object):
         Sets the capture to debug mode.
         """
         self.log.level = logbook.DEBUG
+        self.debug = True
 
     def setup_eventloop(self):
         """
@@ -296,9 +298,12 @@ class Capture(object):
         parameters = [get_tshark_path(self.tshark_path), '-l', '-n', '-T', xml_type] + self.get_parameters(packet_count=packet_count)
 
         self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
+
+        # Ignore stderr output unless in debug mode (sent to console)
+        output = None if self.debug else open(os.devnull, "w")
         tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,
                                                                     stdout=subprocess.PIPE,
-                                                                    open(os.devnull, "w"),
+                                                                    stderr=output,
                                                                     stdin=stdin))
         self.log.debug('TShark subprocess created')
 
@@ -312,6 +317,9 @@ class Capture(object):
         """
         Kill the given process and properly closes any pipes connected to it.
         """
+        if process.returncode is not None and process.returncode != 0:
+            raise TSharkCrashException('TShark seems to have crashed. Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.')
+
         try:
             process.kill()
         except ProcessLookupError:

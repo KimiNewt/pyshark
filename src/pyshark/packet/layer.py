@@ -54,7 +54,10 @@ class LayerField(object):
             return self.showname.split(': ')[0]
 
     def __getstate__(self):
-        return {slot: getattr(self, slot) for slot in self.__slots__}
+        ret = {}
+        for slot in self.__slots__:
+            ret[slot] = getattr(self, slot)
+        return ret
 
     def __setstate__(self, data):
         for key, val in data.iteritems():

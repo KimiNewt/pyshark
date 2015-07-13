@@ -12,7 +12,7 @@ class LiveCapture(Capture):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
 
-        :param interface: Name of the interface to sniff on. If not given, takes the first available.
+        :param interface: Name of the interface to sniff on or a list of names (str). If not given, runs on all interfaces.
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.
         :param only_summaries: Only produce packet summaries, much faster but includes very little information
@@ -32,8 +32,10 @@ class LiveCapture(Capture):
         
         if interface is None:
             self.interfaces = get_tshark_interfaces(tshark_path)
-        else:
+        elif isinstance(interface, basestring):
             self.interfaces = [interface]
+        else:
+            self.interfaces = interface
 
     def get_parameters(self, packet_count=None):
         """

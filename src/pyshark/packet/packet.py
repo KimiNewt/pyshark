@@ -118,3 +118,11 @@ class Packet(Pickleable):
         for layer in consts.TRANSPORT_LAYERS:
             if layer in self:
                 return layer
+
+    def get_multiple_layers(self, layer_name):
+        """
+        Returns a list of all the layers in the packet that are of the layer type (an incase-sensitive string).
+        This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLAN) which cannot be
+        retrieved by easier means.
+        """
+        return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]   

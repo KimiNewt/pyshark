@@ -317,16 +317,17 @@ class Capture(object):
         """
         Kill the given process and properly closes any pipes connected to it.
         """
-        if process.returncode is not None and process.returncode != 0:
-            raise TSharkCrashException('TShark seems to have crashed. Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.')
+        if process.returncode is None:
+            try:
+                process.kill()
+            except ProcessLookupError:
+                pass
+            except OSError:
+                if os.name != 'nt':
+                    raise
+        elif process.returncode > 0:
+            raise TSharkCrashException('TShark seems to have crashed (retcode: %d). Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.' % process.returncode)
 
-        try:
-            process.kill()
-        except ProcessLookupError:
-            pass
-        except OSError:
-            if os.name != 'nt':
-                raise
 
     def close(self):
         for process in self.running_processes:

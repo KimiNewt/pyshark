@@ -35,6 +35,6 @@ def test_raw_mode(icmp_packet):
 
 def test_frame_info_access(icmp_packet):
 		actual = icmp_packet.frame_info.protocols
-		expected = {'eth:ip:icmp:data', 'eth:ethertype:ip:icmp:data'}
+		expected = set(['eth:ip:icmp:data', 'eth:ethertype:ip:icmp:data'])
 		assert actual in expected
 		assert icmp_packet.frame_info.number == '8'

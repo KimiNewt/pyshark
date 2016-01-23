@@ -353,7 +353,7 @@ class Capture(object):
             for preference_name, preference_value in self.override_prefs.items():
                 if all(self.encryption) and preference_name in ('wlan.enable_decryption', 'uat:80211_keys'):
                     continue  # skip if override preferences also given via --encryption options
-                params += ['-o', '{}:{}'.format(preference_name, preference_value)]
+                params += ['-o', '{0}:{1}'.format(preference_name, preference_value)]
 
         if self.output_file:
             params += ['-w', self.output_file]

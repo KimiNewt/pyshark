@@ -5,7 +5,9 @@ class LiveRingCapture(LiveCapture):
     Represents a live ringbuffer capture on a network interface.
     """
 
-    def __init__(self, ring_file_size=1024, num_ring_files=1, ring_file_name='/tmp/pyshark.pcap', interface=None, bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None, encryption_type='wpa-pwk', decode_as=None, tshark_path=None):
+    def __init__(self, ring_file_size=1024, num_ring_files=1, ring_file_name='/tmp/pyshark.pcap', interface=None,
+                 bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
+                 encryption_type='wpa-pwk', decode_as=None, tshark_path=None, override_prefs=None):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
         :param ring_file_size: Size of the ring file in kB, default is 1024
@@ -19,13 +21,15 @@ class LiveRingCapture(LiveCapture):
         :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD', or
         'WPA-PWK'. Defaults to WPA-PWK).
         :param decode_as: A dictionary of {decode_criterion_string: decode_as_protocol} that are used to tell tshark
-        :param tshark_path: Path of the tshark binary
         to decode protocols in situations it wouldn't usually, for instance {'tcp.port==8888': 'http'} would make
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
+        :param tshark_path: Path of the tshark binary
+        :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME, PREFERENCE_VALUE, ...}.
         """
         super(LiveRingCapture, self).__init__(interface, bpf_filter=bpf_filter, display_filter=display_filter, only_summaries=only_summaries,
                                               decryption_key=decryption_key, encryption_type=encryption_type,
-                                              tshark_path=tshark_path, decode_as=decode_as)
+                                              tshark_path=tshark_path, decode_as=decode_as,
+                                              override_prefs=override_prefs)
 
         self.ring_file_size = ring_file_size
         self.num_ring_files = num_ring_files

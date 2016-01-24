@@ -53,9 +53,7 @@ def test_capture_gets_encryption_and_override_perfs():
         expected_results = ('esp.enable_null_encryption_decode_heuristic:TRUE',
                             'wlan.enable_decryption:TRUE',
                             'uat:80211_keys:"{0}","helloworld"'.format(valid_encryption_type))
-        option_count = 0
         start_idx = 0
-        override_index = params.index('-o')
         actual_parameter_options = []
         while True:
             try:

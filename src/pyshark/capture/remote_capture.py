@@ -27,6 +27,7 @@ class RemoteCapture(LiveCapture):
         to decode protocols in situations it wouldn't usually, for instance {'tcp.port==8888': 'http'} would make
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
         :param tshark_path: Path of the tshark binary
+        :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         """
         interface = 'rpcap://%s:%d/%s' % (remote_host, remote_port, remote_interface)
         super(RemoteCapture, self).__init__(interface, bpf_filter=bpf_filter, only_summaries=only_summaries,

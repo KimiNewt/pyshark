@@ -7,10 +7,10 @@ class RemoteCapture(LiveCapture):
     """
 
     def __init__(self, remote_host, remote_interface, remote_port=2002, bpf_filter=None, only_summaries=False,
-                 decryption_key=None, encryption_type='wpa-pwk', decode_as=None, tshark_path=None):
+                 decryption_key=None, encryption_type='wpa-pwk', decode_as=None, tshark_path=None, override_prefs=None):
         """
-        Creates a new remote capture which will connect to a remote machine which is running rpcapd. Use the sniff() method
-        to get packets.
+        Creates a new remote capture which will connect to a remote machine which is running rpcapd. Use the sniff()
+        method to get packets.
         Note: The remote machine should have rpcapd running in null authentication mode (-n). Be warned that the traffic
         is unencrypted!
 
@@ -27,8 +27,9 @@ class RemoteCapture(LiveCapture):
         to decode protocols in situations it wouldn't usually, for instance {'tcp.port==8888': 'http'} would make
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
         :param tshark_path: Path of the tshark binary
+        :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         """
         interface = 'rpcap://%s:%d/%s' % (remote_host, remote_port, remote_interface)
         super(RemoteCapture, self).__init__(interface, bpf_filter=bpf_filter, only_summaries=only_summaries,
                                             decryption_key=decryption_key, encryption_type=encryption_type,
-                                            tshark_path=tshark_path, decode_as=decode_as)
+                                            tshark_path=tshark_path, decode_as=decode_as, override_prefs=override_prefs)

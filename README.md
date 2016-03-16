@@ -48,7 +48,6 @@ Layer IP:
 Used to conserve memory when reading large caps.
 * **param input_file**: Either a path or a file-like object containing either a
 packet capture file (PCAP, PCAP-NG..) or a TShark xml.
-* **param bpf_filter**: A BPF (tcpdump) filter to apply on the cap before reading.
 * **param display_filter**: A display (wireshark) filter to apply on the cap
 before reading it.
 * **param only_summaries**: Only produce packet summaries, much faster but includes

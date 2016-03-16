@@ -21,7 +21,6 @@ class FileCapture(Capture):
         :param keep_packets: Whether to keep packets after reading them via next(). Used to conserve memory when reading
         large caps (can only be used along with the "lazy" option!)
         :param input_file: File path of the capture (PCAP, PCAPNG)
-        :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
         :param display_filter: A display (wireshark) filter to apply on the cap before reading it.
         :param only_summaries: Only produce packet summaries, much faster but includes very little information.
         :param decryption_key: Optional key used to encrypt and decrypt captured traffic.

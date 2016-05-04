@@ -148,7 +148,7 @@ class Layer(Pickleable):
         return val
 
     def __dir__(self):
-        return dir(type(self)) + self.__dict__.keys() + self.field_names
+        return dir(type(self)) + list(self.__dict__.keys()) + self.field_names
 
     def get_field(self, name):
         """

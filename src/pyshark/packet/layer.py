@@ -88,10 +88,14 @@ class LayerFieldsContainer(str, Pickleable):
     def __new__(cls, main_field, *args, **kwargs):
         obj = str.__new__(cls, main_field.get_default_value(), *args, **kwargs)
         obj.fields = [main_field]
+        obj.sub_fields = {}
         return obj
 
     def add_field(self, field):
         self.fields.append(field)
+
+    def add_subfield(self, key, field):
+        self.sub_fields[key] = field
 
     @property
     def main_field(self):
@@ -111,7 +115,15 @@ class LayerFieldsContainer(str, Pickleable):
         """
         return self.fields
 
+    def __dir__(self):
+        return dir(type(self)) + list(self.__dict__.keys()) + list(self.sub_fields.keys()) + dir(self.main_field)
+
     def __getattr__(self, item):
+        if item in self.sub_fields:
+            # There might be a sub field of that type
+            return self.sub_fields[item]
+
+        # Otherwise, get an attribute of this field.
         return getattr(self.main_field, item)
 
 
@@ -138,6 +150,45 @@ class Layer(Pickleable):
                 self._all_fields[attributes['name']].add_field(field_obj)
             else:
                 self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
+
+        # Sort out subfields. We keep the "flat" field layout (access with underscores) for legacy reasons.
+        self._sort_subfields()
+
+    def _sort_subfields(self):
+        """
+        Puts subfields inside their parents. i.e. "pkt.bootp.flags.bc" will be accessible instead of the flat
+         "pkt.bootp.flags_bc".
+        """
+        for field in sorted(self._all_fields):
+            field = field.replace(self._field_prefix, '')
+            if '.' not in field:
+                # Not a subfield
+                continue
+            parts = field.split('.')
+
+            # Get deepest existing parent
+            deepest_subfield = None
+            for part_ind in range(len(parts)):
+                # Get path with one more part (i.e. "bootp.flags.whatever")
+
+                current_path = self._field_prefix + '.'.join(parts[:part_ind + 1])
+                if current_path in self._all_fields:
+                    if deepest_subfield and parts[part_ind] not in deepest_subfield.sub_fields:
+                         deepest_subfield.add_subfield(parts[part_ind], self._all_fields[current_path])
+                    deepest_subfield = self._all_fields[current_path]
+                else:
+                    # Have to create an "empty" field.
+                    new_field = LayerFieldsContainer(LayerField(show="Container Field"))
+
+                    # Add self to parent
+                    if part_ind == 0:
+                        # Add to root
+                        self._all_fields[current_path] = new_field
+                    else:
+                        # Add to subfield
+                        deepest_subfield.add_subfield(parts[part_ind], new_field)
+                        self._all_fields[current_path] = deepest_subfield
+                    deepest_subfield = new_field
 
     def __getattr__(self, item):
         val = self.get_field(item)
@@ -233,7 +284,7 @@ class Layer(Pickleable):
             tw.write(field_line, bold=True)
 
     def _get_all_fields_with_alternates(self):
-        all_fields = self._all_fields.values()
+        all_fields = list(self._all_fields.values())
         all_fields += sum([field.alternate_fields for field in all_fields], [])
         return all_fields
 

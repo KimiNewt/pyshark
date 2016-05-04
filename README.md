@@ -20,7 +20,7 @@ Tested on windows/linux.
 >>> cap = pyshark.FileCapture('/tmp/mycapture.cap')
 >>> cap
 <FileCapture /tmp/mycapture.cap (589 packets)>
-print cap[0]
+>>> print cap[0]
 Packet (Length: 698)
 Layer ETH:
         Destination: BLANKED

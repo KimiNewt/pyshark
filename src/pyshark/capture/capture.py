@@ -20,6 +20,13 @@ class UnknownEncyptionStandardException(Exception):
     pass
 
 
+class StopCapture(Exception):
+    """
+    Exception that the user can throw anywhere in packet-handling to stop the capture process.
+    """
+    pass
+
+
 class Capture(object):
     """
     Base class for packet captures.
@@ -111,12 +118,12 @@ class Capture(object):
         except TimeoutError:
             pass
 
-    def set_debug(self):
+    def set_debug(self, set_to=True):
         """
-        Sets the capture to debug mode.
+        Sets the capture to debug mode (or turns it off if specified).
         """
         self.log.level = logbook.DEBUG
-        self.debug = True
+        self.debug = set_to
 
     def setup_eventloop(self):
         """
@@ -174,6 +181,7 @@ class Capture(object):
                 except EOFError:
                     self.log.debug('EOF reached (sync)')
                     break
+
                 if packet:
                     packets_captured += 1
                     yield packet
@@ -213,6 +221,8 @@ class Capture(object):
         try:
             yield From(self._go_through_packets_from_fd(tshark_process.stdout, packet_callback,
                                                         packet_count=packet_count))
+        except StopCapture:
+            pass
         finally:
             self._cleanup_subprocess(tshark_process)
 
@@ -235,7 +245,11 @@ class Capture(object):
 
             if packet:
                 packets_captured += 1
-                packet_callback(packet)
+                try:
+                    packet_callback(packet)
+                except StopCapture:
+                    self.log.debug('User-initiated capture stop in callback')
+                    break
 
             if packet_count and packets_captured >= packet_count:
                 break

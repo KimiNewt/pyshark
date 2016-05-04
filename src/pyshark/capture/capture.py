@@ -38,7 +38,7 @@ class Capture(object):
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
-                 decode_as=None, tshark_path=None):
+                 decode_as=None, tshark_path=None, override_prefs=None):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
@@ -49,6 +49,7 @@ class Capture(object):
         self.decode_as = decode_as
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self.tshark_path = tshark_path
+        self.override_prefs = override_prefs
         self.debug = False
 
         self.eventloop = eventloop
@@ -362,6 +363,12 @@ class Capture(object):
         if all(self.encryption):
             params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + '","' +
                                                                   self.encryption[0] + '"']
+        if self.override_prefs:
+            for preference_name, preference_value in self.override_prefs.items():
+                if all(self.encryption) and preference_name in ('wlan.enable_decryption', 'uat:80211_keys'):
+                    continue  # skip if override preferences also given via --encryption options
+                params += ['-o', '{0}:{1}'.format(preference_name, preference_value)]
+
         if self.output_file:
             params += ['-w', self.output_file]
 

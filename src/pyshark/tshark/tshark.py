@@ -5,11 +5,15 @@ from distutils.version import LooseVersion
 import os
 import subprocess
 import sys
+import re
 
 from pyshark.config import get_config
 
 
 class TSharkNotFoundException(Exception):
+    pass
+
+class TSharkVersionException(Exception):
     pass
 
 
@@ -97,7 +101,11 @@ def get_tshark_version(tshark_path=None):
     parameters = [get_tshark_path(tshark_path), '-v']
     version_output = check_output(parameters).decode("ascii")
     version_line = version_output.splitlines()[0]
-    version_string = version_line.split()[1]
+    pattern = '.*\s(\d+\.\d+\.\d+).*'  # match " #.#.#" version pattern
+    m = re.match(pattern, version_line)
+    if not m:
+        raise TSharkVersionException('Unable to parse TShark version from: {}'.format(version_line))
+    version_string = m.groups()[0]  # Use first match found
 
     return version_string
 

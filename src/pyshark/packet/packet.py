@@ -63,7 +63,7 @@ class Packet(Pickleable):
             return False
 
     def __dir__(self):
-        return dir(type(self)) + self.__dict__.keys() + [l.layer_name for l in self.layers]
+        return dir(type(self)) + list(self.__dict__.keys()) + [l.layer_name for l in self.layers]
 
     @property
     def sniff_time(self):

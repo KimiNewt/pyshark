@@ -38,10 +38,11 @@ class Capture(object):
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
-                 decode_as=None, tshark_path=None, override_prefs=None):
+                 decode_as=None, tshark_path=None, override_prefs=None, capture_filter=None):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
+        self.capture_filter = capture_filter
         self.only_summaries = only_summaries
         self.output_file = output_file
         self.running_processes = set()
@@ -356,6 +357,8 @@ class Capture(object):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = []
+        if self.capture_filter:
+            params += ['-f', self.capture_filter]
         if self.display_filter:
             params += [get_tshark_display_filter_flag(self.tshark_path), self.display_filter]
         if packet_count:

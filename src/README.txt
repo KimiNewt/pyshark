@@ -57,6 +57,16 @@ Reading from a live interface:
     for packet in capture.sniff_continuously(packet_count=5):
         print 'Just arrived:', packet
 
+Infinite reading from a live interface with capture filter:
+------------------------------
+
+::
+
+    def packet_captured(packet):
+      print 'Just arrived:', packet
+
+    capture = pyshark.LiveCapture(interface='eth0', capture_filter='tcp')
+    capture.apply_on_packets(packet_captured)
 
 Accessing packet data:
 ----------------------

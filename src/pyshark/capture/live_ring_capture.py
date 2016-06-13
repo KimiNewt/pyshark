@@ -40,9 +40,5 @@ class LiveRingCapture(LiveCapture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(LiveRingCapture, self).get_parameters(packet_count=packet_count)
-        for interface in self.interfaces:
-            params += ['-i', interface]
-        if self.bpf_filter:
-            params += ['-f', self.bpf_filter]
         params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files), '-w', self.ring_file_name, '-P']
         return params

@@ -1,6 +1,10 @@
 from pyshark.capture.capture import Capture
 from pyshark.tshark.tshark import get_tshark_interfaces
+import sys
 
+# Define basestring as str if we're in python3.
+if sys.version_info >= (3, 0):
+    basestring = str
 
 class LiveCapture(Capture):
     """

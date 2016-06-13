@@ -45,10 +45,10 @@ class LiveCapture(Capture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
-        for interface in self.interfaces:
-            params += ['-i', interface]
         if self.bpf_filter:
             params += ['-f', self.bpf_filter]
+        for interface in self.interfaces:
+            params += ['-i', interface]
         return params
 
     # Backwards compatibility

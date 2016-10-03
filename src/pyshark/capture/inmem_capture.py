@@ -18,8 +18,8 @@ class LinkTypes(object):
 class InMemCapture(Capture):
 
     def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
-                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None, tshark_path=None,
-                  override_prefs=None):
+                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
+                  disable_protocol=None, tshark_path=None, override_prefs=None):
         """
         Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
         Currently opens a new instance of tshark for every packet buffer,
@@ -36,10 +36,13 @@ class InMemCapture(Capture):
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
         :param tshark_path: Path of the tshark binary
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
+        :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
+
         """
         super(InMemCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                            decryption_key=decryption_key, encryption_type=encryption_type,
-                                           decode_as=decode_as, tshark_path=tshark_path)
+                                           decode_as=decode_as, disable_protocol=disable_protocol,
+                                           tshark_path=tshark_path)
         self.bpf_filter = bpf_filter
         self._packets_to_write = None
         self._current_linktype = None

@@ -1,6 +1,10 @@
 from pyshark.capture.capture import Capture
 from pyshark.tshark.tshark import get_tshark_interfaces
+import sys
 
+# Define basestring as str if we're in python3.
+if sys.version_info >= (3, 0):
+    basestring = str
 
 class LiveCapture(Capture):
     """
@@ -45,10 +49,10 @@ class LiveCapture(Capture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
-        for interface in self.interfaces:
-            params += ['-i', interface]
         if self.bpf_filter:
             params += ['-f', self.bpf_filter]
+        for interface in self.interfaces:
+            params += ['-i', interface]
         return params
 
     # Backwards compatibility

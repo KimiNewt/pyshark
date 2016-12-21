@@ -189,3 +189,5 @@ exists in each capture class.
 >>> pyshark.LiveCapture.SUPPORTED_ENCRYPTION_STANDARDS
 ('wep', 'wpa-pwd', 'wpa-psk')
 ```
+## License
+This project is licensed under MIT. Contributions to this project are accepted under the same license. 

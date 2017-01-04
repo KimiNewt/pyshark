@@ -132,6 +132,7 @@ class Layer(Pickleable):
         # We copy over all the fields from the XML object
         # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
         # so we'd rather not save them.
+
         for field in xml_obj.findall('./field'):
             field_obj = self.objectify(field)
             if field_obj.name in self._all_fields.keys():
@@ -163,10 +164,20 @@ class Layer(Pickleable):
         attributes = dict(obj.attrib)
 
         fields = [self.objectify(field) for field in obj.findall('./field')]
-        subfield = fields[0] if len(fields) == 1 else fields if fields else None
+        if len(fields) == 1:
+            subfield = fields[0]
+        elif fields:
+            subfield = fields
+        else:
+            subfield = None
 
         fields = [self.objectify(field) for field in obj.findall('./proto')]
-        subproto = fields[0] if len(fields) == 1 else fields if fields else None
+        if len(fields) == 1:
+            subproto = fields[0]
+        elif fields:
+            subproto = fields
+        else:
+            subproto = None
 
         fld_obj = LayerField(field=subfield, proto=subproto, **attributes)
         return fld_obj
@@ -196,6 +207,13 @@ class Layer(Pickleable):
             return field.raw_value
 
         return field
+
+    @property
+    def all_fields(self):
+        """
+        Return all LayerFieldContainer items in Layer
+        """
+        return self._all_fields
 
     @property
     def _field_prefix(self):

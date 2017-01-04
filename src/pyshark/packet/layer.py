@@ -198,6 +198,13 @@ class Layer(Pickleable):
         return field
 
     @property
+    def all_fields(self):
+        """
+        Return all LayerFieldContainer items in Layer
+        """
+        return self._all_fields
+
+    @property
     def _field_prefix(self):
         """
         Prefix to field names in the XML.

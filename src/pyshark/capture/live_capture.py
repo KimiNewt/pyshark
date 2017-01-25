@@ -12,7 +12,8 @@ class LiveCapture(Capture):
     """
 
     def __init__(self, interface=None, bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
-                 encryption_type='wpa-pwk', output_file=None, decode_as=None, tshark_path=None, override_prefs=None, capture_filter=None):
+                 encryption_type='wpa-pwk', output_file=None, decode_as=None, disable_protocol=None, tshark_path=None,
+                 override_prefs=None, capture_filter=None):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
 
@@ -30,13 +31,15 @@ class LiveCapture(Capture):
         :param tshark_path: Path of the tshark binary
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param capture_filter: Capture (wireshark) filter to use.
+        :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         """
         super(LiveCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                           decryption_key=decryption_key, encryption_type=encryption_type,
-                                          output_file=output_file, decode_as=decode_as, tshark_path=tshark_path,
-                                          override_prefs=override_prefs, capture_filter=capture_filter)
+                                          output_file=output_file, decode_as=decode_as, disable_protocol=disable_protocol,
+                                          tshark_path=tshark_path, override_prefs=override_prefs,
+                                          capture_filter=capture_filter)
         self.bpf_filter = bpf_filter
-        
+
         if interface is None:
             self.interfaces = get_tshark_interfaces(tshark_path)
         elif isinstance(interface, basestring):

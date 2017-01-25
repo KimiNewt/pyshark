@@ -54,6 +54,7 @@ packet capture file (PCAP, PCAP-NG..) or a TShark xml.
 before reading it.
 * **param only_summaries**: Only produce packet summaries, much faster but includes
 very little information
+* **param disable_protocol**: Disable detection of a protocol (tshark > version 2)
 * **param decryption_key**: Key used to encrypt and decrypt captured traffic.
 * **param encryption_type**: Standard of encryption used in captured traffic (must
 be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK.
@@ -81,6 +82,7 @@ the first available.
 * **param display_filter**: Display (wireshark) filter to use.
 * **param only_summaries**: Only produce packet summaries, much faster but
 includes very little information
+* **param disable_protocol**: Disable detection of a protocol (tshark > version 2)
 * **param decryption_key**: Key used to encrypt and decrypt captured traffic.
 * **param encryption_type**: Standard of encryption used in captured traffic
 (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK).
@@ -110,6 +112,7 @@ the first available.
 * **param display_filter**: Display (wireshark) filter to use.
 * **param only_summaries**: Only produce packet summaries, much faster but
 includes very little information
+* **param disable_protocol**: Disable detection of a protocol (tshark > version 2)
 * **param decryption_key**: Key used to encrypt and decrypt captured traffic.
 * **param encryption_type**: Standard of encryption used in captured traffic
 (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK).
@@ -136,6 +139,7 @@ true interface name (i.e. \\Device\\NPF_..).
 reading.
 * **param only_summaries**: Only produce packet summaries, much faster but
 includes very little information
+* **param disable_protocol**: Disable detection of a protocol (tshark > version 2)
 * **param decryption_key**: Key used to encrypt and decrypt captured traffic.
 * **param encryption_type**: Standard of encryption used in captured traffic
 (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK).

@@ -13,8 +13,8 @@ class FileCapture(Capture):
     """
 
     def __init__(self, input_file=None, keep_packets=True, display_filter=None, only_summaries=False,
-                 decryption_key=None, encryption_type='wpa-pwk', decode_as=None, tshark_path=None,
-                 override_prefs=None):
+                 decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
+                 disable_protocol=None, tshark_path=None, override_prefs=None):
         """
         Creates a packet capture object by reading from file.
 
@@ -31,10 +31,12 @@ class FileCapture(Capture):
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
         :param tshark_path: Path of the tshark binary
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
+        :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         """
         super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                           decryption_key=decryption_key, encryption_type=encryption_type,
-                                          decode_as=decode_as, tshark_path=tshark_path, override_prefs=override_prefs)
+                                          decode_as=decode_as, disable_protocol=disable_protocol, tshark_path=tshark_path,
+                                          override_prefs=override_prefs)
         self.input_filename = input_file
         if not isinstance(input_file, basestring):
             self.input_filename = input_file.name

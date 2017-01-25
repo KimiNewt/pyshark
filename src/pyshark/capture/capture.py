@@ -38,7 +38,8 @@ class Capture(object):
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
-                 decode_as=None, tshark_path=None, override_prefs=None, capture_filter=None):
+                 decode_as=None,  disable_protocol=None, tshark_path=None,
+                 override_prefs=None, capture_filter=None):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
@@ -48,6 +49,7 @@ class Capture(object):
         self.running_processes = set()
         self.loaded = False
         self.decode_as = decode_as
+        self.disable_protocol = disable_protocol
         self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self.tshark_path = tshark_path
         self.override_prefs = override_prefs
@@ -378,6 +380,10 @@ class Capture(object):
         if self.decode_as:
             for criterion, decode_as_proto in self.decode_as.items():
                 params += ['-d', ','.join([criterion.strip(), decode_as_proto.strip()])]
+
+        if self.disable_protocol:
+            params += ['--disable-protocol', self.disable_protocol.strip()]
+
         return params
 
     def __iter__(self):

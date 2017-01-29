@@ -5,7 +5,6 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - "Nightly"
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y tshark

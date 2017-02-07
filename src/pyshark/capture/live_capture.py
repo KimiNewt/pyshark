@@ -41,6 +41,9 @@ class LiveCapture(Capture):
         self.bpf_filter = bpf_filter
         self.monitor_mode = monitor_mode
 
+        if sys.platform == 'win32' and monitor_mode:
+            raise WindowsError('Monitor mode is not supported by the Windows platform')
+
         if interface is None:
             self.interfaces = get_tshark_interfaces(tshark_path)
         elif isinstance(interface, basestring):
@@ -60,7 +63,7 @@ class LiveCapture(Capture):
         else:
             for interface in self.interfaces:
                 params += ['-i', interface]
-                
+
         return params
 
     # Backwards compatibility

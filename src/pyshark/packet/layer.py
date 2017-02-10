@@ -163,10 +163,20 @@ class Layer(Pickleable):
         attributes = dict(obj.attrib)
 
         fields = [self.objectify(field) for field in obj.findall('./field')]
-        subfield = fields[0] if len(fields) == 1 else fields if fields else None
+        if len(fields) == 1:
+            subfield = fields[0]
+        elif fields:
+            subfield = fields
+        else:
+            subfield = None
 
         fields = [self.objectify(field) for field in obj.findall('./proto')]
-        subproto = fields[0] if len(fields) == 1 else fields if fields else None
+        if len(fields) == 1:
+            subproto = fields[0]
+        elif fields:
+            subproto = fields
+        else:
+            subproto = None
 
         fld_obj = LayerField(field=subfield, proto=subproto, **attributes)
         return fld_obj

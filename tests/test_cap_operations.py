@@ -1,9 +1,11 @@
 import mock
 import time
 import pytest
-from trollius import TimeoutError
 from multiprocessing import Process, Queue
 from multiprocessing.queues import Empty
+from asyncio import TimeoutError
+
+import sys
 from pyshark.packet.packet_summary import PacketSummary
 
 
@@ -49,11 +51,14 @@ def test_getting_packet_summary(lazy_simple_capture):
     # make sure some data is in.
     assert lazy_simple_capture[0]._fields
 
+
 def _iterate_capture_object(cap_obj, q):
     for packet in cap_obj:
         pass
     q.put(True)
 
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='Linux test')
 def test_iterate_empty_psml_capture(lazy_simple_capture):
     lazy_simple_capture.only_summaries = True
     lazy_simple_capture.display_filter = "frame.len == 1"

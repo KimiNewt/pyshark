@@ -1,8 +1,6 @@
+import asyncio
 import struct
 import time
-
-import trollius as asyncio
-from trollius import subprocess, From, Return
 
 from pyshark.capture.capture import Capture
 
@@ -55,9 +53,9 @@ class InMemCapture(Capture):
         params += ['-i', '-']
         return params
 
-    @asyncio.coroutine
-    def _get_tshark_process(self, packet_count=None):
-        proc = yield From(super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PIPE))
+    async def _get_tshark_process(self, packet_count=None):
+        proc = await super(InMemCapture, self)._get_tshark_process(packet_count=packet_count,
+                                                                   stdin=asyncio.subprocess.PIPE)
         self._tshark_stdin = proc.stdin
 
         # Create PCAP header
@@ -69,7 +67,7 @@ class InMemCapture(Capture):
             proc.stdin.write(struct.pack("IIII", int(time.time()), 0, len(packet), len(packet)))
             proc.stdin.write(packet)
         proc.stdin.close()
-        raise Return(proc)
+        return proc
 
     def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
         """

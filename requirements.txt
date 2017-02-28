@@ -3,5 +3,4 @@ py
 pytest
 mock
 logbook
-trollius
 lxml

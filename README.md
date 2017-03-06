@@ -15,6 +15,20 @@ Tested on windows/linux.
 
 ##Installation
 
+###All Platforms
+Simply run the following to install the latest from pypi
+```bash
+pip install pyshark
+```
+
+Or install from the git repository:
+```bash
+git clone https://github.com/KimiNewt/pyshark.git
+cd pyshark/src
+python setup.py install
+```
+
+
 ###Mac OS X
 You may have to install libxml which can be unexpected.  If you receive an error from clang or an error message about libxml, run the following:
 ```bash

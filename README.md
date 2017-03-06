@@ -13,6 +13,18 @@ There are quite a few python packet parsing modules, this one is different becau
 This package allows parsing from a capture file or a live capture, using all wireshark dissectors you have installed.
 Tested on windows/linux.
 
+##Installation
+
+###Mac OS X
+You may have to install libxml which can be unexpected.  If you receive an error from clang or an error message about libxml, run the following:
+```bash
+xcode-select --install
+pip install libxml
+```
+You will probably have to accept a EULA for XCode so be ready to click an "Accept" dialog in the GUI.
+
+
+
 ##Usage
 
 ###Reading from a capture file:

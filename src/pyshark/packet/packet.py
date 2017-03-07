@@ -114,6 +114,20 @@ class Packet(Pickleable):
         return self.layers[-1].layer_name.upper()
 
     @property
+    def layer_names(self):
+        """
+        Returns all layer names
+        """
+        return [layer.layer_name for layer in self.layers]
+
+    @property
+    def all_layers(self):
+        """
+        Returns list of layers in packet
+        """
+        return self.layers
+
+    @property
     def transport_layer(self):
         for layer in consts.TRANSPORT_LAYERS:
             if layer in self:
@@ -125,4 +139,4 @@ class Packet(Pickleable):
         This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLAN) which cannot be
         retrieved by easier means.
         """
-        return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]   
+        return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]

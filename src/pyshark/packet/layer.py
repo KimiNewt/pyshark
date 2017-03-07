@@ -10,9 +10,9 @@ class LayerField(object):
     """
     # Note: We use this object with slots and not just a dict because
     # it's much more memory-efficient (cuts about a third of the memory).
-    __slots__ = ['name', 'showname', 'raw_value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
+    __slots__ = ['name', 'field', 'proto', 'showname', 'raw_value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
 
-    def __init__(self, name=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
+    def __init__(self, name=None, field=None, proto=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
         self.name = name
         self.showname = showname
         self.raw_value = value
@@ -20,6 +20,8 @@ class LayerField(object):
         self.pos = pos
         self.size = size
         self.unmaskedvalue = unmaskedvalue
+        self.field = field
+        self.proto = proto
 
         if hide and hide == 'yes':
             self.hide = True
@@ -130,14 +132,18 @@ class Layer(Pickleable):
         # We copy over all the fields from the XML object
         # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
         # so we'd rather not save them.
-        for field in xml_obj.findall('.//field'):
-            attributes = dict(field.attrib)
-            field_obj = LayerField(**attributes)
-            if attributes['name'] in self._all_fields:
-                # Field name already exists, add this field to the container.
-                self._all_fields[attributes['name']].add_field(field_obj)
+        for field in xml_obj.findall('./field'):
+            field_obj = self.objectify(field)
+            if field_obj.name in self._all_fields.keys():
+                self._all_fields[field_obj.name].add_field(field_obj)
             else:
-                self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
+                self._all_fields[field_obj.name] = LayerFieldsContainer(field_obj)
+        for field in xml_obj.findall('./proto'):
+            field_obj = self.objectify(field)
+            if field_obj.name in self._all_fields.keys():
+                self._all_fields[field_obj.name].add_field(field_obj)
+            else:
+                self._all_fields[field_obj.name] = LayerFieldsContainer(field_obj)
 
     def __getattr__(self, item):
         val = self.get_field(item)
@@ -149,6 +155,31 @@ class Layer(Pickleable):
 
     def __dir__(self):
         return dir(type(self)) + list(self.__dict__.keys()) + self.field_names
+
+    def objectify(self, obj):
+        """
+        Recursing method for copying nested fields from XML object
+        """
+        attributes = dict(obj.attrib)
+
+        fields = [self.objectify(field) for field in obj.findall('./field')]
+        if len(fields) == 1:
+            subfield = fields[0]
+        elif fields:
+            subfield = fields
+        else:
+            subfield = None
+
+        fields = [self.objectify(field) for field in obj.findall('./proto')]
+        if len(fields) == 1:
+            subproto = fields[0]
+        elif fields:
+            subproto = fields
+        else:
+            subproto = None
+
+        fld_obj = LayerField(field=subfield, proto=subproto, **attributes)
+        return fld_obj
 
     def get_field(self, name):
         """
@@ -177,6 +208,13 @@ class Layer(Pickleable):
         return field
 
     @property
+    def all_fields(self):
+        """
+        Return all LayerFieldContainer items in Layer
+        """
+        return self._all_fields
+
+    @property
     def _field_prefix(self):
         """
         Prefix to field names in the XML.
@@ -184,7 +222,7 @@ class Layer(Pickleable):
         if self.layer_name == 'geninfo':
             return ''
         return self.layer_name + '.'
-        
+
     @property
     def field_names(self):
         """

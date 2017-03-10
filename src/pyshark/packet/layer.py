@@ -133,18 +133,19 @@ class Layer(Pickleable):
         # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
         # so we'd rather not save them.
 
-        for field in xml_obj.findall('./field'):
+        for field in xml_obj.field:
             field_obj = self.objectify(field)
             if field_obj.name in self._all_fields.keys():
                 self._all_fields[field_obj.name].add_field(field_obj)
             else:
                 self._all_fields[field_obj.name] = LayerFieldsContainer(field_obj)
-        for field in xml_obj.findall('./proto'):
-            field_obj = self.objectify(field)
-            if field_obj.name in self._all_fields.keys():
-                self._all_fields[field_obj.name].add_field(field_obj)
-            else:
-                self._all_fields[field_obj.name] = LayerFieldsContainer(field_obj)
+        if 'proto' in xml_obj.keys():
+            for field in xml_obj.proto:
+                field_obj = self.objectify(field)
+                if field_obj.name in self._all_fields.keys():
+                    self._all_fields[field_obj.name].add_field(field_obj)
+                else:
+                    self._all_fields[field_obj.name] = LayerFieldsContainer(field_obj)
 
     def __getattr__(self, item):
         val = self.get_field(item)
@@ -161,25 +162,22 @@ class Layer(Pickleable):
         """
         Recursing method for copying nested fields from XML object
         """
-        attributes = dict(obj.attrib)
+        subfield = None
+        if 'field' in obj.keys():
+            fields = [self.objectify(field) for field in obj.field]
+            if len(fields) == 1:
+                subfield = fields[0]
+            elif fields:
+                subfield = fields
 
-        fields = [self.objectify(field) for field in obj.findall('./field')]
-        if len(fields) == 1:
-            subfield = fields[0]
-        elif fields:
-            subfield = fields
-        else:
-            subfield = None
-
-        fields = [self.objectify(field) for field in obj.findall('./proto')]
-        if len(fields) == 1:
-            subproto = fields[0]
-        elif fields:
-            subproto = fields
-        else:
-            subproto = None
-
-        fld_obj = LayerField(field=subfield, proto=subproto, **attributes)
+        subproto = None
+        if 'proto' in obj.keys():
+            fields = [self.objectify(field) for field in obj.proto]
+            if len(fields) == 1:
+                subproto = fields[0]
+            elif fields:
+                subproto = fields
+        fld_obj = LayerField(field=subfield, proto=subproto, **obj.attrib)
         return fld_obj
 
     def get_field(self, name):

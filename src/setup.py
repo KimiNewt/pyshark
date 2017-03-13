@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.txt')) as f:
 
 setup(
     name="pyshark",
-    version="0.3.6.2",
+    version="0.3.6.3",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
     # Temporarily using trollis 1.0.4 until issue https://github.com/haypo/trollius/issues/4 is resolved.

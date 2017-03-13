@@ -212,14 +212,13 @@ class Capture(object):
             coro = asyncio.wait_for(coro, timeout)
         return self.eventloop.run_until_complete(coro)
 
-
     @asyncio.coroutine
-    def packets_from_tshark(self, packet_callback, packet_count=None):
+    def packets_from_tshark(self, packet_callback, packet_count=None, close_tshark=True):
         """
         A coroutine which creates a tshark process, runs the given callback on each packet that is received from it and
         closes the process when it is done.
 
-        Do not use directly. Can be used in order to insert packets into your own eventloop.
+        Do not use interactively. Can be used in order to insert packets into your own eventloop.
         """
         tshark_process = yield From(self._get_tshark_process(packet_count=packet_count))
         try:
@@ -228,7 +227,8 @@ class Capture(object):
         except StopCapture:
             pass
         finally:
-            self._cleanup_subprocess(tshark_process)
+            if close_tshark:
+                self._cleanup_subprocess(tshark_process)
 
     @asyncio.coroutine
     def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
@@ -345,7 +345,6 @@ class Capture(object):
                     raise
         elif process.returncode > 0:
             raise TSharkCrashException('TShark seems to have crashed (retcode: %d). Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.' % process.returncode)
-
 
     def close(self):
         for process in self.running_processes:

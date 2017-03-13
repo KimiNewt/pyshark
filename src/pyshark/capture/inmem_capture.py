@@ -1,10 +1,11 @@
 import struct
 import time
+import warnings
 
 import trollius as asyncio
 from trollius import subprocess, From, Return
 
-from pyshark.capture.capture import Capture
+from pyshark.capture.capture import Capture, StopCapture
 
 
 class LinkTypes(object):
@@ -42,10 +43,11 @@ class InMemCapture(Capture):
         super(InMemCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                            decryption_key=decryption_key, encryption_type=encryption_type,
                                            decode_as=decode_as, disable_protocol=disable_protocol,
-                                           tshark_path=tshark_path)
+                                           tshark_path=tshark_path, override_prefs=override_prefs)
         self.bpf_filter = bpf_filter
         self._packets_to_write = None
         self._current_linktype = None
+        self._current_tshark = None
 
     def get_parameters(self, packet_count=None):
         """
@@ -57,22 +59,52 @@ class InMemCapture(Capture):
 
     @asyncio.coroutine
     def _get_tshark_process(self, packet_count=None):
+        if self._current_tshark:
+            raise Return(self._current_tshark)
         proc = yield From(super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PIPE))
-        self._tshark_stdin = proc.stdin
+        self._current_tshark = proc
 
         # Create PCAP header
         header = struct.pack("IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 0x7fff, self._current_linktype)
         proc.stdin.write(header)
-
-        for packet in self._packets_to_write:
-            # Write packet header
-            proc.stdin.write(struct.pack("IIII", int(time.time()), 0, len(packet), len(packet)))
-            proc.stdin.write(packet)
-        proc.stdin.close()
         raise Return(proc)
+
+    def _write_packet(self, packet):
+        # Write packet header
+        self._current_tshark.stdin.write(struct.pack("IIII", int(time.time()), 0, len(packet), len(packet)))
+        self._current_tshark.stdin.write(packet)
+
+    def parse_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
+        """
+        Parses a single binary packet and returns its parsed version.
+
+        DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
+        working with it.
+        """
+        self._current_linktype = linktype
+        if not self._current_tshark:
+            self.eventloop.run_until_complete(self._get_tshark_process())
+        packet_future = asyncio.Future()
+        self._write_packet(binary_packet)
+
+        def callback(pkt):
+            packet_future.set_result(pkt)
+            raise StopCapture()
+
+        self.eventloop.run_until_complete(self.packets_from_tshark(callback, close_tshark=False))
+        return packet_future.result()
+
+    def close(self):
+        self._current_tshark = None
+        super(InMemCapture, self).close()
 
     def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
         """
+        DEPRECATED. Use parse_packet instead.
+        This function adds the packet to the packets list, and also closes and reopens tshark for
+        each packet.
+        ==============
+
         Gets a binary (string) packet and parses & adds it to this capture.
         Returns the added packet.
 
@@ -81,7 +113,11 @@ class InMemCapture(Capture):
         By default, assumes the packet is an ethernet packet. For another link type, supply the linktype argument (most
         can be found in the class LinkTypes)
         """
-        return self.feed_packets([binary_packet], linktype=linktype)[0]
+        warnings.warn("Deprecated method. Use InMemCapture.parse_packet() instead")
+        pkt = self.parse_packet(binary_packet, linktype)
+        self.close()
+        self._packets.append(pkt)
+        return pkt
 
     def feed_packets(self, binary_packets, linktype=LinkTypes.ETHERNET):
         """
@@ -91,7 +127,9 @@ class InMemCapture(Capture):
         By default, assumes the packets are ethernet packets. For another link type, supply the linktype argument (most
         can be found in the class LinkTypes)
         """
-        self._packets_to_write = binary_packets
-        self._current_linktype = linktype
-        self.load_packets(packet_count=len(binary_packets))
-        return self[-len(binary_packets):]
+        pkts = []
+        for packet in binary_packets:
+            pkts.append(self.parse_packet(packet, linktype))
+            self._packets.append(packet)
+        self.close()
+        return pkts

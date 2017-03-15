@@ -1,118 +1,12 @@
+import operator
 import os
-import binascii
+
+import cachetools
 import py
+from cachetools import cachedmethod
+
 from pyshark.packet.common import Pickleable
-
-
-class LayerField(object):
-    """
-    Holds all data about a field of a layer, both its actual value and its name and nice representation.
-    """
-    # Note: We use this object with slots and not just a dict because
-    # it's much more memory-efficient (cuts about a third of the memory).
-    __slots__ = ['name', 'showname', 'raw_value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
-
-    def __init__(self, name=None, showname=None, value=None, show=None, hide=None, pos=None, size=None, unmaskedvalue=None):
-        self.name = name
-        self.showname = showname
-        self.raw_value = value
-        self.show = show
-        self.pos = pos
-        self.size = size
-        self.unmaskedvalue = unmaskedvalue
-
-        if hide and hide == 'yes':
-            self.hide = True
-        else:
-            self.hide = False
-
-    def __repr__(self):
-        return '<LayerField %s: %s>' % (self.name, self.get_default_value())
-
-    def get_default_value(self):
-        """
-        Gets the best 'value' string this field has.
-        """
-        val = self.show
-        if not val:
-            val = self.raw_value
-        if not val:
-            val = self.showname
-        return val
-
-    @property
-    def showname_value(self):
-        """
-        For fields which do not contain a normal value, we attempt to take their value from the showname.
-        """
-        if self.showname and ': ' in self.showname:
-            return self.showname.split(': ')[1]
-
-    @property
-    def showname_key(self):
-        if self.showname and ': ' in self.showname:
-            return self.showname.split(': ')[0]
-
-    def __getstate__(self):
-        ret = {}
-        for slot in self.__slots__:
-            ret[slot] = getattr(self, slot)
-        return ret
-
-    def __setstate__(self, data):
-        for key, val in data.iteritems():
-            setattr(self, key, val)
-
-    @property
-    def binary_value(self):
-        """
-        Returns the raw value of this field (as a binary string)
-        """
-        return binascii.unhexlify(self.raw_value)
-
-    @property
-    def int_value(self):
-        """
-        Returns the raw value of this field (as an integer).
-        """
-        return int(self.raw_value, 16)
-
-
-class LayerFieldsContainer(str, Pickleable):
-    """
-    An object which contains one or more fields (of the same name).
-    When accessing member, such as showname, raw_value, etc. the appropriate member of the main (first) field saved
-    in this container will be shown.
-    """
-
-    def __new__(cls, main_field, *args, **kwargs):
-        obj = str.__new__(cls, main_field.get_default_value(), *args, **kwargs)
-        obj.fields = [main_field]
-        return obj
-
-    def add_field(self, field):
-        self.fields.append(field)
-
-    @property
-    def main_field(self):
-        return self.fields[0]
-
-    @property
-    def alternate_fields(self):
-        """
-        Return the alternate values of this field containers (non-main ones).
-        """
-        return self.fields[1:]
-
-    @property
-    def all_fields(self):
-        """
-        Returns all fields in a list, the main field followed by the alternate fields.
-        """
-        return self.fields
-
-    def __getattr__(self, item):
-        return getattr(self.main_field, item)
+from pyshark.packet.fields import LayerField, LayerFieldsContainer
 
 
 class Layer(Pickleable):
@@ -234,7 +128,8 @@ class Layer(Pickleable):
 
     def _get_all_fields_with_alternates(self):
         all_fields = list(self._all_fields.values())
-        all_fields += sum([field.alternate_fields for field in all_fields], [])
+        all_fields += sum([field.alternate_fields for field in all_fields
+                           if isinstance(field, LayerFieldsContainer)], [])
         return all_fields
 
     def _get_all_field_lines(self):
@@ -242,15 +137,27 @@ class Layer(Pickleable):
         Returns all lines that represent the fields of the layer (both their names and values).
         """
         for field in self._get_all_fields_with_alternates():
-            if field.hide:
+            if isinstance(field, Layer):
+                yield "\t" + field.layer_name + ":" + os.linesep
+                for line in field._get_all_field_lines():
+                    # Python2.7
+                    yield "\t\t" + line
                 continue
-            if field.showname:
-                field_repr = field.showname
-            elif field.show:
-                field_repr = field.show
-            else:
+
+            field_repr = self._get_field_repr(field)
+            if not field_repr:
                 continue
             yield '\t' + field_repr + os.linesep
+
+    def _get_field_repr(self, field):
+        if field.hide:
+            return
+        if field.showname:
+            return field.showname
+        elif field.show:
+            return field.show
+        elif field.raw_value:
+            return "%s: %s" % (self._sanitize_field_name(field.name), field.raw_value)
 
     def get_field_by_showname(self, showname):
         """
@@ -264,3 +171,47 @@ class Layer(Pickleable):
             if field.showname_key == showname:
                 # Return it if "XXX: whatever == XXX"
                 return field
+
+
+class JsonLayer(Layer):
+
+    def __init__(self, layer_name, layer_dict, base_name=None):
+        """
+
+        :param layer_name:
+        :param layer_dict:
+        :param base_name: the name of the prefix for field keys (it isn't the layer name on subtrees)
+        """
+        self.raw_mode = False
+        self._layer_name = layer_name
+        self._base_name = base_name
+        if self._base_name is None:
+            self._base_name = self._layer_name
+        self._all_fields = {}
+        self._wrapped_fields = {}
+
+        if not isinstance(layer_dict, dict):
+            self.value = layer_dict
+            return
+
+        for field_name, value in layer_dict.items():
+            if isinstance(value, dict):
+                self._all_fields[field_name] = JsonLayer(field_name, value,
+                                                         base_name=self._base_name)
+            else:
+                self._all_fields[field_name] = value
+
+    def _sanitize_field_name(self, field_name):
+        return field_name.rsplit('.', 1)[-1]
+
+    def _get_all_fields_with_alternates(self):
+        return list(self._all_fields.values())
+
+    def get_field(self, name):
+        # We only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
+        field = self._wrapped_fields.get(name)
+        if field is None:
+            field = super(JsonLayer, self).get_field(name)
+            field = LayerFieldsContainer(LayerField(name=name, value=field))
+            self._wrapped_fields[name] = field
+        return field

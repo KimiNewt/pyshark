@@ -41,18 +41,3 @@ def _packet_from_pdml_packet(pdml_packet):
                   length=geninfo.get_field_value('len'), sniff_time=geninfo.get_field_value('timestamp', raw=True),
                   captured_length=geninfo.get_field_value('caplen'),
                   interface_captured=frame.get_field_value('interface_id', raw=True))
-
-
-
-def packets_from_xml(xml_data):
-    """
-    Returns a list of Packet objects from a TShark XML.
-
-    :param xml_data: str containing the XML.
-    """
-    pdml = lxml.objectify.fromstring(xml_data)
-    packets = []
-
-    for xml_pkt in pdml.getchildren():
-        packets += [packet_from_xml_packet(xml_pkt)]
-    return packets

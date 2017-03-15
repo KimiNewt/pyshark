@@ -8,7 +8,9 @@ from trollius import From, subprocess, Return
 from trollius.executor import TimeoutError
 from trollius.py33_exceptions import ProcessLookupError
 
-from pyshark.tshark.tshark import get_tshark_path, get_tshark_display_filter_flag
+from pyshark.tshark.tshark import get_tshark_path, get_tshark_display_filter_flag, \
+    tshark_supports_json, TSharkVersionException
+from pyshark.tshark.tshark_json import packet_from_json_packet
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
 
@@ -39,7 +41,7 @@ class Capture(object):
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
-                 override_prefs=None, capture_filter=None):
+                 override_prefs=None, capture_filter=None, use_json=False):
         self._packets = []
         self.current_packet = 0
         self.display_filter = display_filter
@@ -54,6 +56,7 @@ class Capture(object):
         self.tshark_path = tshark_path
         self.override_prefs = override_prefs
         self.debug = False
+        self.use_json = use_json
 
         self.eventloop = eventloop
         if self.eventloop is None:
@@ -145,6 +148,24 @@ class Capture(object):
         asyncio.set_event_loop(self.eventloop)
 
     @staticmethod
+    def _extract_packet_json_from_data(data, got_first_packet=True):
+        tag_start = 0
+        if not got_first_packet:
+            tag_start = data.find(b"{")
+            if tag_start == -1:
+                return None, data
+        closing_tag = b"}\n\n  ,"
+        tag_end = data.find(closing_tag)
+        if tag_end == -1:
+            closing_tag = b"}\n\n]"
+            tag_end = data.find(closing_tag)
+        if tag_end != -1:
+            # Include closing parenthesis but not comma
+            tag_end += len(closing_tag) - 1
+            return data[tag_start:tag_end], data[tag_end + 1:]
+        return None, data
+
+    @staticmethod
     def _extract_tag_from_data(data, tag_name=b'packet'):
         """
         Gets data containing a (part of) tshark xml.
@@ -181,7 +202,9 @@ class Capture(object):
             while True:
                 try:
                     packet, data = self.eventloop.run_until_complete(
-                        self._get_packet_from_stream(tshark_process.stdout, data, psml_structure=psml_structure))
+                        self._get_packet_from_stream(tshark_process.stdout, data, psml_structure=psml_structure,
+                                                     got_first_packet=packets_captured > 0))
+
                 except EOFError:
                     self.log.debug('EOF reached (sync)')
                     break
@@ -239,10 +262,11 @@ class Capture(object):
         self.log.debug('Starting to go through packets')
 
         psml_struct, data = yield From(self._get_psml_struct(fd))
-
         while True:
             try:
-                packet, data = yield From(self._get_packet_from_stream(fd, data, psml_structure=psml_struct))
+                packet, data = yield From(self._get_packet_from_stream(fd, data,
+                                                                       got_first_packet=packets_captured > 0,
+                                                                       psml_structure=psml_struct))
             except EOFError:
                 self.log.debug('EOF reached')
                 break
@@ -284,19 +308,26 @@ class Capture(object):
             raise Return(None, data)
 
     @asyncio.coroutine
-    def _get_packet_from_stream(self, stream, existing_data, psml_structure=None):
+    def _get_packet_from_stream(self, stream, existing_data, got_first_packet=True,
+                                psml_structure=None):
         """
         A coroutine which returns a single packet if it can be read from the given StreamReader.
         :return a tuple of (packet, remaining_data). The packet will be None if there was not enough XML data to create
         a packet. remaining_data is the leftover data which was not enough to create a packet from.
         :raises EOFError if EOF was reached.
         """
-        #yield each packet in existing_data
-        #Maybe there is already a packet in our buffer
-        packet, existing_data = self._extract_tag_from_data(existing_data)
+        # yield each packet in existing_data
+        if self.use_json:
+            packet, existing_data = self._extract_packet_json_from_data(existing_data,
+                                                                        got_first_packet=got_first_packet)
+        else:
+            packet, existing_data = self._extract_tag_from_data(existing_data)
 
         if packet:
-            packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
+            if self.use_json:
+                packet = packet_from_json_packet(packet)
+            else:
+                packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
             raise Return(packet, existing_data)
 
         new_data = yield From(stream.read(self.DEFAULT_BATCH_SIZE))
@@ -312,17 +343,23 @@ class Capture(object):
         """
         Returns a new tshark process with previously-set parameters.
         """
-        xml_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(self.tshark_path), '-l', '-n', '-T', xml_type] + self.get_parameters(packet_count=packet_count)
+        if self.use_json:
+            output_type = 'json'
+            if not tshark_supports_json():
+                raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
+        else:
+            output_type = 'psml' if self.only_summaries else 'pdml'
+        parameters = [get_tshark_path(self.tshark_path), '-l', '-n', '-T', output_type] + \
+                     self.get_parameters(packet_count=packet_count)
 
         self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
 
         # Ignore stderr output unless in debug mode (sent to console)
         output = None if self.debug else open(os.devnull, "w")
         tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,
-                                                                    stdout=subprocess.PIPE,
-                                                                    stderr=output,
-                                                                    stdin=stdin))
+                                                                   stdout=subprocess.PIPE,
+                                                                   stderr=output,
+                                                                   stdin=stdin))
         self.log.debug('TShark subprocess created')
 
         if tshark_process.returncode is not None and tshark_process.returncode != 0:

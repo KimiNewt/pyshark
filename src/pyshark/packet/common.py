@@ -8,3 +8,17 @@ class Pickleable(object):
 
     def __setstate__(self, data):
         self.__dict__.update(data)
+
+
+class SlotsPickleable(object):
+    __slots__ = []
+
+    def __getstate__(self):
+        ret = {}
+        for slot in self.__slots__:
+            ret[slot] = getattr(self, slot)
+        return ret
+
+    def __setstate__(self, data):
+        for key, val in data.iteritems():
+            setattr(self, key, val)

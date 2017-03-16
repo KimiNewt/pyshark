@@ -1,9 +1,9 @@
 import binascii
 
-from pyshark.packet.common import Pickleable
+from pyshark.packet.common import Pickleable, SlotsPickleable
 
 
-class LayerField(object):
+class LayerField(SlotsPickleable):
     """
     Holds all data about a field of a layer, both its actual value and its name and nice representation.
     """
@@ -51,16 +51,6 @@ class LayerField(object):
     def showname_key(self):
         if self.showname and ': ' in self.showname:
             return self.showname.split(': ')[0]
-
-    def __getstate__(self):
-        ret = {}
-        for slot in self.__slots__:
-            ret[slot] = getattr(self, slot)
-        return ret
-
-    def __setstate__(self, data):
-        for key, val in data.iteritems():
-            setattr(self, key, val)
 
     @property
     def binary_value(self):

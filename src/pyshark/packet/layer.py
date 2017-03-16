@@ -1,9 +1,7 @@
 import operator
 import os
 
-import cachetools
 import py
-from cachetools import cachedmethod
 
 from pyshark.packet.common import Pickleable
 from pyshark.packet.fields import LayerField, LayerFieldsContainer
@@ -11,7 +9,7 @@ from pyshark.packet.fields import LayerField, LayerFieldsContainer
 
 class Layer(Pickleable):
     """
-    An object representing a Packet layer.
+    An object reJpresenting a Packet layer.
     """
     DATA_LAYER = 'data'
 
@@ -48,6 +46,11 @@ class Layer(Pickleable):
         """
         Gets the XML field object of the given name.
         """
+        # Quicker in case the exact name was used.
+        field = self._all_fields.get(name)
+        if field is not None:
+            return field
+
         for field_name, field in self._all_fields.items():
             if self._sanitize_field_name(name) == self._sanitize_field_name(field_name):
                 return field
@@ -141,7 +144,7 @@ class Layer(Pickleable):
                 yield "\t" + field.layer_name + ":" + os.linesep
                 for line in field._get_all_field_lines():
                     # Python2.7
-                    yield "\t\t" + line
+                    yield "\t" + line
                 continue
 
             field_repr = self._get_field_repr(field)
@@ -174,44 +177,37 @@ class Layer(Pickleable):
 
 
 class JsonLayer(Layer):
+    raw_mode = False
 
-    def __init__(self, layer_name, layer_dict, base_name=None):
+    def __init__(self, layer_name, layer_dict):
         """
+        Creates a JsonLayer and under sublayers redursively.
 
-        :param layer_name:
-        :param layer_dict:
         :param base_name: the name of the prefix for field keys (it isn't the layer name on subtrees)
         """
-        self.raw_mode = False
         self._layer_name = layer_name
-        self._base_name = base_name
-        if self._base_name is None:
-            self._base_name = self._layer_name
-        self._all_fields = {}
         self._wrapped_fields = {}
-
         if not isinstance(layer_dict, dict):
             self.value = layer_dict
+            self._all_fields = {}
             return
 
-        for field_name, value in layer_dict.items():
-            if isinstance(value, dict):
-                self._all_fields[field_name] = JsonLayer(field_name, value,
-                                                         base_name=self._base_name)
-            else:
-                self._all_fields[field_name] = value
+        self._all_fields = layer_dict
 
     def _sanitize_field_name(self, field_name):
         return field_name.rsplit('.', 1)[-1]
 
     def _get_all_fields_with_alternates(self):
-        return list(self._all_fields.values())
+        return [self.get_field(name) for name in self.field_names]
 
     def get_field(self, name):
         # We only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
         field = self._wrapped_fields.get(name)
         if field is None:
             field = super(JsonLayer, self).get_field(name)
-            field = LayerFieldsContainer(LayerField(name=name, value=field))
+            if isinstance(field, dict):
+                field = JsonLayer(name, field)
+            else:
+                field = LayerFieldsContainer(LayerField(name=name, value=field))
             self._wrapped_fields[name] = field
         return field

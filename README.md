@@ -1,4 +1,4 @@
-#pyshark
+# pyshark
 
 [![Build Status](https://travis-ci.org/KimiNewt/pyshark.svg)](https://travis-ci.org/KimiNewt/pyshark)
 
@@ -13,9 +13,9 @@ There are quite a few python packet parsing modules, this one is different becau
 This package allows parsing from a capture file or a live capture, using all wireshark dissectors you have installed.
 Tested on windows/linux.
 
-##Installation
+## Installation
 
-###All Platforms
+### All Platforms
 Simply run the following to install the latest from pypi
 ```bash
 pip install pyshark
@@ -29,7 +29,7 @@ python setup.py install
 ```
 
 
-###Mac OS X
+### Mac OS X
 You may have to install libxml which can be unexpected.  If you receive an error from clang or an error message about libxml, run the following:
 ```bash
 xcode-select --install
@@ -39,9 +39,9 @@ You will probably have to accept a EULA for XCode so be ready to click an "Accep
 
 
 
-##Usage
+## Usage
 
-###Reading from a capture file:
+### Reading from a capture file:
 
 ```python
 >>> import pyshark
@@ -86,7 +86,7 @@ very little information
 be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK.
 * **param tshark_path**: Path of the tshark binary
 
-###Reading from a live interface:
+### Reading from a live interface:
 
 ```python
 >>> capture = pyshark.LiveCapture(interface='eth0')
@@ -115,7 +115,7 @@ includes very little information
 * **param tshark_path**: Path of the tshark binary
 * **param output_file**: Additionally save captured packets to this file.
 
-###Reading from a live interface using a ring buffer
+### Reading from a live interface using a ring buffer
 ```python
 >>> capture = pyshark.LiveRingCapture(interface='eth0')
 >>> capture.sniff(timeout=50)
@@ -145,7 +145,7 @@ includes very little information
 * **param tshark_path**: Path of the tshark binary
 * **param output_file**: Additionally save captured packets to this file.
 
-###Reading from a live remote interface:
+### Reading from a live remote interface:
 
 ```python
 >>> capture = pyshark.RemoteCapture('192.168.1.101', 'eth0')
@@ -171,7 +171,7 @@ includes very little information
 (must be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK).
 * **param tshark_path**: Path of the tshark binary
 
-###Accessing packet data:
+### Accessing packet data:
 
 Data can be accessed in multiple ways.
 Packets are divided into layers, first you have to reach the appropriate layer and then you can select your field.
@@ -201,7 +201,7 @@ Source or Destination Address: 10.0.0.10 (10.0.0.10)
 ```
 
 
-###Decrypting packet captures
+### Decrypting packet captures
 
 Pyshark supports automatic decryption of traces using the WEP, WPA-PWD, and WPA-PSK standards (WPA-PWD is the default).
 

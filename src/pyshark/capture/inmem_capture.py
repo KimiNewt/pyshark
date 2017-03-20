@@ -20,7 +20,8 @@ class InMemCapture(Capture):
 
     def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
                   decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
-                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False):
+                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False,
+                  linktype=LinkTypes.ETHERNET):
         """
         Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
         Currently opens a new instance of tshark for every packet buffer,
@@ -47,7 +48,7 @@ class InMemCapture(Capture):
                                            use_json=use_json)
         self.bpf_filter = bpf_filter
         self._packets_to_write = None
-        self._current_linktype = None
+        self._current_linktype = linktype
         self._current_tshark = None
 
     def get_parameters(self, packet_count=None):
@@ -75,25 +76,38 @@ class InMemCapture(Capture):
         self._current_tshark.stdin.write(struct.pack("IIII", int(time.time()), 0, len(packet), len(packet)))
         self._current_tshark.stdin.write(packet)
 
-    def parse_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
+    def parse_packet(self, binary_packet):
         """
         Parses a single binary packet and returns its parsed version.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
+        Use parse_packets when parsing multiple packets for faster parsing
         """
-        self._current_linktype = linktype
+        return self.parse_packets([binary_packet])[0]
+
+    def parse_packets(self, binary_packets):
+        """
+        Parses binary packets and return a list of parsed packets.
+
+        DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
+        working with it.
+        """
+        parsed_packets = []
+
         if not self._current_tshark:
             self.eventloop.run_until_complete(self._get_tshark_process())
-        packet_future = asyncio.Future()
-        self._write_packet(binary_packet)
+        for binary_packet in binary_packets:
+            self._write_packet(binary_packet)
 
         def callback(pkt):
-            packet_future.set_result(pkt)
-            raise StopCapture()
+            parsed_packets.append(pkt)
+            if len(parsed_packets) == len(binary_packets):
+                raise StopCapture()
 
+        self.eventloop.run_until_complete(self._current_tshark.stdin.drain())
         self.eventloop.run_until_complete(self.packets_from_tshark(callback, close_tshark=False))
-        return packet_future.result()
+        return parsed_packets
 
     def close(self):
         self._current_tshark = None
@@ -114,8 +128,9 @@ class InMemCapture(Capture):
         By default, assumes the packet is an ethernet packet. For another link type, supply the linktype argument (most
         can be found in the class LinkTypes)
         """
-        warnings.warn("Deprecated method. Use InMemCapture.parse_packet() instead")
-        pkt = self.parse_packet(binary_packet, linktype)
+        warnings.warn("Deprecated method. Use InMemCapture.parse_packet() instead.")
+        self._current_linktype = linktype
+        pkt = self.parse_packet(binary_packet)
         self.close()
         self._packets.append(pkt)
         return pkt
@@ -128,9 +143,8 @@ class InMemCapture(Capture):
         By default, assumes the packets are ethernet packets. For another link type, supply the linktype argument (most
         can be found in the class LinkTypes)
         """
-        pkts = []
-        for packet in binary_packets:
-            pkts.append(self.parse_packet(packet, linktype))
-            self._packets.append(packet)
+        self._current_linktype = linktype
+        parsed_packets = self.parse_packets(binary_packets)
+        self._packets.extend(parsed_packets)
         self.close()
-        return pkts
+        return parsed_packets

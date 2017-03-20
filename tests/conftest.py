@@ -15,7 +15,7 @@ def lazy_simple_capture(request, caps_directory):
     """
     cap_path = os.path.join(caps_directory, 'capture_test.pcapng')
     cap = pyshark.FileCapture(cap_path)
-    cap.log.level = logbook.DEBUG
+    cap.set_debug()
 
     def finalizer():
         cap.close()

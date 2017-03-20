@@ -4,6 +4,7 @@ import logbook
 import sys
 
 import trollius as asyncio
+from logbook import StreamHandler
 from trollius import From, subprocess, Return
 from trollius.executor import TimeoutError
 from trollius.py33_exceptions import ProcessLookupError
@@ -52,7 +53,7 @@ class Capture(object):
         self.loaded = False
         self.decode_as = decode_as
         self.disable_protocol = disable_protocol
-        self.log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
+        self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self.tshark_path = tshark_path
         self.override_prefs = override_prefs
         self.debug = False
@@ -129,7 +130,9 @@ class Capture(object):
         """
         Sets the capture to debug mode (or turns it off if specified).
         """
-        self.log.level = logbook.DEBUG
+        if set_to:
+            StreamHandler(sys.stdout).push_application()
+            self._log.level = logbook.DEBUG
         self.debug = set_to
 
     def setup_eventloop(self):
@@ -206,7 +209,7 @@ class Capture(object):
                                                      got_first_packet=packets_captured > 0))
 
                 except EOFError:
-                    self.log.debug('EOF reached (sync)')
+                    self._log.debug('EOF reached (sync)')
                     break
 
                 if packet:
@@ -259,7 +262,7 @@ class Capture(object):
         A coroutine which goes through a stream and calls a given callback for each XML packet seen in it.
         """
         packets_captured = 0
-        self.log.debug('Starting to go through packets')
+        self._log.debug('Starting to go through packets')
 
         psml_struct, data = yield From(self._get_psml_struct(fd))
         while True:
@@ -268,7 +271,7 @@ class Capture(object):
                                                                        got_first_packet=packets_captured > 0,
                                                                        psml_structure=psml_struct))
             except EOFError:
-                self.log.debug('EOF reached')
+                self._log.debug('EOF reached')
                 break
 
             if packet:
@@ -276,7 +279,7 @@ class Capture(object):
                 try:
                     packet_callback(packet)
                 except StopCapture:
-                    self.log.debug('User-initiated capture stop in callback')
+                    self._log.debug('User-initiated capture stop in callback')
                     break
 
             if packet_count and packets_captured >= packet_count:
@@ -352,7 +355,7 @@ class Capture(object):
         parameters = [get_tshark_path(self.tshark_path), '-l', '-n', '-T', output_type] + \
                      self.get_parameters(packet_count=packet_count)
 
-        self.log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
+        self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
 
         # Ignore stderr output unless in debug mode (sent to console)
         output = None if self.debug else open(os.devnull, "w")
@@ -360,7 +363,7 @@ class Capture(object):
                                                                    stdout=subprocess.PIPE,
                                                                    stderr=output,
                                                                    stdin=stdin))
-        self.log.debug('TShark subprocess created')
+        self._log.debug('TShark subprocess created')
 
         if tshark_process.returncode is not None and tshark_process.returncode != 0:
             raise TSharkCrashException(

@@ -13,6 +13,7 @@ from pyshark.config import get_config
 class TSharkNotFoundException(Exception):
     pass
 
+
 class TSharkVersionException(Exception):
     pass
 
@@ -97,6 +98,7 @@ def get_tshark_path(tshark_path=None):
         'Search these paths: {}'.format(possible_paths)
     )
 
+
 def get_tshark_version(tshark_path=None):
     parameters = [get_tshark_path(tshark_path), '-v']
     version_output = check_output(parameters).decode("ascii")
@@ -109,6 +111,12 @@ def get_tshark_version(tshark_path=None):
 
     return version_string
 
+
+def tshark_supports_json(tshark_path=None):
+    tshark_version = get_tshark_version(tshark_path)
+    return LooseVersion(tshark_version) >= LooseVersion("2.2.0")
+
+
 def get_tshark_display_filter_flag(tshark_path=None):
     """
     Returns '-Y' for tshark versions >= 1.10.0 and '-R' for older versions.
@@ -118,6 +126,7 @@ def get_tshark_display_filter_flag(tshark_path=None):
         return '-Y'
     else:
         return '-R'
+
 
 def get_tshark_interfaces(tshark_path=None):
     """

@@ -20,7 +20,7 @@ class InMemCapture(Capture):
 
     def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
                   decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
-                  disable_protocol=None, tshark_path=None, override_prefs=None):
+                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False):
         """
         Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
         Currently opens a new instance of tshark for every packet buffer,
@@ -43,7 +43,8 @@ class InMemCapture(Capture):
         super(InMemCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                            decryption_key=decryption_key, encryption_type=encryption_type,
                                            decode_as=decode_as, disable_protocol=disable_protocol,
-                                           tshark_path=tshark_path, override_prefs=override_prefs)
+                                           tshark_path=tshark_path, override_prefs=override_prefs,
+                                           use_json=use_json)
         self.bpf_filter = bpf_filter
         self._packets_to_write = None
         self._current_linktype = None

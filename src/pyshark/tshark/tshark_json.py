@@ -18,7 +18,7 @@ def packet_from_json_packet(json_pkt):
             layers.append(JsonLayer(layer, layer_dict))
 
     return Packet(layers=layers, frame_info=JsonLayer('frame', frame_dict),
-                  number=int(frame_dict['frame.number']),
+                  number=int(frame_dict.get('frame.number', 0)),
                   length=int(frame_dict['frame.len']),
                   sniff_time=frame_dict['frame.time'],
-                  interface_captured=frame_dict['frame.interface_id'])
+                  interface_captured=frame_dict.get('frame.interface_id'))

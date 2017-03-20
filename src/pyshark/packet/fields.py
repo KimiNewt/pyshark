@@ -64,6 +64,13 @@ class LayerField(SlotsPickleable):
         """
         Returns the raw value of this field (as an integer).
         """
+        return int(self.raw_value)
+
+    @property
+    def hex_value(self):
+        """
+        Returns the raw value of this field (as an integer in base 16).
+        """
         return int(self.raw_value, 16)
 
 

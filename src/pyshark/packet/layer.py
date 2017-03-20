@@ -205,9 +205,26 @@ class JsonLayer(Layer):
         field = self._wrapped_fields.get(name)
         if field is None:
             field = super(JsonLayer, self).get_field(name)
+            if field is None:
+                raise AttributeError("No such field %s" % name)
             if isinstance(field, dict):
                 field = JsonLayer(name, field)
             else:
                 field = LayerFieldsContainer(LayerField(name=name, value=field))
             self._wrapped_fields[name] = field
         return field
+
+    def has_field(self, dotted_name):
+        """
+        Checks whether the layer has the given field name.
+        Can get a dotted name, i.e. layer.sublayer.subsublayer.field
+        """
+        parts = dotted_name.split('.')
+        cur_layer = self
+        for part in parts:
+            if part in cur_layer.field_names:
+                cur_layer = cur_layer.get_field(part)
+            else:
+                return False
+        return True
+

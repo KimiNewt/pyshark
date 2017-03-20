@@ -13,9 +13,12 @@ def packet_from_json_packet(json_pkt):
     frame_dict = pkt_dict['_source']['layers']['frame']
     layers = []
     for layer in frame_dict['frame.protocols'].split(':'):
-        layer_dict = pkt_dict['_source']['layers'].get(layer)
+        layer_dict = pkt_dict['_source']['layers'].pop(layer, None)
         if layer_dict is not None:
             layers.append(JsonLayer(layer, layer_dict))
+    # Add all leftovers
+    for name, layer in pkt_dict['_source']['layers'].items():
+        layers.append(JsonLayer(name, layer))
 
     return Packet(layers=layers, frame_info=JsonLayer('frame', frame_dict),
                   number=int(frame_dict.get('frame.number', 0)),

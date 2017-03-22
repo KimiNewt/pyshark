@@ -255,7 +255,7 @@ class JsonLayer(Layer):
                 return True
         return False
 
-    def _make_wrapped_field(self, name, field, is_fake=False):
+    def _make_wrapped_field(self, name, field, is_fake=False, full_name=None):
         """Creates the field lazily.
 
         If it's a simple field, wraps it in a container that adds extra features.
@@ -263,10 +263,7 @@ class JsonLayer(Layer):
         If it's an intermediate layer, copies over the relevant fields and creates a new layer for
         it.
         """
-        if self._is_intermediate:
-            # Intermediate layer do not include their names in field keys.
-            full_name = self._full_name
-        else:
+        if not full_name:
             full_name = '%s.%s' % (self._full_name, name)
 
         if is_fake:
@@ -279,7 +276,11 @@ class JsonLayer(Layer):
                 full_name = '%s.%s' % (self._full_name, name)
             return JsonLayer(name, field, full_name=full_name, is_intermediate=is_fake)
         elif isinstance(field, list):
-            return [self._make_wrapped_field(name, field_part) for field_part in field]
+            # For whatever reason in list-type object it goes back to using the original parent name
+            return [self._make_wrapped_field(name, field_part,
+                                             full_name=self._full_name.split('.')[0])
+                    for field_part in field]
+
         return LayerFieldsContainer(LayerField(name=name, value=field))
 
     def has_field(self, dotted_name):

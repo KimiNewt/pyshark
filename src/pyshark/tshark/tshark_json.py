@@ -1,16 +1,31 @@
-try:
-    import ujson as json
-except ImportError:
-    import json
+import json
 
 from pyshark.packet.layer import JsonLayer
 from pyshark.packet.packet import Packet
 
 
+def duplicate_object_hook(ordered_pairs):
+    """Warn on duplicate keys."""
+    json_dict = {}
+    for key, val in ordered_pairs:
+        existing_val = json_dict.get(key)
+        if not existing_val:
+            json_dict[key] = val
+        else:
+            if isinstance(existing_val, list):
+                existing_val.append(val)
+            else:
+                json_dict[key] = [existing_val, val]
+
+    return json_dict
+
+
 def packet_from_json_packet(json_pkt):
-    pkt_dict = json.loads(json_pkt)
+    # NOTE: We can use ujson here for ~25% speed-up, however since we can't use hooks in ujson
+    # we lose the ability to view duplicates. This might still be a good option later on.
+    pkt_dict = json.loads(json_pkt.decode('utf-8'), object_pairs_hook=duplicate_object_hook)
     # We use the frame dict here and not the object access because it's faster.
-    frame_dict = pkt_dict['_source']['layers']['frame']
+    frame_dict = pkt_dict['_source']['layers'].pop('frame')
     layers = []
     for layer in frame_dict['frame.protocols'].split(':'):
         layer_dict = pkt_dict['_source']['layers'].pop(layer, None)

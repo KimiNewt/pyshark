@@ -1,4 +1,3 @@
-import operator
 import os
 
 import py
@@ -140,17 +139,24 @@ class Layer(Pickleable):
         Returns all lines that represent the fields of the layer (both their names and values).
         """
         for field in self._get_all_fields_with_alternates():
-            if isinstance(field, Layer):
-                yield "\t" + field.layer_name + ":" + os.linesep
-                for line in field._get_all_field_lines():
-                    # Python2.7
-                    yield "\t" + line
-                continue
+            # Change to yield from
+            for line in self._get_field_or_layer_repr(field):
+                yield line
 
+    def _get_field_or_layer_repr(self, field):
+        if isinstance(field, Layer):
+            yield "\t" + field.layer_name + ":" + os.linesep
+            for line in field._get_all_field_lines():
+                # Python2.7 (no yield from)
+                yield "\t" + line
+        elif isinstance(field, list):
+            for subfield_or_layer in field:
+                for line in self._get_field_or_layer_repr(subfield_or_layer):
+                    yield line
+        else:
             field_repr = self._get_field_repr(field)
-            if not field_repr:
-                continue
-            yield '\t' + field_repr + os.linesep
+            if field_repr:
+                yield '\t' + field_repr + os.linesep
 
     def _get_field_repr(self, field):
         if field.hide:
@@ -179,13 +185,14 @@ class Layer(Pickleable):
 class JsonLayer(Layer):
     raw_mode = False
 
-    def __init__(self, layer_name, layer_dict):
-        """
-        Creates a JsonLayer and under sublayers redursively.
-
-        :param base_name: the name of the prefix for field keys (it isn't the layer name on subtrees)
-        """
+    def __init__(self, layer_name, layer_dict, full_name=None, is_intermediate=False):
+        """Creates a JsonLayer. All sublayers and fields are created lazily later."""
         self._layer_name = layer_name
+        if not full_name:
+            self._full_name = self._layer_name
+        else:
+            self._full_name = full_name
+        self._is_intermediate = is_intermediate
         self._wrapped_fields = {}
         if not isinstance(layer_dict, dict):
             self.value = layer_dict
@@ -195,24 +202,85 @@ class JsonLayer(Layer):
         self._all_fields = layer_dict
 
     def _sanitize_field_name(self, field_name):
-        return field_name.rsplit('.', 1)[-1]
+        return field_name.replace(self._full_name + '.', '')
+
+    @property
+    def field_names(self):
+        return list(set([self._sanitize_field_name(name) for name in self._all_fields
+                         if name.startswith(self._full_name)] +
+                        [name.rsplit('.', 1)[1] for name in self._all_fields]))
 
     def _get_all_fields_with_alternates(self):
         return [self.get_field(name) for name in self.field_names]
 
     def get_field(self, name):
+        """Gets a field by its full or partial name."""
         # We only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
         field = self._wrapped_fields.get(name)
         if field is None:
-            field = super(JsonLayer, self).get_field(name)
+            is_fake = False
+            field = self._get_internal_field_by_name(name)
             if field is None:
-                raise AttributeError("No such field %s" % name)
-            if isinstance(field, dict):
-                field = JsonLayer(name, field)
-            else:
-                field = LayerFieldsContainer(LayerField(name=name, value=field))
+                # Might be a "fake" field in JSON
+                is_fake = self._is_fake_field(name)
+                if not is_fake:
+                    raise AttributeError("No such field %s" % name)
+            field = self._make_wrapped_field(name, field, is_fake=is_fake)
             self._wrapped_fields[name] = field
         return field
+
+    def _get_internal_field_by_name(self, name):
+        """Gets the field by name, or None if not found."""
+        field = self._all_fields.get(name, self._all_fields.get('%s.%s' % (self._full_name, name)))
+        if field is not None:
+            return field
+        for field_name in self._all_fields:
+            # Specific name
+            if field_name.endswith('.%s' % name):
+                return self._all_fields[field_name]
+
+    def _is_fake_field(self, name):
+        # Some fields include parts that are not reflected in the JSON dictionary
+        # i.e. a possible json is:
+        # {
+        #   foo: {
+        #           foo.bar.baz: {
+        #                   foo.baz: 3
+        #               }
+        # }
+        # So in this case we must create a fake layer for "bar".
+        field_full_name = '%s.%s.' % (self._full_name, name)
+        for name, field in self._all_fields.items():
+            if name.startswith(field_full_name):
+                return True
+        return False
+
+    def _make_wrapped_field(self, name, field, is_fake=False):
+        """Creates the field lazily.
+
+        If it's a simple field, wraps it in a container that adds extra features.
+        If it's a nested layer, creates a layer for it.
+        If it's an intermediate layer, copies over the relevant fields and creates a new layer for
+        it.
+        """
+        if self._is_intermediate:
+            # Intermediate layer do not include their names in field keys.
+            full_name = self._full_name
+        else:
+            full_name = '%s.%s' % (self._full_name, name)
+
+        if is_fake:
+            # Populate with all fields that are supposed to be inside of it
+            field = {key: value for key, value in self._all_fields.items()
+                     if key.startswith(full_name)}
+        if isinstance(field, dict):
+            if name.endswith('_tree'):
+                name = name.replace('_tree', '')
+                full_name = '%s.%s' % (self._full_name, name)
+            return JsonLayer(name, field, full_name=full_name, is_intermediate=is_fake)
+        elif isinstance(field, list):
+            return [self._make_wrapped_field(name, field_part) for field_part in field]
+        return LayerFieldsContainer(LayerField(name=name, value=field))
 
     def has_field(self, dotted_name):
         """

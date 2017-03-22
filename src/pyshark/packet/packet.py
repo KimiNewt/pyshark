@@ -107,7 +107,7 @@ class Packet(Pickleable):
         for layer in self.layers:
             if layer.layer_name == item:
                 return layer
-        raise AttributeError()
+        raise AttributeError("No attribute named %s" % item)
 
     @property
     def highest_layer(self):

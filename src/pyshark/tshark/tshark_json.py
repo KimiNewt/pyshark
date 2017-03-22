@@ -5,7 +5,7 @@ from pyshark.packet.packet import Packet
 
 
 def duplicate_object_hook(ordered_pairs):
-    """Warn on duplicate keys."""
+    """Make lists out of duplicate keys."""
     json_dict = {}
     for key, val in ordered_pairs:
         existing_val = json_dict.get(key)

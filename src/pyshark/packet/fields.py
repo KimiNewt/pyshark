@@ -55,23 +55,26 @@ class LayerField(SlotsPickleable):
     @property
     def binary_value(self):
         """
-        Returns the raw value of this field (as a binary string)
+        Converts this field to binary (assuming it's a binary string)
         """
         return binascii.unhexlify(self.raw_value)
 
     @property
     def int_value(self):
         """
-        Returns the raw value of this field (as an integer).
+        Returns the int value of this field (assuming it's an integer integer).
         """
         return int(self.raw_value)
 
     @property
     def hex_value(self):
         """
-        Returns the raw value of this field (as an integer in base 16).
+        Returns the int value of this field if it's in base 16 (either as a normal number or in
+        a "0xFFFF"-style hex value)
         """
         return int(self.raw_value, 16)
+
+    base16_value = hex_value
 
 
 class LayerFieldsContainer(str, Pickleable):

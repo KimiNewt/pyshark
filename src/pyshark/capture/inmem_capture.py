@@ -7,6 +7,8 @@ from trollius import subprocess, From, Return
 
 from pyshark.capture.capture import Capture, StopCapture
 
+DEFAULT_TIMEOUT = 30
+
 
 class LinkTypes(object):
     NULL = 0
@@ -93,6 +95,9 @@ class InMemCapture(Capture):
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         """
+        if not binary_packets:
+            raise ValueError("Must supply at least one packet")
+        # TODO: Test no packets given for timeout then disable
         parsed_packets = []
 
         if not self._current_tshark:
@@ -105,9 +110,20 @@ class InMemCapture(Capture):
             if len(parsed_packets) == len(binary_packets):
                 raise StopCapture()
 
-        self.eventloop.run_until_complete(self._current_tshark.stdin.drain())
-        self.eventloop.run_until_complete(self.packets_from_tshark(callback, close_tshark=False))
+        self.eventloop.run_until_complete(self._get_parsed_packet_from_tshark(callback))
         return parsed_packets
+
+    @asyncio.coroutine
+    def _get_parsed_packet_from_tshark(self, callback):
+        yield From(self._current_tshark.stdin.drain())
+        try:
+            yield From(asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False),
+                                       DEFAULT_TIMEOUT))
+        except asyncio.TimeoutError:
+            self.close()
+            raise asyncio.TimeoutError("Timed out while waiting for tshark to parse packet. "
+                                       "Try rerunning with cap.set_debug() to see tshark errors. "
+                                       "Closing tshark..")
 
     def close(self):
         self._current_tshark = None

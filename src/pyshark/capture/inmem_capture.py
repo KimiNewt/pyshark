@@ -19,6 +19,7 @@ class LinkTypes(object):
 
 
 class InMemCapture(Capture):
+    JSON_SEPARATOR = b"}\n\n"
 
     def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
                   decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
@@ -97,7 +98,6 @@ class InMemCapture(Capture):
         """
         if not binary_packets:
             raise ValueError("Must supply at least one packet")
-        # TODO: Test no packets given for timeout then disable
         parsed_packets = []
 
         if not self._current_tshark:

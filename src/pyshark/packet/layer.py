@@ -38,6 +38,15 @@ class Layer(Pickleable):
             return val.raw_value
         return val
 
+    def get(self, item, default=None):
+        """
+        Works the same way as getattr, but returns the given default if not the field was not found
+        """
+        try:
+            return getattr(self, item)
+        except AttributeError:
+            return default
+
     def __dir__(self):
         return dir(type(self)) + list(self.__dict__.keys()) + self.field_names
 
@@ -208,7 +217,7 @@ class JsonLayer(Layer):
     def field_names(self):
         return list(set([self._sanitize_field_name(name) for name in self._all_fields
                          if name.startswith(self._full_name)] +
-                        [name.rsplit('.', 1)[1] for name in self._all_fields]))
+                        [name.rsplit('.', 1)[1] for name in self._all_fields if '.' in name]))
 
     def _get_all_fields_with_alternates(self):
         return [self.get_field(name) for name in self.field_names]

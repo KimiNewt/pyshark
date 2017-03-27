@@ -45,12 +45,12 @@ class LayerField(SlotsPickleable):
         For fields which do not contain a normal value, we attempt to take their value from the showname.
         """
         if self.showname and ': ' in self.showname:
-            return self.showname.split(': ')[1]
+            return self.showname.split(': ', 1)[1]
 
     @property
     def showname_key(self):
         if self.showname and ': ' in self.showname:
-            return self.showname.split(': ')[0]
+            return self.showname.split(': ', 1)[0]
 
     @property
     def binary_value(self):

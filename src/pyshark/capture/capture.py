@@ -349,7 +349,7 @@ class Capture(object):
         """
         if self.use_json:
             output_type = 'json'
-            if not tshark_supports_json():
+            if not tshark_supports_json(self.tshark_path):
                 raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
         else:
             output_type = 'psml' if self.only_summaries else 'pdml'

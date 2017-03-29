@@ -41,7 +41,7 @@ Reading from a capture file:
             Destination: BLANKED
       ...
 
-  
+
 Reading from a live interface:
 ------------------------------
 
@@ -71,7 +71,7 @@ Infinite reading from a live interface with capture filter:
 Accessing packet data:
 ----------------------
 
-Data can be accessed in multiple ways. 
+Data can be accessed in multiple ways.
 Packets are divided into layers, first you have to reach the appropriate layer and then you can select your field.
 
 All of the following work::
@@ -82,4 +82,3 @@ All of the following work::
     >>> 192.168.0.100
     packet[2].src
     >>> 192.168.0.100
-

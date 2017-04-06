@@ -85,7 +85,10 @@ class LayerFieldsContainer(str, Pickleable):
     """
 
     def __new__(cls, main_field, *args, **kwargs):
-        obj = str.__new__(cls, main_field.get_default_value(), *args, **kwargs)
+        value = main_field.get_default_value()
+        if value is None:
+            value = ''
+        obj = str.__new__(cls, value, *args, **kwargs)
         obj.fields = [main_field]
         return obj
 

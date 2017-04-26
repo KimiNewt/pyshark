@@ -13,7 +13,5 @@ before_install:
   - pip install --upgrade pip
 script:
   - pip install -r requirements.txt
-  - cd src/
   - python setup.py install
-  - cd ../tests
-  - py.test
+  - pytest tests

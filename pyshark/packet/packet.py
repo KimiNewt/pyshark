@@ -125,4 +125,4 @@ class Packet(Pickleable):
         This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLAN) which cannot be
         retrieved by easier means.
         """
-        return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]   
+        return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]

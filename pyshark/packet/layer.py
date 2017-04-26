@@ -89,7 +89,7 @@ class Layer(Pickleable):
         if self.layer_name == 'geninfo':
             return ''
         return self.layer_name + '.'
-        
+
     @property
     def field_names(self):
         """
@@ -305,4 +305,3 @@ class JsonLayer(Layer):
             else:
                 return False
         return True
-

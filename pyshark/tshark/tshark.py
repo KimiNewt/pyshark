@@ -42,7 +42,7 @@ def check_output(*popenargs, **kwargs):
     'ls: non_existent_file: No such file or directory\n'
     """
     #if sys.version_info.major > 2 or sys.version_info.minor >= 7:
-    #    return subprocess.check_output(*popenargs, **kwargs) 
+    #    return subprocess.check_output(*popenargs, **kwargs)
 
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
@@ -135,5 +135,5 @@ def get_tshark_interfaces(tshark_path=None):
     """
     parameters = [get_tshark_path(tshark_path), '-D']
     tshark_interfaces = check_output(parameters).decode("ascii")
-    
+
     return [line.split('.')[0] for line in tshark_interfaces.splitlines()]

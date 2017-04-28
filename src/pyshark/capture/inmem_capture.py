@@ -1,3 +1,4 @@
+import os
 import struct
 import time
 import warnings
@@ -19,7 +20,6 @@ class LinkTypes(object):
 
 
 class InMemCapture(Capture):
-    JSON_SEPARATOR = b"}\n\n"
 
     def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
                   decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
@@ -73,6 +73,10 @@ class InMemCapture(Capture):
         header = struct.pack("IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 0x7fff, self._current_linktype)
         proc.stdin.write(header)
         raise Return(proc)
+
+    @classmethod
+    def _get_json_separator(cls):
+        return b"}%s%s" % (os.linesep.encode(), os.linesep.encode())
 
     def _write_packet(self, packet):
         # Write packet header

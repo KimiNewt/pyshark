@@ -96,7 +96,6 @@ class Packet(Pickleable):
         return 'Packet (Length: %s)%s' %(self.length, os.linesep)
 
     def pretty_print(self):
-        print('self._packet_string')
         for layer in self.layers:
             layer.pretty_print()
 

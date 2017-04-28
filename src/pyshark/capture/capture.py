@@ -34,7 +34,6 @@ class Capture(object):
     """
     Base class for packet captures.
     """
-    JSON_SEPARATOR = b"}\n\n  ,"
     DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logbook.CRITICAL
@@ -152,16 +151,20 @@ class Capture(object):
         asyncio.set_event_loop(self.eventloop)
 
     @classmethod
+    def _get_json_separator(cls):
+        return b"}%s%s  ," % (os.linesep.encode(), os.linesep.encode())
+
+    @classmethod
     def _extract_packet_json_from_data(cls, data, got_first_packet=True):
         tag_start = 0
         if not got_first_packet:
             tag_start = data.find(b"{")
             if tag_start == -1:
                 return None, data
-        closing_tag = cls.JSON_SEPARATOR
+        closing_tag = cls._get_json_separator()
         tag_end = data.find(closing_tag)
         if tag_end == -1:
-            closing_tag = b"}\n\n]"
+            closing_tag = b"}%b%b]" % (os.linesep.encode(), os.linesep.encode())
             tag_end = data.find(closing_tag)
         if tag_end != -1:
             # Include closing parenthesis but not comma

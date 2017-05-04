@@ -44,7 +44,7 @@ class FileCapture(Capture):
         if not isinstance(input_file, basestring):
             self.input_filename = input_file.name
         if not os.path.exists(self.input_filename):
-            raise Exception('File not found: ' + str(self.input_filename))
+            raise FileNotFoundError(str(self.input_filename))
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
 

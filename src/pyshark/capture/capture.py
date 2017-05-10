@@ -164,7 +164,7 @@ class Capture(object):
         closing_tag = cls._get_json_separator()
         tag_end = data.find(closing_tag)
         if tag_end == -1:
-            closing_tag = ("}%b%b]" % (os.linesep, os.linesep)).encode()
+            closing_tag = ("}%s%s]" % (os.linesep, os.linesep)).encode()
             tag_end = data.find(closing_tag)
         if tag_end != -1:
             # Include closing parenthesis but not comma

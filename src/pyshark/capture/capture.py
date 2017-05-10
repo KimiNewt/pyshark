@@ -152,7 +152,7 @@ class Capture(object):
 
     @classmethod
     def _get_json_separator(cls):
-        return b"}%s%s  ," % (os.linesep.encode(), os.linesep.encode())
+        return ("}%s%s  ," % (os.linesep, os.linesep)).encode()
 
     @classmethod
     def _extract_packet_json_from_data(cls, data, got_first_packet=True):
@@ -164,7 +164,7 @@ class Capture(object):
         closing_tag = cls._get_json_separator()
         tag_end = data.find(closing_tag)
         if tag_end == -1:
-            closing_tag = b"}%b%b]" % (os.linesep.encode(), os.linesep.encode())
+            closing_tag = ("}%b%b]" % (os.linesep, os.linesep)).encode()
             tag_end = data.find(closing_tag)
         if tag_end != -1:
             # Include closing parenthesis but not comma

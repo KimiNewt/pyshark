@@ -76,7 +76,7 @@ class InMemCapture(Capture):
 
     @classmethod
     def _get_json_separator(cls):
-        return b"}%s%s" % (os.linesep.encode(), os.linesep.encode())
+        return ("}%s%s" % (os.linesep, os.linesep)).encode()
 
     def _write_packet(self, packet):
         # Write packet header

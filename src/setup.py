@@ -6,10 +6,10 @@ with open(os.path.join(os.path.dirname(__file__), 'README.txt')) as f:
 
 setup(
     name="pyshark",
-    version="0.3.7.5",
+    version="0.3.7.6",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
-    # Temporarily using trollis 1.0.4 until issue https://github.com/haypo/trollius/issues/4 is resolved.
+    # Temporarily using trollius 1.0.4 until issue https://github.com/haypo/trollius/issues/4 is resolved.
     install_requires=['lxml', 'py', 'trollius==1.0.4', 'logbook'],
     tests_require=['mock', 'pytest'],
     url="https://github.com/KimiNewt/pyshark",

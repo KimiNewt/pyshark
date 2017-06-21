@@ -131,7 +131,7 @@ class InMemCapture(Capture):
 
     def close(self):
         self._current_tshark = None
-        super(InMemCapture, self).close()
+        self._close_async()
 
     def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
         """

@@ -222,7 +222,7 @@ class Capture(object):
                 if packet_count and packets_captured >= packet_count:
                     break
         finally:
-            self._cleanup_subprocess(tshark_process)
+            self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
 
     def apply_on_packets(self, callback, timeout=None):
         """
@@ -258,7 +258,7 @@ class Capture(object):
             pass
         finally:
             if close_tshark:
-                self._cleanup_subprocess(tshark_process)
+                yield From(self._cleanup_subprocess(tshark_process))
 
     @asyncio.coroutine
     def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
@@ -375,6 +375,7 @@ class Capture(object):
         self.running_processes.add(tshark_process)
         raise Return(tshark_process)
 
+    @asyncio.coroutine
     def _cleanup_subprocess(self, process):
         """
         Kill the given process and properly closes any pipes connected to it.
@@ -382,6 +383,7 @@ class Capture(object):
         if process.returncode is None:
             try:
                 process.kill()
+                yield process.wait()
             except ProcessLookupError:
                 pass
             except OSError:
@@ -391,8 +393,12 @@ class Capture(object):
             raise TSharkCrashException('TShark seems to have crashed (retcode: %d). Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.' % process.returncode)
 
     def close(self):
+        self.eventloop.run_until_complete(self._close_async())
+
+    @asyncio.coroutine
+    def _close_async(self):
         for process in self.running_processes:
-            self._cleanup_subprocess(process)
+            yield From(self._cleanup_subprocess(process))
 
     def __del__(self):
         self.close()

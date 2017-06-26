@@ -383,7 +383,9 @@ class Capture(object):
         if process.returncode is None:
             try:
                 process.kill()
-                yield process.wait()
+                yield asyncio.wait_for(process.wait(), 1)
+            except TimeoutError:
+                self._log.debug('Waiting for process to close failed, may have zombie process.')
             except ProcessLookupError:
                 pass
             except OSError:
@@ -399,9 +401,11 @@ class Capture(object):
     def _close_async(self):
         for process in self.running_processes:
             yield From(self._cleanup_subprocess(process))
+        self.running_processes.clear()
 
     def __del__(self):
-        self.close()
+        if self.running_processes:
+            self.close()
 
     def get_parameters(self, packet_count=None):
         """

@@ -4,14 +4,14 @@ from pyshark.tshark.tshark import (
     get_tshark_display_filter_flag,
     get_tshark_interfaces,
     get_tshark_version,
-    get_tshark_path,
+    get_process_path,
 )
 
 
 @mock.patch('os.path.exists', autospec=True)
 def test_get_tshark_path(mock_exists):
     mock_exists.return_value = True
-    actual = get_tshark_path("/some/path/tshark")
+    actual = get_process_path("/some/path/tshark")
     expected = "/some/path/tshark"
     assert actual == expected
 

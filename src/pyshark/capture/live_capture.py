@@ -1,5 +1,10 @@
+import os
+
+import trollius as asyncio
+from trollius import From, Return
+
 from pyshark.capture.capture import Capture
-from pyshark.tshark.tshark import get_tshark_interfaces
+from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path
 import sys
 
 # Define basestring as str if we're in python3.
@@ -59,6 +64,13 @@ class LiveCapture(Capture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
+        # Read from STDIN
+        params += ['-i', '-']
+        return params
+
+    def _get_dumpcap_parameters(self):
+        # Don't report packet counts, use pcap format
+        params = ["-q", "-P"]
         if self.bpf_filter:
             params += ['-f', self.bpf_filter]
         if self.monitor_mode:
@@ -66,8 +78,21 @@ class LiveCapture(Capture):
         else:
             for interface in self.interfaces:
                 params += ['-i', interface]
-
+        # Write to STDOUT
+        params += ["-w", "-"]
         return params
+
+    @asyncio.coroutine
+    def _get_tshark_process(self, packet_count=None, stdin=None):
+        read, write = os.pipe()
+
+        dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
+        dumpcap_process = yield From(asyncio.create_subprocess_exec(*dumpcap_params, stdout=write))
+        self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
+
+        tshark = yield From(
+            super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=read))
+        raise Return(tshark)
 
     # Backwards compatibility
     sniff = Capture.load_packets

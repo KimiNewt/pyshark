@@ -27,8 +27,7 @@ class InMemCapture(Capture):
                   linktype=LinkTypes.ETHERNET):
         """
         Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
-        Currently opens a new instance of tshark for every packet buffer,
-        so it is very slow -- try inserting more than one packet at a time if possible.
+        Significantly faster if packets are added in a batch.
 
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.
@@ -59,7 +58,7 @@ class InMemCapture(Capture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(InMemCapture, self).get_parameters(packet_count=packet_count)
-        params += ['-i', '-']
+        params += ['-r', '-']
         return params
 
     @asyncio.coroutine
@@ -131,7 +130,7 @@ class InMemCapture(Capture):
 
     def close(self):
         self._current_tshark = None
-        self._close_async()
+        super(InMemCapture, self).close()
 
     def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
         """

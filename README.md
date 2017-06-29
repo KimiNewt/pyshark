@@ -6,6 +6,8 @@ Python wrapper for tshark, allowing python packet parsing using wireshark dissec
 
 Extended documentation: http://kiminewt.github.io/pyshark
 
+**Impending Python2 deprecation** - I plan on soon changing the code so it is incompatible with Python 2. Python 2 users will have to keep using an old version, and a fork will be opened for important bugfixes.
+
 **Looking for contributors** - for various reasons I have a hard time finding time to maintain and enhance the package at the moment. Any pull-requests will be reviewed and if any one is interested and is suitable, I will be happy to include them in the project. Feel free to mail me at dorgreen1 at gmail.
 
 There are quite a few python packet parsing modules, this one is different because it doesn't actually parse any packets, it simply uses tshark's (wireshark command-line utility) ability to export XMLs to use its parsing.

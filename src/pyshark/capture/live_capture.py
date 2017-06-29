@@ -65,7 +65,7 @@ class LiveCapture(Capture):
         """
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
         # Read from STDIN
-        params += ['-i', '-']
+        params += ['-r', '-']
         return params
 
     def _get_dumpcap_parameters(self):
@@ -87,7 +87,8 @@ class LiveCapture(Capture):
         read, write = os.pipe()
 
         dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
-        dumpcap_process = yield From(asyncio.create_subprocess_exec(*dumpcap_params, stdout=write))
+        dumpcap_process = yield From(asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
+                                                                    stderr=self._stderr_output()))
         self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
 
         tshark = yield From(

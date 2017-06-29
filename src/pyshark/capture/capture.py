@@ -349,6 +349,10 @@ class Capture(object):
     def _get_tshark_path(self):
         return get_process_path(self.tshark_path)
 
+    def _stderr_output(self):
+        # Ignore stderr output unless in debug mode (sent to console)
+        return None if self.debug else open(os.devnull, "w")
+
     @asyncio.coroutine
     def _get_tshark_process(self, packet_count=None, stdin=None):
         """
@@ -365,11 +369,9 @@ class Capture(object):
 
         self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
 
-        # Ignore stderr output unless in debug mode (sent to console)
-        output = None if self.debug else open(os.devnull, "w")
         tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,
                                                                    stdout=subprocess.PIPE,
-                                                                   stderr=output,
+                                                                   stderr=self._stderr_output(),
                                                                    stdin=stdin))
         self._created_new_process(parameters, tshark_process)
         raise Return(tshark_process)

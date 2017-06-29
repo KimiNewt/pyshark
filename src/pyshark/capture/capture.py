@@ -9,7 +9,7 @@ from trollius import From, subprocess, Return
 from trollius.executor import TimeoutError
 from trollius.py33_exceptions import ProcessLookupError
 
-from pyshark.tshark.tshark import get_tshark_path, get_tshark_display_filter_flag, \
+from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException
 from pyshark.tshark.tshark_json import packet_from_json_packet
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
@@ -258,7 +258,8 @@ class Capture(object):
             pass
         finally:
             if close_tshark:
-                yield From(self._cleanup_subprocess(tshark_process))
+                yield From(self._close_async())
+                #yield From(self._cleanup_subprocess(tshark_process))
 
     @asyncio.coroutine
     def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
@@ -345,6 +346,13 @@ class Capture(object):
             raise EOFError()
         raise Return(None, existing_data)
 
+    def _get_tshark_path(self):
+        return get_process_path(self.tshark_path)
+
+    def _stderr_output(self):
+        # Ignore stderr output unless in debug mode (sent to console)
+        return None if self.debug else open(os.devnull, "w")
+
     @asyncio.coroutine
     def _get_tshark_process(self, packet_count=None, stdin=None):
         """
@@ -356,24 +364,25 @@ class Capture(object):
                 raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
         else:
             output_type = 'psml' if self.only_summaries else 'pdml'
-        parameters = [get_tshark_path(self.tshark_path), '-l', '-n', '-T', output_type] + \
+        parameters = [self._get_tshark_path(), '-l', '-n', '-T', output_type] + \
                      self.get_parameters(packet_count=packet_count)
 
         self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
 
-        # Ignore stderr output unless in debug mode (sent to console)
-        output = None if self.debug else open(os.devnull, "w")
         tshark_process = yield From(asyncio.create_subprocess_exec(*parameters,
                                                                    stdout=subprocess.PIPE,
-                                                                   stderr=output,
+                                                                   stderr=self._stderr_output(),
                                                                    stdin=stdin))
-        self._log.debug('TShark subprocess created')
-
-        if tshark_process.returncode is not None and tshark_process.returncode != 0:
-            raise TSharkCrashException(
-                'TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
-        self.running_processes.add(tshark_process)
+        self._created_new_process(parameters, tshark_process)
         raise Return(tshark_process)
+
+    def _created_new_process(self, parameters, process, process_name="TShark"):
+        self._log.debug('%s subprocess created', process_name)
+        if process.returncode is not None and process.returncode != 0:
+            raise TSharkCrashException(
+                '%s seems to have crashed. Try updating it. (command ran: "%s")' % (
+                    process_name, ' '.join(parameters)))
+        self.running_processes.add(process)
 
     @asyncio.coroutine
     def _cleanup_subprocess(self, process):

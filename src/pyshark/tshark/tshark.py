@@ -57,7 +57,7 @@ def check_output(*popenargs, **kwargs):
     return output
 
 
-def get_tshark_path(tshark_path=None):
+def get_process_path(tshark_path=None, process_name='tshark'):
     """
     Finds the path of the tshark executable. If the user has provided a path
     or specified a location in config.ini it will be used. Otherwise default
@@ -79,7 +79,7 @@ def get_tshark_path(tshark_path=None):
             program_files = os.getenv(env)
             if program_files is not None:
                 possible_paths.append(
-                    os.path.join(program_files, 'Wireshark', 'tshark.exe')
+                    os.path.join(program_files, 'Wireshark', '%s.exe' % process_name)
                 )
     # Linux, etc. search order: configuration file's path, the system's path
     else:
@@ -88,7 +88,7 @@ def get_tshark_path(tshark_path=None):
             '/usr/bin:/usr/sbin:/usr/lib/tshark:/usr/local/bin'
         )
         for path in os_path.split(':'):
-            possible_paths.append(os.path.join(path, 'tshark'))
+            possible_paths.append(os.path.join(path, process_name))
 
     for path in possible_paths:
         if os.path.exists(path):
@@ -100,7 +100,7 @@ def get_tshark_path(tshark_path=None):
 
 
 def get_tshark_version(tshark_path=None):
-    parameters = [get_tshark_path(tshark_path), '-v']
+    parameters = [get_process_path(tshark_path), '-v']
     with open(os.devnull, 'w') as null:
         version_output = check_output(parameters, stderr=null).decode("ascii")
 
@@ -135,7 +135,7 @@ def get_tshark_interfaces(tshark_path=None):
     Returns a list of interface numbers from the output tshark -D. Used
     internally to capture on multiple interfaces.
     """
-    parameters = [get_tshark_path(tshark_path), '-D']
+    parameters = [get_process_path(tshark_path), '-D']
     with open(os.devnull, 'w') as null:
         tshark_interfaces = check_output(parameters, stderr=null).decode("ascii")
 

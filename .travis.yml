@@ -9,7 +9,7 @@ python:
 # - "Nightly"
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y tshark
+  - sudo apt-get install -t jessie-backports -y tshark
   - pip install --upgrade pip
 script:
   - pip install -r requirements.txt

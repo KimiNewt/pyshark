@@ -58,7 +58,7 @@ class InMemCapture(Capture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(InMemCapture, self).get_parameters(packet_count=packet_count)
-        params += ['-r', '-']
+        params += ['-i', '-']
         return params
 
     @asyncio.coroutine

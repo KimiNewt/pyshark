@@ -189,6 +189,14 @@ All of the following work:
 192.168.0.100
 ```
 
+To test whether a layer is in a packet, you can use its name:
+
+```python
+>>> 'IP' in packet
+True
+```
+
+To see all possible field names, use the `packet.layer.field_names` attribute (i.e. `packet.ip.field_names`) or the autocomplete function on your interpreter.
 
 You can also get the original binary data of a field, or a pretty description of it:
 

@@ -98,6 +98,8 @@ class Packet(Pickleable):
     def pretty_print(self):
         for layer in self.layers:
             layer.pretty_print()
+    # Alias
+    show = pretty_print
 
     def __getattr__(self, item):
         """

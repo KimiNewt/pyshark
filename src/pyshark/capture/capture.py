@@ -43,25 +43,26 @@ class Capture(object):
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
                  override_prefs=None, capture_filter=None, use_json=False):
-        self._packets = []
-        self.current_packet = 0
-        self.display_filter = display_filter
-        self.capture_filter = capture_filter
-        self.only_summaries = only_summaries
-        self.output_file = output_file
-        self.running_processes = set()
+
         self.loaded = False
-        self.decode_as = decode_as
-        self.disable_protocol = disable_protocol
-        self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self.tshark_path = tshark_path
-        self.override_prefs = override_prefs
+        self._override_prefs = override_prefs
         self.debug = False
         self.use_json = use_json
+        self._packets = []
+        self._current_packet = 0
+        self._display_filter = display_filter
+        self._capture_filter = capture_filter
+        self._only_summaries = only_summaries
+        self._output_file = output_file
+        self._running_processes = set()
+        self._decode_as = decode_as
+        self._disable_protocol = disable_protocol
+        self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
 
         self.eventloop = eventloop
         if self.eventloop is None:
-            self.setup_eventloop()
+            self._setup_eventloop()
         if encryption_type and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS:
             self.encryption = (decryption_key, encryption_type.lower())
         else:
@@ -86,10 +87,10 @@ class Capture(object):
     # Allows for child classes to call next() from super() without 2to3 "fixing"
     # the call
     def next_packet(self):
-        if self.current_packet >= len(self._packets):
+        if self._current_packet >= len(self._packets):
             raise StopIteration()
-        cur_packet = self._packets[self.current_packet]
-        self.current_packet += 1
+        cur_packet = self._packets[self._current_packet]
+        self._current_packet += 1
         return cur_packet
 
     def clear(self):
@@ -97,13 +98,13 @@ class Capture(object):
         Empties the capture of any saved packets.
         """
         self._packets = []
-        self.current_packet = 0
+        self._current_packet = 0
 
     def reset(self):
         """
         Starts iterating packets from the first one.
         """
-        self.current_packet = 0
+        self._current_packet = 0
 
     def load_packets(self, packet_count=0, timeout=None):
         """
@@ -135,7 +136,7 @@ class Capture(object):
             self._log.level = logbook.DEBUG
         self.debug = set_to
 
-    def setup_eventloop(self):
+    def _setup_eventloop(self):
         """
         Sets up a new eventloop as the current one according to the OS.
         """
@@ -301,7 +302,7 @@ class Capture(object):
         data = b''
         psml_struct = None
 
-        if self.only_summaries:
+        if self._only_summaries:
             # If summaries are read, we need the psdml structure which appears on top of the file.
             while not psml_struct:
                 new_data = yield From(fd.read(self.SUMMARIES_BATCH_SIZE))
@@ -363,7 +364,7 @@ class Capture(object):
             if not tshark_supports_json(self.tshark_path):
                 raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
         else:
-            output_type = 'psml' if self.only_summaries else 'pdml'
+            output_type = 'psml' if self._only_summaries else 'pdml'
         parameters = [self._get_tshark_path(), '-l', '-n', '-T', output_type] + \
                      self.get_parameters(packet_count=packet_count)
 
@@ -382,7 +383,7 @@ class Capture(object):
             raise TSharkCrashException(
                 '%s seems to have crashed. Try updating it. (command ran: "%s")' % (
                     process_name, ' '.join(parameters)))
-        self.running_processes.add(process)
+        self._running_processes.add(process)
 
     @asyncio.coroutine
     def _cleanup_subprocess(self, process):
@@ -408,12 +409,12 @@ class Capture(object):
 
     @asyncio.coroutine
     def _close_async(self):
-        for process in self.running_processes:
+        for process in self._running_processes:
             yield From(self._cleanup_subprocess(process))
-        self.running_processes.clear()
+        self._running_processes.clear()
 
     def __del__(self):
-        if self.running_processes:
+        if self._running_processes:
             self.close()
 
     def get_parameters(self, packet_count=None):
@@ -421,30 +422,30 @@ class Capture(object):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = []
-        if self.capture_filter:
-            params += ['-f', self.capture_filter]
-        if self.display_filter:
-            params += [get_tshark_display_filter_flag(self.tshark_path), self.display_filter]
+        if self._capture_filter:
+            params += ['-f', self._capture_filter]
+        if self._display_filter:
+            params += [get_tshark_display_filter_flag(self.tshark_path), self._display_filter]
         if packet_count:
             params += ['-c', str(packet_count)]
         if all(self.encryption):
             params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + '","' +
                                                                   self.encryption[0] + '"']
-        if self.override_prefs:
-            for preference_name, preference_value in self.override_prefs.items():
+        if self._override_prefs:
+            for preference_name, preference_value in self._override_prefs.items():
                 if all(self.encryption) and preference_name in ('wlan.enable_decryption', 'uat:80211_keys'):
                     continue  # skip if override preferences also given via --encryption options
                 params += ['-o', '{0}:{1}'.format(preference_name, preference_value)]
 
-        if self.output_file:
-            params += ['-w', self.output_file]
+        if self._output_file:
+            params += ['-w', self._output_file]
 
-        if self.decode_as:
-            for criterion, decode_as_proto in self.decode_as.items():
+        if self._decode_as:
+            for criterion, decode_as_proto in self._decode_as.items():
                 params += ['-d', ','.join([criterion.strip(), decode_as_proto.strip()])]
 
-        if self.disable_protocol:
-            params += ['--disable-protocol', self.disable_protocol.strip()]
+        if self._disable_protocol:
+            params += ['--disable-protocol', self._disable_protocol.strip()]
 
         return params
 

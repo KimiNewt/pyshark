@@ -41,13 +41,12 @@ def test_filling_cap_in_increments(lazy_simple_capture):
     assert len(lazy_simple_capture) == 3
 
 
-def test_getting_packet_summary(lazy_simple_capture):
-    lazy_simple_capture.only_summaries = True
-    assert isinstance(lazy_simple_capture[0], PacketSummary)
+def test_getting_packet_summary(simple_summary_capture):
+    assert isinstance(simple_summary_capture[0], PacketSummary)
 
-    # Since we cannot check the exact fields since they're dependent on wireshark configuration, we'll at least
-    # make sure some data is in.
-    assert lazy_simple_capture[0]._fields
+    # Since we cannot check the exact fields since they're dependent on wireshark configuration,
+    # we'll at least make sure some data is in.
+    assert simple_summary_capture[0]._fields
 
 
 def _iterate_capture_object(cap_obj, q):
@@ -56,11 +55,10 @@ def _iterate_capture_object(cap_obj, q):
     q.put(True)
 
 
-def test_iterate_empty_psml_capture(lazy_simple_capture):
-    lazy_simple_capture.only_summaries = True
-    lazy_simple_capture.display_filter = "frame.len == 1"
+def test_iterate_empty_psml_capture(simple_summary_capture):
+    simple_summary_capture.display_filter = "frame.len == 1"
     q = Queue()
-    p = Process(target=_iterate_capture_object, args=(lazy_simple_capture, q))
+    p = Process(target=_iterate_capture_object, args=(simple_summary_capture, q))
     p.start()
     p.join(2)
     try:

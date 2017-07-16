@@ -92,6 +92,9 @@ class LayerFieldsContainer(str, Pickleable):
         obj.fields = [main_field]
         return obj
 
+    def __dir__(self):
+        return dir(type(self)) + list(self.__dict__.keys()) + dir(self.main_field)
+
     def add_field(self, field):
         self.fields.append(field)
 

@@ -150,6 +150,7 @@ class Capture(object):
         else:
             self.eventloop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.eventloop)
+        asyncio.get_child_watcher().attach_loop(self.eventloop)
 
     @classmethod
     def _get_json_separator(cls):

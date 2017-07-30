@@ -75,9 +75,8 @@ class LiveCapture(Capture):
             params += ['-f', self.bpf_filter]
         if self.monitor_mode:
             params += ['-I']
-        else:
-            for interface in self.interfaces:
-                params += ['-i', interface]
+        for interface in self.interfaces:
+            params += ['-i', interface]
         # Write to STDOUT
         params += ["-w", "-"]
         return params

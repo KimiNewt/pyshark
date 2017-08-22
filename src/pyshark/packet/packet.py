@@ -14,7 +14,7 @@ class Packet(Pickleable):
     """
 
     def __init__(self, layers=None, frame_info=None, number=None,
-                 length=None, captured_length=None, sniff_time=None, interface_captured=None):
+                 length=None, captured_length=None, interface_captured=None):
         """
         Creates a Packet object with the given layers and info.
 
@@ -34,7 +34,6 @@ class Packet(Pickleable):
         self.interface_captured = interface_captured
         self.captured_length = captured_length
         self.length = length
-        self.sniff_timestamp = sniff_time
 
     def __getitem__(self, item):
         """
@@ -67,20 +66,28 @@ class Packet(Pickleable):
 
     @property
     def sniff_time(self):
+        return datetime.datetime.fromtimestamp(self.sniff_timestamp)
+
+    @property
+    def sniff_timestamp(self):
         try:
-            timestamp = float(self.sniff_timestamp)
+            return float(self.frame_info.time_epoch)
         except ValueError:
             # If the value after the decimal point is negative, discard it
             # Google: wireshark fractional second
-            timestamp = float(self.sniff_timestamp.split(".")[0])
-        return datetime.datetime.fromtimestamp(timestamp)
+            return float(self.frame_info.time_epoch.split(".")[0])
 
     def __repr__(self):
         transport_protocol = ''
         if self.transport_layer != self.highest_layer and self.transport_layer is not None:
             transport_protocol = self.transport_layer + '/'
 
-        return '<%s%s Packet>' % (transport_protocol, self.highest_layer)
+        extra_repr = ""
+        if self[self.highest_layer].get_extension():
+            extra_repr = self[self.highest_layer].get_repr()
+        if extra_repr:
+            extra_repr = " (%s)" % extra_repr
+        return '<%s%s%s Packet>' % (transport_protocol, self.highest_layer, extra_repr)
 
     def __str__(self):
         s = self._packet_string

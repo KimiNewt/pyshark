@@ -1,7 +1,9 @@
 import os
 
+import functools
 import py
 
+from pyshark.extensions import registry
 from pyshark.packet.common import Pickleable
 from pyshark.packet.fields import LayerField, LayerFieldsContainer
 
@@ -17,6 +19,8 @@ class Layer(Pickleable):
 
         self._layer_name = xml_obj.attrib['name']
         self._all_fields = {}
+        self._extension = None
+        self._initialized_extension = False
 
         # We copy over all the fields from the XML object
         # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
@@ -31,12 +35,28 @@ class Layer(Pickleable):
                 self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
 
     def __getattr__(self, item):
-        val = self.get_field(item)
-        if val is None:
-            raise AttributeError()
+        try:
+            val = self.get_field(item)
+        except AttributeError:
+            if hasattr(self.get_extension(), item):
+                # Pass the packet along to the get_extension and return the function
+                return functools.partial(getattr(self.get_extension(), item), self)
+            # If not in get_extension.
+            raise
+
         if self.raw_mode:
             return val.raw_value
         return val
+
+    def get_extension(self):
+        if not self._initialized_extension:
+            # We don't simply check if extension is None because it might continue to be so.
+            self._initialized_extension = True
+            for ext in registry.EXTENSIONS:
+                if ext.fits_layer(self):
+                    self._extension = ext
+                    break
+        return self._extension
 
     def get(self, item, default=None):
         """
@@ -48,7 +68,10 @@ class Layer(Pickleable):
             return default
 
     def __dir__(self):
-        return dir(type(self)) + list(self.__dict__.keys()) + self.field_names
+        extension_funcs = []
+        if self.get_extension():
+            extension_funcs = dir(self.get_extension())
+        return dir(type(self)) + list(self.__dict__.keys()) + self.field_names + extension_funcs
 
     def get_field(self, name):
         """
@@ -197,6 +220,9 @@ class JsonLayer(Layer):
     def __init__(self, layer_name, layer_dict, full_name=None, is_intermediate=False):
         """Creates a JsonLayer. All sublayers and fields are created lazily later."""
         self._layer_name = layer_name
+        self._extension = None
+        self._initialized_extension = False
+
         if not full_name:
             self._full_name = self._layer_name
         else:
@@ -215,17 +241,21 @@ class JsonLayer(Layer):
 
     @property
     def field_names(self):
-        return list(set([self._sanitize_field_name(name) for name in self._all_fields
-                         if name.startswith(self._full_name)] +
-                        [name.rsplit('.', 1)[1] for name in self._all_fields if '.' in name]))
+        #if name.startswith(self._full_name)
+        return list(set([self._sanitize_field_name(name) for name in self._all_fields] +
+                        [name.rsplit('.', 1)[1] for name in self._all_fields if '.' in name
+                         and not ' ' in name]))
 
     def _get_all_fields_with_alternates(self):
         return [self.get_field(name) for name in self.field_names]
 
-    def get_field(self, name):
+    def get_field(self, name, as_dict=False):
         """Gets a field by its full or partial name."""
-        # We only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
-        field = self._wrapped_fields.get(name)
+        field = None
+        if not as_dict:
+            # We only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
+            field = self._wrapped_fields.get(name)
+
         if field is None:
             is_fake = False
             field = self._get_internal_field_by_name(name)
@@ -234,6 +264,8 @@ class JsonLayer(Layer):
                 is_fake = self._is_fake_field(name)
                 if not is_fake:
                     raise AttributeError("No such field %s" % name)
+            if as_dict:
+                return field
             field = self._make_wrapped_field(name, field, is_fake=is_fake)
             self._wrapped_fields[name] = field
         return field
@@ -279,6 +311,9 @@ class JsonLayer(Layer):
             # Populate with all fields that are supposed to be inside of it
             field = {key: value for key, value in self._all_fields.items()
                      if key.startswith(full_name)}
+        elif not name.startswith(self._full_name):
+            # Text field
+            pass
         if isinstance(field, dict):
             if name.endswith('_tree'):
                 name = name.replace('_tree', '')

@@ -14,3 +14,7 @@ class DNSExtension(LayerExtension):
         for query_desc in queries:
             queries[query_desc]["description"] = query_desc
         return [JsonLayer("QUERY", query, full_name="dns") for query in queries.values()]
+
+
+class MDNSExtension(DNSExtension):
+    PROTOCOL = "mDNS"

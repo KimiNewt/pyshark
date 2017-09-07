@@ -71,7 +71,8 @@ class Layer(Pickleable):
         extension_funcs = []
         if self.get_extension():
             extension_funcs = dir(self.get_extension())
-        return dir(type(self)) + list(self.__dict__.keys()) + self.field_names + extension_funcs
+        accessible_fields = [fn for fn in self.field_names if " " not in fn and "-" not in fn]
+        return dir(type(self)) + list(self.__dict__.keys()) + accessible_fields + extension_funcs
 
     def get_field(self, name):
         """

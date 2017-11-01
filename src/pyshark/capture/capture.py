@@ -227,7 +227,7 @@ class Capture(object):
         finally:
             self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
 
-    def apply_on_packets(self, callback, timeout=None):
+    def apply_on_packets(self, callback, timeout=None, packet_count=None):
         """
         Runs through all packets and calls the given callback (a function) with each one as it is read.
         If the capture is infinite (i.e. a live capture), it will run forever, otherwise it will complete after all
@@ -240,7 +240,7 @@ class Capture(object):
 
         If a timeout is given, raises a Timeout error if not complete before the timeout (in seconds)
         """
-        coro = self.packets_from_tshark(callback)
+        coro = self.packets_from_tshark(callback, packet_count=packet_count)
         if timeout is not None:
             coro = asyncio.wait_for(coro, timeout)
         return self.eventloop.run_until_complete(coro)

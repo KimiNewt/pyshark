@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 import os
+import threading
+
 import logbook
 import sys
 
@@ -150,7 +152,7 @@ class Capture(object):
         else:
             self.eventloop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.eventloop)
-        if os.name == 'posix':
+        if os.name == 'posix' and isinstance(threading.current_thread(), threading._MainThread):
             asyncio.get_child_watcher().attach_loop(self.eventloop)
 
     @classmethod

@@ -1,3 +1,4 @@
+import sys
 import binascii
 
 from pyshark.packet.common import Pickleable, SlotsPickleable
@@ -88,7 +89,7 @@ class LayerFieldsContainer(str, Pickleable):
         value = main_field.get_default_value()
         if value is None:
             value = ''
-        obj = str.__new__(cls, value, *args, **kwargs)
+        obj = str.__new__(cls, value.encode(sys.getfilesystemencoding()), *args, **kwargs)
         obj.fields = [main_field]
         return obj
 

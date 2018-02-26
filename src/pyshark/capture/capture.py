@@ -1,8 +1,7 @@
-from __future__ import unicode_literals
-
 import asyncio
 import os
 import threading
+import subprocess
 
 import logbook
 import sys
@@ -229,7 +228,7 @@ class Capture(object):
 
         Example usage:
         def print_callback(pkt):
-            print pkt
+            print(pkt)
         capture.apply_on_packets(print_callback)
 
         If a timeout is given, raises a Timeout error if not complete before the timeout (in seconds)
@@ -239,7 +238,7 @@ class Capture(object):
             coro = asyncio.wait_for(coro, timeout)
         return self.eventloop.run_until_complete(coro)
 
-    async def packets_from_tshark(self, packet_callback, packet_count=None):
+    async def packets_from_tshark(self, packet_callback, packet_count=None, close_tshark=True):
         """
         A coroutine which creates a tshark process, runs the given callback on each packet that is received from it and
         closes the process when it is done.
@@ -253,7 +252,7 @@ class Capture(object):
             pass
         finally:
             if close_tshark:
-                yield From(self._close_async())
+                await self._close_async()
                 #yield From(self._cleanup_subprocess(tshark_process))
 
     async def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
@@ -304,7 +303,7 @@ class Capture(object):
         else:
             return None, data
 
-    async def _get_packet_from_stream(self, stream, existing_data, psml_structure=None):
+    async def _get_packet_from_stream(self, stream, existing_data, got_first_packet=True, psml_structure=None):
         """A coroutine which returns a single packet if it can be read from the given StreamReader.
 
         :return a tuple of (packet, remaining_data). The packet will be None if there was not enough XML data to create
@@ -366,19 +365,18 @@ class Capture(object):
         self._log.debug('%s subprocess created', process_name)
         if process.returncode is not None and process.returncode != 0:
             raise TSharkCrashException(
-                'TShark seems to have crashed. Try updating it. (command ran: "%s")' % ' '.join(parameters))
-        self.running_processes.add(tshark_process)
-        return tshark_process
+                '%s seems to have crashed. Try updating it. (command ran: "%s")' % (
+                    process_name, ' '.join(parameters)))
+        self._running_processes.add(process)
 
-    @asyncio.coroutine
-    def _cleanup_subprocess(self, process):
+    async def _cleanup_subprocess(self, process):
         """
         Kill the given process and properly closes any pipes connected to it.
         """
         if process.returncode is None:
             try:
                 process.kill()
-                yield asyncio.wait_for(process.wait(), 1)
+                return asyncio.wait_for(process.wait(), 1)
             except TimeoutError:
                 self._log.debug('Waiting for process to close failed, may have zombie process.')
             except ProcessLookupError:
@@ -391,15 +389,13 @@ class Capture(object):
                                        'Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.'
                                        % process.returncode)
 
-        if process in self.running_processes:
-            self.running_processes.remove(process)
-
     def close(self):
-        if self._closed:
-            return
-        for process in self.running_processes.copy():
-            self._cleanup_subprocess(process)
-        self._closed = True
+        self.eventloop.run_until_complete(self._close_async())
+
+    async def _close_async(self):
+        for process in self._running_processes:
+            await self._cleanup_subprocess(process)
+        self._running_processes.clear()
 
     def __del__(self):
         if self._running_processes:

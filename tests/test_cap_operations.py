@@ -1,4 +1,7 @@
-import mock
+try:
+    import mock
+except ModuleNotFoundError:
+    from unittest import mock
 import time
 import pytest
 from multiprocessing import Process, Queue

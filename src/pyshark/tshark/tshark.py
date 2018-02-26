@@ -113,12 +113,17 @@ def get_tshark_version(tshark_path=None):
 
     return version_string
 
+<<<<<<< HEAD
 
 def tshark_supports_json(tshark_path=None):
     tshark_version = get_tshark_version(tshark_path)
     return LooseVersion(tshark_version) >= LooseVersion("2.2.0")
 
 
+||||||| merged common ancestors
+=======
+
+>>>>>>> Dropped trollius and support for Python <3.5; updated asyncio stuff accordingly.
 def get_tshark_display_filter_flag(tshark_path=None):
     """
     Returns '-Y' for tshark versions >= 1.10.0 and '-R' for older versions.

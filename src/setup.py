@@ -17,10 +17,9 @@ setup(
     author="KimiNewt",
     description="Python wrapper for tshark, allowing python packet parsing using wireshark dissectors",
     keywords="wireshark capture packets parsing packet",
-    use_2to3=True,
+
     classifiers=[
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
     ],
 )

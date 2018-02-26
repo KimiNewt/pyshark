@@ -1,9 +1,11 @@
 import mock
 import time
 import pytest
-from trollius import TimeoutError
 from multiprocessing import Process, Queue
 from multiprocessing.queues import Empty
+from asyncio import TimeoutError
+
+import sys
 from pyshark.packet.packet_summary import PacketSummary
 
 
@@ -49,14 +51,27 @@ def test_getting_packet_summary(simple_summary_capture):
     assert simple_summary_capture[0]._fields
 
 
+
 def _iterate_capture_object(cap_obj, q):
     for packet in cap_obj:
         pass
     q.put(True)
 
+<<<<<<< HEAD
 
 def test_iterate_empty_psml_capture(simple_summary_capture):
     simple_summary_capture.display_filter = "frame.len == 1"
+||||||| merged common ancestors
+def test_iterate_empty_psml_capture(lazy_simple_capture):
+    lazy_simple_capture.only_summaries = True
+    lazy_simple_capture.display_filter = "frame.len == 1"
+=======
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='Linux test')
+def test_iterate_empty_psml_capture(lazy_simple_capture):
+    lazy_simple_capture.only_summaries = True
+    lazy_simple_capture.display_filter = "frame.len == 1"
+>>>>>>> Dropped trollius and support for Python <3.5; updated asyncio stuff accordingly.
     q = Queue()
     p = Process(target=_iterate_capture_object, args=(simple_summary_capture, q))
     p.start()

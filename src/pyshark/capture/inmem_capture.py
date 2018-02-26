@@ -1,10 +1,9 @@
+import asyncio
 import os
 import struct
 import time
 import warnings
 
-import trollius as asyncio
-from trollius import subprocess, From, Return
 
 from pyshark.capture.capture import Capture, StopCapture
 
@@ -61,17 +60,22 @@ class InMemCapture(Capture):
         params += ['-i', '-']
         return params
 
-    @asyncio.coroutine
-    def _get_tshark_process(self, packet_count=None):
+    async def _get_tshark_process(self, packet_count=None):
         if self._current_tshark:
             raise Return(self._current_tshark)
-        proc = yield From(super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PIPE))
+        proc = await super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PIPE)
         self._current_tshark = proc
 
         # Create PCAP header
         header = struct.pack("IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 0x7fff, self._current_linktype)
         proc.stdin.write(header)
-        raise Return(proc)
+
+        for packet in self._packets_to_write:
+            # Write packet header
+            proc.stdin.write(struct.pack("IIII", int(time.time()), 0, len(packet), len(packet)))
+            proc.stdin.write(packet)
+        proc.stdin.close()
+        return proc
 
     @classmethod
     def _get_json_separator(cls):

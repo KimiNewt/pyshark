@@ -138,17 +138,9 @@ class Layer(Pickleable):
             tw.write(field_line, bold=True)
 
     def _get_all_fields_with_alternates(self):
-<<<<<<< HEAD
         all_fields = list(self._all_fields.values())
         all_fields += sum([field.alternate_fields for field in all_fields
                            if isinstance(field, LayerFieldsContainer)], [])
-||||||| merged common ancestors
-        all_fields = self._all_fields.values()
-        all_fields += sum([field.alternate_fields for field in all_fields], [])
-=======
-        all_fields = list(self._all_fields.values())
-        all_fields += sum([field.alternate_fields for field in all_fields], [])
->>>>>>> Dropped trollius and support for Python <3.5; updated asyncio stuff accordingly.
         return all_fields
 
     def _get_all_field_lines(self):

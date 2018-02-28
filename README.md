@@ -1,4 +1,6 @@
-# pyshark
+# py3shark
+
+This is a fork of pyshark supporting python3, install via `pip install py3shark`, use as pyshark!
 
 [![Join the chat at https://gitter.im/pyshark_gitter/Lobby](https://badges.gitter.im/pyshark_gitter/Lobby.svg)](https://gitter.im/pyshark_gitter/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](https://travis-ci.org/KimiNewt/pyshark.svg)](https://travis-ci.org/KimiNewt/pyshark)
 
@@ -20,7 +22,7 @@ Tested on windows/linux.
 ### All Platforms
 Simply run the following to install the latest from pypi
 ```bash
-pip install pyshark
+pip install py3shark
 ```
 
 Or install from the git repository:

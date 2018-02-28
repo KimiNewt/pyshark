@@ -1,4 +1,7 @@
-import mock
+try:
+    import mock
+except ModuleNotFoundError:
+    from unittest import mock
 import pytest
 
 import pyshark

@@ -5,22 +5,20 @@ with open(os.path.join(os.path.dirname(__file__), 'README.txt')) as f:
     long_description = f.read()
 
 setup(
-    name="pyshark",
-    version="0.3.7.11",
+    name="py3shark",
+    version="0.4.0",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
-    # Temporarily using trollius 1.0.4 until issue https://github.com/haypo/trollius/issues/4 is resolved.
-    install_requires=['lxml', 'py', 'trollius==1.0.4', 'logbook'],
+    install_requires=['lxml', 'py', 'logbook'],
     tests_require=['mock', 'pytest'],
-    url="https://github.com/KimiNewt/pyshark",
+    url="https://github.com/laixintao/py3shark",
     long_description=long_description,
     author="KimiNewt",
-    description="Python wrapper for tshark, allowing python packet parsing using wireshark dissectors",
+    description="Python wrapper for tshark, a fork for pyshark support Python3.5+",
     keywords="wireshark capture packets parsing packet",
-    use_2to3=True,
+
     classifiers=[
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
     ],
 )

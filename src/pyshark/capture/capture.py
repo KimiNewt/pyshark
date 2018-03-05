@@ -209,7 +209,6 @@ class Capture(object):
         psml_structure, data = self.eventloop.run_until_complete(self._get_psml_struct(tshark_process.stdout))
         packets_captured = 0
 
-        data = b''
         try:
             while True:
                 try:

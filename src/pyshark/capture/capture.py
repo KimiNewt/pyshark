@@ -228,6 +228,9 @@ class Capture(object):
                 except EOFError:
                     self._log.debug('EOF reached (sync)')
                     break
+                except KeyboardInterrupt:
+                    self._log.debug("KeyboardInterrupt")
+                    break
 
                 if packet:
                     packets_captured += 1
@@ -356,7 +359,8 @@ class Capture(object):
 
         if not new_data:
             # Reached EOF
-            raise EOFError()
+            # raise EOFError()
+            pass
         raise Return(None, existing_data)
 
     def _get_tshark_path(self):

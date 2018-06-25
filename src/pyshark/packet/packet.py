@@ -3,6 +3,8 @@ from __future__ import print_function
 import datetime
 import os
 
+import binascii
+
 from pyshark.packet import consts
 from pyshark.packet.common import Pickleable
 
@@ -63,6 +65,12 @@ class Packet(Pickleable):
 
     def __dir__(self):
         return dir(type(self)) + list(self.__dict__.keys()) + [l.layer_name for l in self.layers]
+
+    def get_raw_packet(self):
+        assert "FRAME_RAW" in self, "Packet contains no raw data. In order to contains it, " \
+                                    "make sure that use_json and include_raw are set to True " \
+                                    "in the Capture object"
+        return binascii.unhexlify(self.frame_raw.value[0])
 
     @property
     def sniff_time(self):

@@ -9,9 +9,8 @@ setup(
     version="0.4.0",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
-    # Temporarily using trollius 1.0.4 until issue https://github.com/haypo/trollius/issues/4 is resolved.
-    install_requires=['lxml', 'py', 'trollius==1.0.4', 'logbook'],
-    tests_require=['mock', 'pytest'],
+    install_requires=['lxml', 'py', 'logbook'],
+    tests_require=['pytest'],
     url="https://github.com/KimiNewt/pyshark",
     long_description=long_description,
     author="KimiNewt",

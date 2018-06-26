@@ -22,6 +22,10 @@ class UnknownEncyptionStandardException(Exception):
     pass
 
 
+class RawMustUseJsonException(Exception):
+    """If the use_raw argument is True, so should the use_json argument"""
+
+
 class StopCapture(Exception):
     """
     Exception that the user can throw anywhere in packet-handling to stop the capture process.
@@ -41,13 +45,14 @@ class Capture(object):
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
-                 override_prefs=None, capture_filter=None, use_json=False):
+                 override_prefs=None, capture_filter=None, use_json=False, include_raw=False):
 
         self.loaded = False
         self.tshark_path = tshark_path
         self._override_prefs = override_prefs
         self.debug = False
         self.use_json = use_json
+        self.include_raw = include_raw
         self._packets = []
         self._current_packet = 0
         self._display_filter = display_filter
@@ -59,6 +64,9 @@ class Capture(object):
         self._disable_protocol = disable_protocol
         self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
+
+        if include_raw and not use_json:
+            raise RawMustUseJsonException("use_json must be True if include_raw")
 
         self.eventloop = eventloop
         if self.eventloop is None:
@@ -410,6 +418,9 @@ class Capture(object):
             params += ['-f', self._capture_filter]
         if self._display_filter:
             params += [get_tshark_display_filter_flag(self.tshark_path), self._display_filter]
+        # Raw is only enabled when JSON is also enabled.
+        if self.include_raw:
+            params += ["-x"]
         if packet_count:
             params += ['-c', str(packet_count)]
         if all(self.encryption):

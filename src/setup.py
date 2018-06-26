@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.txt')) as f:
 
 setup(
     name="pyshark",
-    version="0.3.8",
+    version="0.4.0",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
     # Temporarily using trollius 1.0.4 until issue https://github.com/haypo/trollius/issues/4 is resolved.
@@ -17,10 +17,11 @@ setup(
     author="KimiNewt",
     description="Python wrapper for tshark, allowing python packet parsing using wireshark dissectors",
     keywords="wireshark capture packets parsing packet",
-    use_2to3=True,
+
     classifiers=[
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 )

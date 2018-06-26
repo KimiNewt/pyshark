@@ -1,10 +1,10 @@
+import asyncio
+import subprocess
 import os
 import struct
 import time
 import warnings
 
-import trollius as asyncio
-from trollius import subprocess, From, Return
 
 from pyshark.capture.capture import Capture, StopCapture
 
@@ -61,17 +61,17 @@ class InMemCapture(Capture):
         params += ['-i', '-']
         return params
 
-    @asyncio.coroutine
-    def _get_tshark_process(self, packet_count=None):
+    async def _get_tshark_process(self, packet_count=None):
         if self._current_tshark:
-            raise Return(self._current_tshark)
-        proc = yield From(super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PIPE))
+            return self._current_tshark
+        proc = await super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PIPE)
         self._current_tshark = proc
 
         # Create PCAP header
         header = struct.pack("IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 0x7fff, self._current_linktype)
         proc.stdin.write(header)
-        raise Return(proc)
+
+        return proc
 
     @classmethod
     def _get_json_separator(cls):
@@ -116,12 +116,11 @@ class InMemCapture(Capture):
         self.eventloop.run_until_complete(self._get_parsed_packet_from_tshark(callback))
         return parsed_packets
 
-    @asyncio.coroutine
-    def _get_parsed_packet_from_tshark(self, callback):
-        yield From(self._current_tshark.stdin.drain())
+    async def _get_parsed_packet_from_tshark(self, callback):
+        await self._current_tshark.stdin.drain()
         try:
-            yield From(asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False),
-                                       DEFAULT_TIMEOUT))
+            await asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False),
+                                       DEFAULT_TIMEOUT)
         except asyncio.TimeoutError:
             self.close()
             raise asyncio.TimeoutError("Timed out while waiting for tshark to parse packet. "

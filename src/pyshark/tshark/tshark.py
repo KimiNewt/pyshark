@@ -137,6 +137,6 @@ def get_tshark_interfaces(tshark_path=None):
     """
     parameters = [get_process_path(tshark_path), '-D']
     with open(os.devnull, 'w') as null:
-        tshark_interfaces = check_output(parameters, stderr=null).decode("ascii")
+        tshark_interfaces = check_output(parameters, stderr=null).decode("utf-8")
 
     return [line.split('.')[0] for line in tshark_interfaces.splitlines()]

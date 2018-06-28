@@ -57,7 +57,7 @@ def check_output(*popenargs, **kwargs):
     return output
 
 
-def get_process_path(tshark_path=None, process_name='tshark'):
+def get_process_path(tshark_path=None, process_name="tshark"):
     """
     Finds the path of the tshark executable. If the user has provided a path
     or specified a location in config.ini it will be used. Otherwise default
@@ -67,7 +67,7 @@ def get_process_path(tshark_path=None, process_name='tshark'):
     :raises TSharkNotFoundException in case TShark is not found in any location.
     """
     config = get_config()
-    possible_paths = [config.get('tshark', 'tshark_path')]
+    possible_paths = [config.get(process_name, "%s_path" % process_name)]
 
     # Add the user provided path to the search list
     if tshark_path is not None:

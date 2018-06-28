@@ -272,7 +272,8 @@ class Capture(object):
 
         while True:
             try:
-                packet, data = await self._get_packet_from_stream(fd, data,got_first_packet=packets_captured > 0, psml_structure=psml_struct)
+                packet, data = await self._get_packet_from_stream(fd, data, got_first_packet=packets_captured > 0,
+                                                                  psml_structure=psml_struct)
             except EOFError:
                 self._log.debug('EOF reached')
                 break

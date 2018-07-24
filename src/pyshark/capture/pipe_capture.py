@@ -1,10 +1,7 @@
-import trollius as asyncio
-from trollius import From, Return
-
-from pyshark.capture.capture import Capture
+from pyshark.capture.live_capture import LiveCapture
 
 
-class PipeCapture(Capture):
+class PipeCapture(LiveCapture):
     def __init__(self, pipe, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False, include_raw=False):
@@ -25,7 +22,7 @@ class PipeCapture(Capture):
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
 
         """
-        super(PipeCapture, self).__init__(display_filter=display_filter,
+        super(PipeCapture, self).__init__(interface=pipe, display_filter=display_filter,
                                           only_summaries=only_summaries,
                                           decryption_key=decryption_key,
                                           encryption_type=encryption_type,
@@ -39,14 +36,7 @@ class PipeCapture(Capture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(PipeCapture, self).get_parameters(packet_count=packet_count)
-        params += ['-r', '-']
         return params
-
-    @asyncio.coroutine
-    def _get_tshark_process(self, packet_count=None):
-        proc = yield From(super(PipeCapture, self)._get_tshark_process(packet_count=packet_count,
-                                                                       stdin=self._pipe))
-        raise Return(proc)
 
     def close(self):
         # Close pipe

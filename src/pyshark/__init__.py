@@ -14,3 +14,5 @@ from pyshark.capture.live_ring_capture import LiveRingCapture
 from pyshark.capture.file_capture import FileCapture
 from pyshark.capture.remote_capture import RemoteCapture
 from pyshark.capture.inmem_capture import InMemCapture
+from pyshark.capture.pipe_capture import PipeCapture
+from pyshark.capture.pipe_ring_capture import PipeRingCapture

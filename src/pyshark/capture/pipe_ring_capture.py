@@ -6,6 +6,10 @@ import subprocess
 import tempfile
 
 
+class DisplayFilterNotAllowedException(Exception):
+    """Display Filters are not allowed in PipeRingCapture."""
+
+
 class PipeRingCapture(PipeCapture):
     """
     Represents a live ringbuffer capture on a network interface.
@@ -34,6 +38,9 @@ class PipeRingCapture(PipeCapture):
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         """
+        if display_filter is not None:
+            raise DisplayFilterNotAllowedException("Display Filters are not allowed in PipeRingCapture.")
+        
         super(PipeRingCapture, self).__init__(pipe, display_filter=display_filter, only_summaries=only_summaries,
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,

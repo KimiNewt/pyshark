@@ -1,7 +1,7 @@
-from pyshark.capture.live_capture import LiveCapture
+from pyshark.capture.capture import Capture
 
 
-class PipeCapture(LiveCapture):
+class PipeCapture(Capture):
     def __init__(self, pipe, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False, include_raw=False):
@@ -22,7 +22,7 @@ class PipeCapture(LiveCapture):
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
 
         """
-        super(PipeCapture, self).__init__(interface=pipe, display_filter=display_filter,
+        super(PipeCapture, self).__init__(display_filter=display_filter,
                                           only_summaries=only_summaries,
                                           decryption_key=decryption_key,
                                           encryption_type=encryption_type,
@@ -36,9 +36,28 @@ class PipeCapture(LiveCapture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(PipeCapture, self).get_parameters(packet_count=packet_count)
-        return params
+        params.extend(['-i{}'.format(self._pipe), '-'])
+        return params[:-1]
 
     def close(self):
         # Close pipe
-        self._pipe.close()
+        # self._pipe.close()  # Don't close the pipe. This should be the job of whatever is piping into it.
         super(PipeCapture, self).close()
+
+    # Backwards compatibility
+    sniff = Capture.load_packets
+
+    def sniff_continuously(self, packet_count=None):
+        """
+        Captures from the set interface, returning a generator which returns packets continuously.
+
+        Can be used as follows:
+        for packet in capture.sniff_continuously();
+            print 'Woo, another packet:', packet
+
+        Note: you can also call capture.apply_on_packets(packet_callback) which should have a slight performance boost.
+
+        :param packet_count: an amount of packets to capture, then stop.
+        """
+        # Retained for backwards compatibility and to add documentation.
+        return self._packets_from_tshark_sync(packet_count=packet_count)

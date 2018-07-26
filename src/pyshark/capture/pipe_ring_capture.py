@@ -40,7 +40,7 @@ class PipeRingCapture(PipeCapture):
         """
         if display_filter is not None:
             raise DisplayFilterNotAllowedException("Display Filters are not allowed in PipeRingCapture.")
-        
+
         super(PipeRingCapture, self).__init__(pipe, display_filter=display_filter, only_summaries=only_summaries,
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
@@ -62,26 +62,3 @@ class PipeRingCapture(PipeCapture):
         params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files), '-w',
                    self.ring_file_name, '-P']
         return params
-
-    async def _get_tshark_process(self, packet_count=None, stdin=None):
-        """
-        Returns a new tshark process with previously-set parameters.
-        """
-        if self.use_json:
-            output_type = 'json'
-            if not tshark_supports_json(self.tshark_path):
-                raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
-        else:
-            output_type = 'psml' if self._only_summaries else 'pdml'
-        parameters = [self._get_tshark_path(), '-l', '-n', '-T', output_type] + \
-                      self.get_parameters(packet_count=packet_count)
-
-        self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
-
-        tshark_process = await asyncio.create_subprocess_exec(*parameters,
-                                                                   stdout=subprocess.PIPE,
-                                                                   stderr=self._stderr_output(),
-                                                                   stdin=stdin)
-        self._created_new_process(parameters, tshark_process)
-        return tshark_process
-

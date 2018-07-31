@@ -20,5 +20,5 @@ class SlotsPickleable(object):
         return ret
 
     def __setstate__(self, data):
-        for key, val in data.iteritems():
+        for key, val in data.items():
             setattr(self, key, val)

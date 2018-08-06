@@ -6,7 +6,7 @@ class PipeCapture(Capture):
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False, include_raw=False):
         """
-        Receives a file-like and reads the packets from there (pcap format).
+        Receives a string for the filename and reads the packets from there (pcap format). Does not close the pipe.
 
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.
@@ -40,8 +40,10 @@ class PipeCapture(Capture):
         return params[:-1]
 
     def close(self):
-        # Close pipe
-        # self._pipe.close()  # Don't close the pipe. This should be the job of whatever is piping into it.
+        """
+        Closes the capture, but not the pipe.
+        """
+        # Close the capture.
         super(PipeCapture, self).close()
 
     # Backwards compatibility

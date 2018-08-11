@@ -365,9 +365,9 @@ class Capture(object):
         self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
 
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
-                                                                   stdout=subprocess.PIPE,
-                                                                   stderr=self._stderr_output(),
-                                                                   stdin=stdin)
+                                                              stdout=subprocess.PIPE,
+                                                              stderr=self._stderr_output(),
+                                                              stdin=stdin)
         self._created_new_process(parameters, tshark_process)
         return tshark_process
 

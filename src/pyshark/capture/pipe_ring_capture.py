@@ -17,8 +17,8 @@ class PipeRingCapture(PipeCapture):
 
     def __init__(self, pipe, ring_file_size=1024, num_ring_files=2, ring_file_name=None,
                  only_summaries=False, decryption_key=None,
-                 encryption_type='wpa-pwk', decode_as=None, disable_protocol=None,
-                 tshark_path=None, override_prefs=None, include_raw=False, use_json=False, **kwargs):
+                 encryption_type='wpa-pwk', decode_as=None, disable_protocol=None, display_filter=None,
+                 tshark_path=None, override_prefs=None, include_raw=False, use_json=False, eventloop=None):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
         :param ring_file_size: Size of the ring file in kB, default is 1024
@@ -38,13 +38,13 @@ class PipeRingCapture(PipeCapture):
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         """
-        if "display_filter" in kwargs.keys():
+        if display_filter is not None:
             raise DisplayFilterNotAllowedException("Display Filters are not allowed in PipeRingCapture.")
 
         super(PipeRingCapture, self).__init__(pipe, display_filter=None, only_summaries=only_summaries,
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
-                                              override_prefs=override_prefs, include_raw=include_raw, use_json=use_json)
+                                              override_prefs=override_prefs, include_raw=include_raw, use_json=use_json, eventloop=eventloop)
 
         self.ring_file_size = ring_file_size
         self.num_ring_files = num_ring_files

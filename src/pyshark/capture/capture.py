@@ -2,6 +2,7 @@ import asyncio
 import os
 import threading
 import subprocess
+import concurrent.futures
 
 import logbook
 import sys
@@ -131,7 +132,7 @@ class Capture(object):
         try:
             self.apply_on_packets(keep_packet, timeout=timeout)
             self.loaded = True
-        except TimeoutError:
+        except concurrent.futures.TimeoutError:
             pass
 
     def set_debug(self, set_to=True):
@@ -364,9 +365,9 @@ class Capture(object):
         self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
 
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
-                                                                   stdout=subprocess.PIPE,
-                                                                   stderr=self._stderr_output(),
-                                                                   stdin=stdin)
+                                                              stdout=subprocess.PIPE,
+                                                              stderr=self._stderr_output(),
+                                                              stdin=stdin)
         self._created_new_process(parameters, tshark_process)
         return tshark_process
 
@@ -386,7 +387,7 @@ class Capture(object):
             try:
                 process.kill()
                 return asyncio.wait_for(process.wait(), 1)
-            except TimeoutError:
+            except concurrent.futures.TimeoutError:
                 self._log.debug('Waiting for process to close failed, may have zombie process.')
             except ProcessLookupError:
                 pass

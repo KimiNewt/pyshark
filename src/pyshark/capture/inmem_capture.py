@@ -24,7 +24,7 @@ class InMemCapture(Capture):
     def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
                   decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                   disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False,
-                  linktype=LinkTypes.ETHERNET, include_raw=False):
+                  linktype=LinkTypes.ETHERNET, include_raw=False, eventloop=None):
         """
         Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
         Significantly faster if packets are added in a batch.
@@ -47,7 +47,7 @@ class InMemCapture(Capture):
                                            decryption_key=decryption_key, encryption_type=encryption_type,
                                            decode_as=decode_as, disable_protocol=disable_protocol,
                                            tshark_path=tshark_path, override_prefs=override_prefs,
-                                           use_json=use_json, include_raw=include_raw)
+                                           use_json=use_json, include_raw=include_raw, eventloop=eventloop)
         self.bpf_filter = bpf_filter
         self._packets_to_write = None
         self._current_linktype = linktype

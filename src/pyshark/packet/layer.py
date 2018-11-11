@@ -203,6 +203,8 @@ class JsonLayer(Layer):
             self._full_name = full_name
         self._is_intermediate = is_intermediate
         self._wrapped_fields = {}
+        if isinstance(layer_dict, list):
+            layer_dict = layer_dict[0]
         if not isinstance(layer_dict, dict):
             self.value = layer_dict
             self._all_fields = {}

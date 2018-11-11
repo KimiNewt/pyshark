@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.txt')) as f:
 
 setup(
     name="pyshark",
-    version="0.4.1",
+    version="0.4.2",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
     install_requires=['lxml', 'py', 'logbook'],

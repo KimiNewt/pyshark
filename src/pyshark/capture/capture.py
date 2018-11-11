@@ -403,7 +403,7 @@ class Capture(object):
         self.eventloop.run_until_complete(self._close_async())
 
     async def _close_async(self):
-        for process in self._running_processes:
+        for process in self._running_processes.copy():
             await self._cleanup_subprocess(process)
         self._running_processes.clear()
 

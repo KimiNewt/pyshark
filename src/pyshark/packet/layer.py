@@ -197,6 +197,7 @@ class JsonLayer(Layer):
     def __init__(self, layer_name, layer_dict, full_name=None, is_intermediate=False):
         """Creates a JsonLayer. All sublayers and fields are created lazily later."""
         self._layer_name = layer_name
+        self.duplicate_layers = []
         if not full_name:
             self._full_name = self._layer_name
         else:
@@ -204,6 +205,9 @@ class JsonLayer(Layer):
         self._is_intermediate = is_intermediate
         self._wrapped_fields = {}
         if isinstance(layer_dict, list):
+            self.duplicate_layers = [JsonLayer(layer_name, duplicate_dict,
+                                               full_name=full_name, is_intermediate=is_intermediate)
+                                     for duplicate_dict in layer_dict[1:]]
             layer_dict = layer_dict[0]
         if not isinstance(layer_dict, dict):
             self.value = layer_dict

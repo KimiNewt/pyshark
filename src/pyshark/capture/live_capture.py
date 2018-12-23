@@ -71,7 +71,7 @@ class LiveCapture(Capture):
 
     def _get_dumpcap_parameters(self):
         # Don't report packet counts, use pcap format
-        params = ["-q", "-P"]
+        params = ["-q"]
         if self.bpf_filter:
             params += ['-f', self.bpf_filter]
         if self.monitor_mode:

@@ -57,7 +57,11 @@ class LayerField(SlotsPickleable):
         """
         Converts this field to binary (assuming it's a binary string)
         """
-        return binascii.unhexlify(self.raw_value)
+        str_raw_value = str(self.raw_value)
+        if len(str_raw_value) % 2 == 1:
+            str_raw_value = '0' + str_raw_value
+
+        return binascii.unhexlify(str_raw_value)
 
     @property
     def int_value(self):

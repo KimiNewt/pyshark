@@ -1,12 +1,13 @@
 import json
 
+from collections import OrderedDict
 from pyshark.packet.layer import JsonLayer
 from pyshark.packet.packet import Packet
 
 
 def duplicate_object_hook(ordered_pairs):
     """Make lists out of duplicate keys."""
-    json_dict = {}
+    json_dict = OrderedDict()
     for key, val in ordered_pairs:
         existing_val = json_dict.get(key)
         if not existing_val:

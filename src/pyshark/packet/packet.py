@@ -69,7 +69,11 @@ class Packet(Pickleable):
         assert "FRAME_RAW" in self, "Packet contains no raw data. In order to contains it, " \
                                     "make sure that use_json and include_raw are set to True " \
                                     "in the Capture object"
-        return binascii.unhexlify(self.frame_raw.value[0])
+        raw_packet = b''
+        byte_values = [ ''.join(x) for x in zip(self.frame_raw.value[0::2], self.frame_raw.value[1::2]) ]
+        for value in byte_values:
+            raw_packet += binascii.unhexlify(value)
+        return raw_packet
 
     @property
     def sniff_time(self):

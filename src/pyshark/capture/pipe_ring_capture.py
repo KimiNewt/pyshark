@@ -1,16 +1,24 @@
-from pyshark import LiveCapture
+from pyshark.capture.pipe_capture import PipeCapture
+from pyshark.capture.capture import TSharkCrashException, TSharkVersionException
+from pyshark.tshark.tshark import tshark_supports_json
+import asyncio
+import subprocess
+import tempfile
 
 
-class LiveRingCapture(LiveCapture):
+class DisplayFilterNotAllowedException(Exception):
+    """Display Filters are not allowed in PipeRingCapture."""
+
+
+class PipeRingCapture(PipeCapture):
     """
     Represents a live ringbuffer capture on a network interface.
     """
 
-    def __init__(self, ring_file_size=1024, num_ring_files=1, ring_file_name='/tmp/pyshark.pcap', interface=None,
-                 bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
-                 encryption_type='wpa-pwk', decode_as=None, disable_protocol=None,
+    def __init__(self, pipe, ring_file_size=1024, num_ring_files=2, ring_file_name=None,
+                 only_summaries=False, decryption_key=None,
+                 encryption_type='wpa-pwk', decode_as=None, disable_protocol=None, display_filter=None,
                  tshark_path=None, override_prefs=None, include_raw=False, use_json=False, eventloop=None):
-
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
         :param ring_file_size: Size of the ring file in kB, default is 1024
@@ -30,19 +38,27 @@ class LiveRingCapture(LiveCapture):
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         """
-        super(LiveRingCapture, self).__init__(interface, bpf_filter=bpf_filter, display_filter=display_filter, only_summaries=only_summaries,
+        if display_filter is not None:
+            raise DisplayFilterNotAllowedException("Display Filters are not allowed in PipeRingCapture.")
+
+        super(PipeRingCapture, self).__init__(pipe, display_filter=None, only_summaries=only_summaries,
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
                                               override_prefs=override_prefs, include_raw=include_raw, use_json=use_json, eventloop=eventloop)
 
         self.ring_file_size = ring_file_size
         self.num_ring_files = num_ring_files
-        self.ring_file_name = ring_file_name
+        if ring_file_name is None:
+            self.ring_file_name = tempfile.mktemp(suffix=".pcap", prefix="pyshark_")
+        else:
+            self.ring_file_name = ring_file_name
 
     def get_parameters(self, packet_count=None):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
-        params = super(LiveRingCapture, self).get_parameters(packet_count=packet_count)
-        params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files), '-w', self.ring_file_name, '-P']
+        params = super(PipeRingCapture, self).get_parameters()[:-2]
+        params.extend(['-i', self._pipe])
+        params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files), '-w',
+                   self.ring_file_name, '-P']
         return params

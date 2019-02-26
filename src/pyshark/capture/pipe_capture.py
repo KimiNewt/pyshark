@@ -1,6 +1,3 @@
-import trollius as asyncio
-from trollius import From, Return
-
 from pyshark.capture.capture import Capture
 
 
@@ -10,7 +7,7 @@ class PipeCapture(Capture):
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False, include_raw=False,
                  eventloop=None):
         """
-        Receives a file-like and reads the packets from there (pcap format).
+        Receives a string for the filename and reads the packets from there (pcap format). Does not close the pipe.
 
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.
@@ -40,16 +37,30 @@ class PipeCapture(Capture):
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = super(PipeCapture, self).get_parameters(packet_count=packet_count)
-        params += ['-r', '-']
-        return params
-
-    @asyncio.coroutine
-    def _get_tshark_process(self, packet_count=None):
-        proc = yield From(super(PipeCapture, self)._get_tshark_process(packet_count=packet_count,
-                                                                       stdin=self._pipe))
-        raise Return(proc)
+        params.extend(['-i{}'.format(self._pipe), '-'])
+        return params[:-1]
 
     def close(self):
-        # Close pipe
-        self._pipe.close()
+        """
+        Closes the capture, but not the pipe.
+        """
+        # Close the capture.
         super(PipeCapture, self).close()
+
+    # Backwards compatibility
+    sniff = Capture.load_packets
+
+    def sniff_continuously(self, packet_count=None):
+        """
+        Captures from the set interface, returning a generator which returns packets continuously.
+
+        Can be used as follows:
+        for packet in capture.sniff_continuously();
+            print 'Woo, another packet:', packet
+
+        Note: you can also call capture.apply_on_packets(packet_callback) which should have a slight performance boost.
+
+        :param packet_count: an amount of packets to capture, then stop.
+        """
+        # Retained for backwards compatibility and to add documentation.
+        return self._packets_from_tshark_sync(packet_count=packet_count)

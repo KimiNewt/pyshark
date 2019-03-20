@@ -27,3 +27,11 @@ def test_get_dumpcap_interface_parameter(capture, monitoring, interfaces):
                           for index, value in enumerate(dumpcap_parameters)
                           if value == "-i"]
     assert dumpcap_interfaces == interfaces
+
+
+def test_check_capture_filter_has_quotes(capture):
+    filter_string = "tcp port 80"
+    quoted_filter = '"%s"' % filter_string
+    capture.bpf_filter = filter_string
+    params = capture._get_dumpcap_parameters()
+    assert quoted_filter in params

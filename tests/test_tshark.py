@@ -19,7 +19,7 @@ def test_get_tshark_path(mock_exists):
     assert actual == expected
 
 
-@mock.patch('pyshark.tshark.tshark.check_output', autospec=True)
+@mock.patch('subprocess.check_output', autospec=True)
 def test_get_tshark_version(mock_check_output):
     mock_check_output.return_value = (
         b'TShark 1.12.1 (Git Rev Unknown from unknown)\n\n'b'Copyright '
@@ -41,7 +41,7 @@ def test_get_display_filter_flag(mock_get_tshark_version):
     expected = '-R'
     assert actual == expected
 
-@mock.patch('pyshark.tshark.tshark.check_output', autospec=True)
+@mock.patch('subprocess.check_output', autospec=True)
 def test_get_tshark_interfaces(mock_check_output):
     mock_check_output.return_value = (
         b'1. wlan0\n2. any\n3. lo (Loopback)\n4. eth0\n5. docker0\n'

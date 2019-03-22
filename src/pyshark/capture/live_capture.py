@@ -73,9 +73,7 @@ class LiveCapture(Capture):
         # Don't report packet counts, use pcap format
         params = ["-q", "-P"]
         if self.bpf_filter:
-            # Quote bpf_filter string before passing to shell
-            bpf_filter = '"{}"'.format(self.bpf_filter)
-            params += ['-f', bpf_filter]
+            params += ['-f', self.bpf_filter]
         if self.monitor_mode:
             params += ['-I']
         for interface in self.interfaces:
@@ -89,10 +87,9 @@ class LiveCapture(Capture):
 
         dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
 
-        dumpcap_command = " ".join(dumpcap_params)
-        self._log.debug("Creating Dumpcap subprocess with parameters: " + dumpcap_command)
-        dumpcap_process = await asyncio.create_subprocess_shell(dumpcap_command, stdout=write,
-                                                                    stderr=self._stderr_output())
+        self._log.debug("Creating Dumpcap subprocess with parameters: "  " ".join(dumpcap_params))
+        dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
+                                                               stderr=self._stderr_output())
         self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
 
         tshark = await super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=read)

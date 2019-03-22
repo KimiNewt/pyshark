@@ -360,10 +360,10 @@ class Capture(object):
         else:
             output_type = 'psml' if self._only_summaries else 'pdml'
         parameters = [self._get_tshark_path(), '-l', '-n', '-T', output_type] + \
-                      self.get_parameters(packet_count=packet_count)
+            self.get_parameters(packet_count=packet_count)
 
         self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
-
+        self._log.debug('Executable: %s' % parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
                                                               stdout=subprocess.PIPE,
                                                               stderr=self._stderr_output(),

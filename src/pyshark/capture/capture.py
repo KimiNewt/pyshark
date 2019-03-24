@@ -46,7 +46,8 @@ class Capture(object):
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type='wpa-pwd', output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
-                 override_prefs=None, capture_filter=None, use_json=False, include_raw=False):
+                 override_prefs=None, capture_filter=None, use_json=False, include_raw=False,
+                 custom_parameters=None):
 
         self.loaded = False
         self.tshark_path = tshark_path
@@ -65,6 +66,7 @@ class Capture(object):
         self._disable_protocol = disable_protocol
         self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
+        self._custom_parameters = custom_parameters
 
         if include_raw and not use_json:
             raise RawMustUseJsonException("use_json must be True if include_raw")
@@ -425,6 +427,9 @@ class Capture(object):
             params += ["-x"]
         if packet_count:
             params += ['-c', str(packet_count)]
+        if self._custom_parameters:
+            for key, val in self._custom_parameters.items():
+                params += [key, val]
         if all(self.encryption):
             params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + '","' +
                                                                   self.encryption[0] + '"']

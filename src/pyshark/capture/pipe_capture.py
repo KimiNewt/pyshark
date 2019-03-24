@@ -8,7 +8,7 @@ class PipeCapture(Capture):
     def __init__(self, pipe, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False, include_raw=False,
-                 eventloop=None):
+                 eventloop=None, custom_parameters=None):
         """
         Receives a file-like and reads the packets from there (pcap format).
 
@@ -24,7 +24,7 @@ class PipeCapture(Capture):
         :param tshark_path: Path of the tshark binary
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
-
+        :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
         """
         super(PipeCapture, self).__init__(display_filter=display_filter,
                                           only_summaries=only_summaries,
@@ -32,7 +32,8 @@ class PipeCapture(Capture):
                                           encryption_type=encryption_type,
                                           decode_as=decode_as, disable_protocol=disable_protocol,
                                           tshark_path=tshark_path, override_prefs=override_prefs,
-                                          use_json=use_json, include_raw=include_raw, eventloop=eventloop)
+                                          use_json=use_json, include_raw=include_raw, eventloop=eventloop,
+                                          custom_parameters=custom_parameters)
         self._pipe = pipe
 
     def get_parameters(self, packet_count=None):

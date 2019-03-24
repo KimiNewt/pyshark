@@ -15,7 +15,7 @@ class FileCapture(Capture):
     def __init__(self, input_file=None, keep_packets=True, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None,
-                 use_json=False, output_file=None, include_raw=False, eventloop=None):
+                 use_json=False, output_file=None, include_raw=False, eventloop=None, custom_parameters=None):
         """
         Creates a packet capture object by reading from file.
 
@@ -36,12 +36,13 @@ class FileCapture(Capture):
         :param use_json: Uses tshark in JSON mode (EXPERIMENTAL). It is a good deal faster than XML
         but also has less information. Available from Wireshark 2.2.0.
         :param output_file: A string of a file to write every read packet into (useful when filtering).
+        :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
         """
         super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                           decryption_key=decryption_key, encryption_type=encryption_type,
                                           decode_as=decode_as, disable_protocol=disable_protocol, tshark_path=tshark_path,
                                           override_prefs=override_prefs, use_json=use_json, output_file=output_file,
-                                          include_raw=include_raw, eventloop=eventloop)
+                                          include_raw=include_raw, eventloop=eventloop, custom_parameters=custom_parameters)
         self.input_filename = input_file
         if not isinstance(input_file, basestring):
             self.input_filename = input_file.name

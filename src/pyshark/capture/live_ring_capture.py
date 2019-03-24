@@ -9,7 +9,8 @@ class LiveRingCapture(LiveCapture):
     def __init__(self, ring_file_size=1024, num_ring_files=1, ring_file_name='/tmp/pyshark.pcap', interface=None,
                  bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
                  encryption_type='wpa-pwk', decode_as=None, disable_protocol=None,
-                 tshark_path=None, override_prefs=None, include_raw=False, eventloop=None):
+                 tshark_path=None, override_prefs=None, include_raw=False, eventloop=None,
+                 custom_parameters=None):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
         :param ring_file_size: Size of the ring file in kB, default is 1024
@@ -28,11 +29,13 @@ class LiveRingCapture(LiveCapture):
         :param tshark_path: Path of the tshark binary
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
+        :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
         """
         super(LiveRingCapture, self).__init__(interface, bpf_filter=bpf_filter, display_filter=display_filter, only_summaries=only_summaries,
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
-                                              override_prefs=override_prefs, include_raw=include_raw, eventloop=eventloop)
+                                              override_prefs=override_prefs, include_raw=include_raw, eventloop=eventloop,
+                                              custom_parameters=custom_parameters)
 
         self.ring_file_size = ring_file_size
         self.num_ring_files = num_ring_files

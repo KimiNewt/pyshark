@@ -88,7 +88,7 @@ class LiveCapture(Capture):
 
         dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
 
-        self._log.debug("Creating Dumpcap subprocess with parameters: "  " ".join(dumpcap_params))
+        self._log.debug("Creating Dumpcap subprocess with parameters: %s" % " ".join(dumpcap_params))
         dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
                                                                stderr=self._stderr_output())
         self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")

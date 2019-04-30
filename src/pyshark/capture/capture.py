@@ -427,9 +427,16 @@ class Capture(object):
             params += ["-x"]
         if packet_count:
             params += ['-c', str(packet_count)]
+
         if self._custom_parameters:
-            for key, val in self._custom_parameters.items():
-                params += [key, val]
+            if isinstance(self._custom_parameters, list):
+                params += self._custom_parameters
+            elif isinstance(self._custom_parameters, dict):
+                for key, val in self._custom_parameters.items():
+                    params += [key, val]
+            else:
+                raise Exception("Custom parameters type not supported.")
+
         if all(self.encryption):
             params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + '","' +
                                                                   self.encryption[0] + '"']

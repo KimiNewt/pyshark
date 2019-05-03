@@ -229,7 +229,8 @@ class Capture(object):
                 if packet_count and packets_captured >= packet_count:
                     break
         finally:
-            self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
+            if tshark_process in self._running_processes:
+                self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
 
     def apply_on_packets(self, callback, timeout=None, packet_count=None):
         """

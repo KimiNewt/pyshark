@@ -77,8 +77,7 @@ def get_tshark_version(tshark_path=None):
     return version_string
 
 
-def tshark_supports_json(tshark_path=None):
-    tshark_version = get_tshark_version(tshark_path)
+def tshark_supports_json(tshark_version):
     return LooseVersion(tshark_version) >= LooseVersion("2.2.0")
 
 

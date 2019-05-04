@@ -173,14 +173,13 @@ class Capture(object):
         else:
             return ("}%s%s  ," % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
 
-    @classmethod
-    def _extract_packet_json_from_data(cls, data, got_first_packet=True):
+    def _extract_packet_json_from_data(self, data, got_first_packet=True):
         tag_start = 0
         if not got_first_packet:
             tag_start = data.find(b"{")
             if tag_start == -1:
                 return None, data
-        packet_separator, end_separator, end_tag_strip_length = cls._get_json_separators()
+        packet_separator, end_separator, end_tag_strip_length = self._get_json_separators()
         tag_end = data.find(packet_separator)
         if tag_end == -1:
             # No end of packet, maybe it has end of entire file?

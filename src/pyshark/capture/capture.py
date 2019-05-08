@@ -180,15 +180,20 @@ class Capture(object):
             if tag_start == -1:
                 return None, data
         packet_separator, end_separator, end_tag_strip_length = self._get_json_separators()
+        found_separator = None
+
         tag_end = data.find(packet_separator)
         if tag_end == -1:
-            # No end of packet, maybe it has end of entire file?
-            tag_end = data.find(end_separator) + len(end_separator) - end_tag_strip_length
+            # Not end of packet, maybe it has end of entire file?
+            tag_end = data.find(end_separator)
+            if tag_end != -1:
+                found_separator = end_separator
         else:
             # Found a single packet, just add the separator without extras
-            tag_end += len(packet_separator) - end_tag_strip_length
+            found_separator = packet_separator
 
-        if tag_end != -1:
+        if found_separator:
+            tag_end += len(found_separator) - end_tag_strip_length
             return data[tag_start:tag_end], data[tag_end + 1:]
         return None, data
 

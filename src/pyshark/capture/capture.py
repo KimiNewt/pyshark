@@ -3,6 +3,7 @@ import os
 import threading
 import subprocess
 import concurrent.futures
+from distutils.version import LooseVersion
 
 import logbook
 import sys
@@ -10,7 +11,7 @@ import sys
 from logbook import StreamHandler
 
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
-    tshark_supports_json, TSharkVersionException
+    tshark_supports_json, TSharkVersionException, get_tshark_version
 from pyshark.tshark.tshark_json import packet_from_json_packet
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
@@ -67,6 +68,7 @@ class Capture(object):
         self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
+        self._tshark_version = None
 
         if include_raw and not use_json:
             raise RawMustUseJsonException("use_json must be True if include_raw")
@@ -158,25 +160,40 @@ class Capture(object):
         if os.name == 'posix' and isinstance(threading.current_thread(), threading._MainThread):
             asyncio.get_child_watcher().attach_loop(self.eventloop)
 
-    @classmethod
-    def _get_json_separator(cls):
-        return ("}%s%s  ," % (os.linesep, os.linesep)).encode()
+    def _get_json_separators(self):
+        """"Returns the separators between packets in a JSON output
 
-    @classmethod
-    def _extract_packet_json_from_data(cls, data, got_first_packet=True):
+        Returns a tuple of (packet_separator, end_of_file_separator, characters_to_disregard).
+        The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
+        commas, parenthesis).
+        """
+        if LooseVersion(self._tshark_version) >= LooseVersion("3.0.0"):
+            return ("%s  },%s" % (os.linesep, os.linesep)).encode(), ("}%s]" % os.linesep).encode(), (
+                    1 + len(os.linesep))
+        else:
+            return ("}%s%s  ," % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
+
+    def _extract_packet_json_from_data(self, data, got_first_packet=True):
         tag_start = 0
         if not got_first_packet:
             tag_start = data.find(b"{")
             if tag_start == -1:
                 return None, data
-        closing_tag = cls._get_json_separator()
-        tag_end = data.find(closing_tag)
+        packet_separator, end_separator, end_tag_strip_length = self._get_json_separators()
+        found_separator = None
+
+        tag_end = data.find(packet_separator)
         if tag_end == -1:
-            closing_tag = ("}%s%s]" % (os.linesep, os.linesep)).encode()
-            tag_end = data.find(closing_tag)
-        if tag_end != -1:
-            # Include closing parenthesis but not comma
-            tag_end += len(closing_tag) - 1
+            # Not end of packet, maybe it has end of entire file?
+            tag_end = data.find(end_separator)
+            if tag_end != -1:
+                found_separator = end_separator
+        else:
+            # Found a single packet, just add the separator without extras
+            found_separator = packet_separator
+
+        if found_separator:
+            tag_end += len(found_separator) - end_tag_strip_length
             return data[tag_start:tag_end], data[tag_end + 1:]
         return None, data
 
@@ -229,7 +246,8 @@ class Capture(object):
                 if packet_count and packets_captured >= packet_count:
                     break
         finally:
-            self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
+            if tshark_process in self._running_processes:
+                self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
 
     def apply_on_packets(self, callback, timeout=None, packet_count=None):
         """
@@ -357,7 +375,9 @@ class Capture(object):
         """
         if self.use_json:
             output_type = 'json'
-            if not tshark_supports_json(self.tshark_path):
+            if not self._tshark_version:
+                self._tshark_version = get_tshark_version(self.tshark_path)
+            if not tshark_supports_json(self._tshark_version):
                 raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
         else:
             output_type = 'psml' if self._only_summaries else 'pdml'

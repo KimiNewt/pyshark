@@ -44,3 +44,8 @@ def simple_summary_capture(request):
     A capture already full of packets
     """
     return make_test_capture(request, only_summaries=True)
+
+
+@pytest.fixture(params=[True, False])
+def simple_xml_and_json_capture(request):
+    return make_test_capture(request, use_json=request.param)

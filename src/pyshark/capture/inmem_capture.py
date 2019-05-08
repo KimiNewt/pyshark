@@ -4,7 +4,7 @@ import os
 import struct
 import time
 import warnings
-
+from distutils.version import LooseVersion
 
 from pyshark.capture.capture import Capture, StopCapture
 
@@ -74,9 +74,17 @@ class InMemCapture(Capture):
 
         return proc
 
-    @classmethod
-    def _get_json_separator(cls):
-        return ("}%s%s" % (os.linesep, os.linesep)).encode()
+    def _get_json_separators(self):
+        """"Returns the separators between packets in a JSON output
+
+        Returns a tuple of (packet_separator, end_of_file_separator, characters_to_disregard).
+        The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
+        commas, parenthesis).
+        """
+        if LooseVersion(self._tshark_version) >= LooseVersion("3.0.0"):
+            return ("%s  }" % os.linesep).encode(), ("}%s]" % os.linesep).encode(), 0
+        else:
+            return ("}%s%s" % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
 
     def _write_packet(self, packet):
         # Write packet header

@@ -8,7 +8,7 @@ from pyshark.packet.fields import LayerField, LayerFieldsContainer
 
 class Layer(Pickleable):
     """
-    An object reJpresenting a Packet layer.
+    An object representing a Packet layer.
     """
     DATA_LAYER = 'data'
 

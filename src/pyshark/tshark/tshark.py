@@ -74,19 +74,18 @@ def get_tshark_version(tshark_path=None):
         raise TSharkVersionException('Unable to parse TShark version from: {}'.format(version_line))
     version_string = m.groups()[0]  # Use first match found
 
-    return version_string
+    return LooseVersion(version_string)
 
 
 def tshark_supports_json(tshark_version):
-    return LooseVersion(tshark_version) >= LooseVersion("2.2.0")
+    return tshark_version >= LooseVersion("2.2.0")
 
 
-def get_tshark_display_filter_flag(tshark_path=None):
+def get_tshark_display_filter_flag(tshark_version):
     """
     Returns '-Y' for tshark versions >= 1.10.0 and '-R' for older versions.
     """
-    tshark_version = get_tshark_version(tshark_path)
-    if LooseVersion(tshark_version) >= LooseVersion("1.10.0"):
+    if tshark_version >= LooseVersion("1.10.0"):
         return '-Y'
     else:
         return '-R'

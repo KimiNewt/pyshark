@@ -1,6 +1,7 @@
 import os
 
 import asyncio
+from distutils.version import LooseVersion
 
 from pyshark.capture.capture import Capture
 from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path
@@ -71,8 +72,11 @@ class LiveCapture(Capture):
         return params
 
     def _get_dumpcap_parameters(self):
-        # Don't report packet counts, use pcap format
-        params = ["-q", "-P"]
+        # Don't report packet counts.
+        params = ["-q"]
+        if self._get_tshark_version() < LooseVersion("2.5.0"):
+            # Tshark versions older than 2.5 don't support pcapng. This flag forces dumpcap to output pcap.
+            params += ["-P"]
         if self.bpf_filter:
             params += ['-f', self.bpf_filter]
         if self.monitor_mode:

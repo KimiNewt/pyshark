@@ -1,3 +1,5 @@
+from distutils.version import LooseVersion
+
 try:
     import mock
 except ModuleNotFoundError:
@@ -29,17 +31,16 @@ def test_get_tshark_version(mock_check_output):
     expected = '1.12.1'
     assert actual == expected
 
-@mock.patch('pyshark.tshark.tshark.get_tshark_version', autospec=True)
-def test_get_display_filter_flag(mock_get_tshark_version):
-    mock_get_tshark_version.return_value = '1.10.0'
-    actual = get_tshark_display_filter_flag()
+
+def test_get_display_filter_flag():
+    actual = get_tshark_display_filter_flag(LooseVersion('1.10.0'))
     expected = '-Y'
     assert actual == expected
 
-    mock_get_tshark_version.return_value = '1.6.0'
-    actual = get_tshark_display_filter_flag()
+    actual = get_tshark_display_filter_flag(LooseVersion('1.6.0'))
     expected = '-R'
     assert actual == expected
+
 
 @mock.patch('subprocess.check_output', autospec=True)
 def test_get_tshark_interfaces(mock_check_output):

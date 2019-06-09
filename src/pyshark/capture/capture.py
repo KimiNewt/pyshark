@@ -68,7 +68,7 @@ class Capture(object):
         self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
-        self._tshark_version = None
+        self.__tshark_version = None
 
         if include_raw and not use_json:
             raise RawMustUseJsonException("use_json must be True if include_raw")
@@ -167,7 +167,7 @@ class Capture(object):
         The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
         commas, parenthesis).
         """
-        if LooseVersion(self._tshark_version) >= LooseVersion("3.0.0"):
+        if self._get_tshark_version() >= LooseVersion("3.0.0"):
             return ("%s  },%s" % (os.linesep, os.linesep)).encode(), ("}%s]" % os.linesep).encode(), (
                     1 + len(os.linesep))
         else:
@@ -369,15 +369,18 @@ class Capture(object):
         # Ignore stderr output unless in debug mode (sent to console)
         return None if self.debug else open(os.devnull, "w")
 
+    def _get_tshark_version(self):
+        if self.__tshark_version is None:
+            self.__tshark_version = get_tshark_version(self.tshark_path)
+        return self.__tshark_version
+
     async def _get_tshark_process(self, packet_count=None, stdin=None):
         """
         Returns a new tshark process with previously-set parameters.
         """
         if self.use_json:
             output_type = 'json'
-            if not self._tshark_version:
-                self._tshark_version = get_tshark_version(self.tshark_path)
-            if not tshark_supports_json(self._tshark_version):
+            if not tshark_supports_json(self._get_tshark_version()):
                 raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
         else:
             output_type = 'psml' if self._only_summaries else 'pdml'
@@ -441,7 +444,8 @@ class Capture(object):
         if self._capture_filter:
             params += ['-f', self._capture_filter]
         if self._display_filter:
-            params += [get_tshark_display_filter_flag(self.tshark_path), self._display_filter]
+            params += [get_tshark_display_filter_flag(self._get_tshark_version(),),
+                       self._display_filter]
         # Raw is only enabled when JSON is also enabled.
         if self.include_raw:
             params += ["-x"]

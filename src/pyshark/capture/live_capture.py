@@ -108,7 +108,7 @@ class LiveCapture(Capture):
         Captures from the set interface, returning a generator which returns packets continuously.
 
         Can be used as follows:
-        for packet in capture.sniff_continuously();
+        for packet in capture.sniff_continuously():
             print 'Woo, another packet:', packet
 
         Note: you can also call capture.apply_on_packets(packet_callback) which should have a slight performance boost.

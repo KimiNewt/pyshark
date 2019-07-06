@@ -426,6 +426,7 @@ class Capture(object):
 
     def close(self):
         self.eventloop.run_until_complete(self._close_async())
+        self.eventloop.close()
 
     async def _close_async(self):
         for process in self._running_processes.copy():

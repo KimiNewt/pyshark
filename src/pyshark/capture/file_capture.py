@@ -87,6 +87,10 @@ class FileCapture(Capture):
         else:
             return '<%s %s (%d packets)>' % (self.__class__.__name__, self.input_filename, len(self._packets))
 
+    def close(self):
+        super(FileCapture,self).close()
+        self.eventloop.close()
+
     def __enter__(self):
         return self
 

@@ -367,7 +367,7 @@ class Capture(object):
 
     def _stderr_output(self):
         # Ignore stderr output unless in debug mode (sent to console)
-        return None if self.debug else open(os.devnull, "w")
+        return None if self.debug else subprocess.DEVNULL
 
     def _get_tshark_version(self):
         if self.__tshark_version is None:

@@ -108,12 +108,18 @@ class InMemCapture(Capture):
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         """
-        if not binary_packets:
-            raise ValueError("Must supply at least one packet")
-        parsed_packets = []
+        return asyncio.get_event_loop().run_until_complete(self.parse_packets_async(binary_packets))
 
+    async def parse_packets_async(self, binary_packets):
+        """
+        A coroutine which parses binary packets and return a list of parsed packets.
+
+        DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
+        working with it.
+        """
+        parsed_packets = []
         if not self._current_tshark:
-            self.eventloop.run_until_complete(self._get_tshark_process())
+            await self._get_tshark_process()
         for binary_packet in binary_packets:
             self._write_packet(binary_packet)
 
@@ -122,14 +128,13 @@ class InMemCapture(Capture):
             if len(parsed_packets) == len(binary_packets):
                 raise StopCapture()
 
-        self.eventloop.run_until_complete(self._get_parsed_packet_from_tshark(callback))
+        await self._get_parsed_packet_from_tshark(callback)
         return parsed_packets
 
     async def _get_parsed_packet_from_tshark(self, callback):
         await self._current_tshark.stdin.drain()
         try:
-            await asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False),
-                                       DEFAULT_TIMEOUT)
+            await asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False), DEFAULT_TIMEOUT)
         except asyncio.TimeoutError:
             await self._close_async()
             raise asyncio.TimeoutError("Timed out while waiting for tshark to parse packet. "

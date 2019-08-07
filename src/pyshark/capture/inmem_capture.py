@@ -136,14 +136,14 @@ class InMemCapture(Capture):
         try:
             await asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False), DEFAULT_TIMEOUT)
         except asyncio.TimeoutError:
-            await self._close_async()
+            await self.close_async()
             raise asyncio.TimeoutError("Timed out while waiting for tshark to parse packet. "
                                        "Try rerunning with cap.set_debug() to see tshark errors. "
                                        "Closing tshark..")
 
-    async def _close_async(self):
+    async def close_async(self):
         self._current_tshark = None
-        await super(InMemCapture, self)._close_async()
+        await super(InMemCapture, self).close_async()
 
     def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
         """

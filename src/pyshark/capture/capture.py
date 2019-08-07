@@ -281,7 +281,7 @@ class Capture(object):
             pass
         finally:
             if close_tshark:
-                await self._close_async()
+                await self.close_async()
                 #yield From(self._cleanup_subprocess(tshark_process))
 
     async def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
@@ -425,9 +425,9 @@ class Capture(object):
                                        % process.returncode)
 
     def close(self):
-        self.eventloop.run_until_complete(self._close_async())
+        self.eventloop.run_until_complete(self.close_async())
 
-    async def _close_async(self):
+    async def close_async(self):
         for process in self._running_processes.copy():
             await self._cleanup_subprocess(process)
         self._running_processes.clear()

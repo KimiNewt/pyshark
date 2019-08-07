@@ -81,7 +81,7 @@ class InMemCapture(Capture):
         The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
         commas, parenthesis).
         """
-        if self._get_tshark_version() >= LooseVersion("3.0.0"):
+        if self._get_tshark_version() >= LooseVersion("2.6.7"):
             return ("%s  }" % os.linesep).encode(), ("}%s]" % os.linesep).encode(), 0
         else:
             return ("}%s%s" % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1

@@ -155,8 +155,15 @@ class Capture(object):
         if os.name == 'nt':
             self.eventloop = asyncio.ProactorEventLoop()
         else:
-            self.eventloop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.eventloop)
+            try:
+                self.eventloop = asyncio.get_event_loop()
+            except RuntimeError:
+                if threading.current_thread() != threading.main_thread():
+                    # Ran not in main thread, make a new eventloop
+                    self.eventloop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(self.eventloop)
+                else:
+                    raise
         if os.name == 'posix' and isinstance(threading.current_thread(), threading._MainThread):
             asyncio.get_child_watcher().attach_loop(self.eventloop)
 

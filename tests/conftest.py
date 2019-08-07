@@ -15,7 +15,6 @@ def make_test_capture(request, **params):
 
     def finalizer():
         cap.close()
-        cap.eventloop.stop()
 
     request.addfinalizer(finalizer)
     return cap

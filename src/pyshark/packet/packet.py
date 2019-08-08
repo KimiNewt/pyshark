@@ -75,7 +75,10 @@ class Packet(Pickleable):
         return raw_packet
 
     def __len__(self):
-        return self.length
+        return int(self.length)
+
+    def __bool__(self):
+        return True
 
     @property
     def sniff_time(self):

@@ -1,5 +1,6 @@
 import os
 import asyncio
+import sys
 from distutils.version import LooseVersion
 
 from pyshark.capture.capture import Capture

@@ -198,6 +198,7 @@ class JsonLayer(Layer):
         """Creates a JsonLayer. All sublayers and fields are created lazily later."""
         self._layer_name = layer_name
         self.duplicate_layers = []
+        self._showname_fields_converted_to_regular = False
         if not full_name:
             self._full_name = self._layer_name
         else:
@@ -219,8 +220,27 @@ class JsonLayer(Layer):
     def _sanitize_field_name(self, field_name):
         return field_name.replace(self._full_name + '.', '')
 
+    def _field_name_from_showname(self, field_name):
+        """Converts a 'showname'-like field key to a regular field name
+
+        Sometimes in the JSON, there are "text" type fields which might look like this:
+        "my_layer":
+            {
+                "my_layer.some_field": 1,
+                "Something Special: it's special": {
+                    "my_layer.special_field": "it's special"
+                }
+            }
+
+        We convert the showname key into the field name. The internals will turn into a fake layer.
+        In this case the field will be accessible by pkt.my_layer.something_special.special_field
+        """
+        showname_key = field_name.split(":", 1)[0]
+        return self._full_name + "." + showname_key.lower().replace(" ", "_")
+
     @property
     def field_names(self):
+        self._convert_showname_field_names_to_field_names()
         return list(set([self._sanitize_field_name(name) for name in self._all_fields
                          if name.startswith(self._full_name)] +
                         [name.rsplit('.', 1)[1] for name in self._all_fields if '.' in name]))
@@ -231,6 +251,7 @@ class JsonLayer(Layer):
     def get_field(self, name):
         """Gets a field by its full or partial name."""
         # We only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
+        self._convert_showname_field_names_to_field_names()
         field = self._wrapped_fields.get(name)
         if field is None:
             is_fake = False
@@ -243,6 +264,25 @@ class JsonLayer(Layer):
             field = self._make_wrapped_field(name, field, is_fake=is_fake)
             self._wrapped_fields[name] = field
         return field
+
+    def _convert_showname_field_names_to_field_names(self):
+        """Converts all fields that don't have a proper name (they have a showname name) to a regular name
+
+        See self._field_name_from_showname docs for more.
+        """
+        if self._showname_fields_converted_to_regular:
+            return
+        for field_name in self._all_fields:
+            if ":" in field_name:
+                field_value = self._all_fields.pop(field_name)
+                if isinstance(field_value, dict):
+                    # Save the showname
+                    field_value["showname"] = field_name
+                # Convert the old name to the new name.
+                self._all_fields[
+                    self._field_name_from_showname(field_name)] = field_value
+
+        self._showname_fields_converted_to_regular = True
 
     def _get_internal_field_by_name(self, name):
         """Gets the field by name, or None if not found."""

@@ -1,10 +1,5 @@
 import os
-import sys
 from pyshark.capture.capture import Capture
-
-# Define basestring as str if we're in python3.
-if sys.version_info >= (3, 0):
-    basestring = str
 
 
 class FileCapture(Capture):
@@ -47,7 +42,7 @@ class FileCapture(Capture):
                                           include_raw=include_raw, eventloop=eventloop,
                                           custom_parameters=custom_parameters, debug=debug)
         self.input_filename = input_file
-        if not isinstance(input_file, basestring):
+        if not isinstance(input_file, str):
             self.input_filename = input_file.name
         if not os.path.exists(self.input_filename):
             raise FileNotFoundError(

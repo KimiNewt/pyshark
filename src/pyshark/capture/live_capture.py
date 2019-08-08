@@ -1,15 +1,9 @@
 import os
-
 import asyncio
 from distutils.version import LooseVersion
 
 from pyshark.capture.capture import Capture
 from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path
-import sys
-
-# Define basestring as str if we're in python3.
-if sys.version_info >= (3, 0):
-    basestring = str
 
 
 class LiveCapture(Capture):
@@ -59,7 +53,7 @@ class LiveCapture(Capture):
 
         if interface is None:
             self.interfaces = get_tshark_interfaces(tshark_path)
-        elif isinstance(interface, basestring):
+        elif isinstance(interface, str):
             self.interfaces = [interface]
         else:
             self.interfaces = interface

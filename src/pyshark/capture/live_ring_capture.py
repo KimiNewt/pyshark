@@ -10,7 +10,7 @@ class LiveRingCapture(LiveCapture):
                  bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
                  encryption_type='wpa-pwk', decode_as=None, disable_protocol=None,
                  tshark_path=None, override_prefs=None, include_raw=False, eventloop=None,
-                 custom_parameters=None):
+                 custom_parameters=None, debug=False):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
         :param ring_file_size: Size of the ring file in kB, default is 1024
@@ -35,7 +35,7 @@ class LiveRingCapture(LiveCapture):
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
                                               override_prefs=override_prefs, include_raw=include_raw, eventloop=eventloop,
-                                              custom_parameters=custom_parameters)
+                                              custom_parameters=custom_parameters, debug=debug)
 
         self.ring_file_size = ring_file_size
         self.num_ring_files = num_ring_files

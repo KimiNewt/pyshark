@@ -1,6 +1,3 @@
-import trollius as asyncio
-from trollius import From, Return
-
 from pyshark.capture.capture import Capture
 
 
@@ -44,11 +41,8 @@ class PipeCapture(Capture):
         params += ['-r', '-']
         return params
 
-    @asyncio.coroutine
-    def _get_tshark_process(self, packet_count=None):
-        proc = yield From(super(PipeCapture, self)._get_tshark_process(packet_count=packet_count,
-                                                                       stdin=self._pipe))
-        raise Return(proc)
+    async def _get_tshark_process(self, packet_count=None):
+        return await super(PipeCapture, self)._get_tshark_process(packet_count=packet_count, stdin=self._pipe)
 
     def close(self):
         # Close pipe

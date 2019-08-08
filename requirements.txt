@@ -2,5 +2,4 @@
 py
 pytest
 mock
-logbook
 lxml

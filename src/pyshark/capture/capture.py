@@ -3,12 +3,10 @@ import os
 import threading
 import subprocess
 import concurrent.futures
+import sys
+import logging
 from distutils.version import LooseVersion
 
-import logbook
-import sys
-
-from logbook import StreamHandler
 
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version
@@ -41,7 +39,7 @@ class Capture(object):
     """
     DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
-    DEFAULT_LOG_LEVEL = logbook.CRITICAL
+    DEFAULT_LOG_LEVEL = logging.CRITICAL
     SUPPORTED_ENCRYPTION_STANDARDS = ["wep", "wpa-pwk", "wpa-pwd", "wpa-psk"]
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
@@ -65,13 +63,16 @@ class Capture(object):
         self._running_processes = set()
         self._decode_as = decode_as
         self._disable_protocol = disable_protocol
-        self._log = logbook.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
+        self._log = logging.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
         self.__tshark_version = None
 
         if include_raw and not use_json:
             raise RawMustUseJsonException("use_json must be True if include_raw")
+
+        if self.debug:
+            self.set_debug()
 
         self.eventloop = eventloop
         if self.eventloop is None:
@@ -139,13 +140,15 @@ class Capture(object):
         except concurrent.futures.TimeoutError:
             pass
 
-    def set_debug(self, set_to=True):
+    def set_debug(self, set_to=True, log_level=logging.DEBUG):
         """
         Sets the capture to debug mode (or turns it off if specified).
         """
         if set_to:
-            StreamHandler(sys.stdout).push_application()
-            self._log.level = logbook.DEBUG
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+            self._log.addHandler(handler)
+            self._log.level = log_level
         self.debug = set_to
 
     def _setup_eventloop(self):

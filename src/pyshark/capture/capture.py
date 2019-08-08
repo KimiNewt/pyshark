@@ -42,10 +42,10 @@ class Capture(object):
     DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logbook.CRITICAL
-    SUPPORTED_ENCRYPTION_STANDARDS = ['wep', 'wpa-pwk', 'wpa-pwd', 'wpa-psk']
+    SUPPORTED_ENCRYPTION_STANDARDS = ["wep", "wpa-pwk", "wpa-pwd", "wpa-psk"]
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
-                 decryption_key=None, encryption_type='wpa-pwd', output_file=None,
+                 decryption_key=None, encryption_type="wpa-pwd", output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
                  override_prefs=None, capture_filter=None, use_json=False, include_raw=False,
                  custom_parameters=None):
@@ -80,7 +80,7 @@ class Capture(object):
             self.encryption = (decryption_key, encryption_type.lower())
         else:
             raise UnknownEncyptionStandardException("Only the following standards are supported: %s."
-                                                    % ', '.join(self.SUPPORTED_ENCRYPTION_STANDARDS))
+                                                    % ", ".join(self.SUPPORTED_ENCRYPTION_STANDARDS))
 
     def __getitem__(self, item):
         """
@@ -152,7 +152,7 @@ class Capture(object):
         """
         Sets up a new eventloop as the current one according to the OS.
         """
-        if os.name == 'nt':
+        if os.name == "nt":
             self.eventloop = asyncio.ProactorEventLoop()
         else:
             try:
@@ -164,7 +164,7 @@ class Capture(object):
                     asyncio.set_event_loop(self.eventloop)
                 else:
                     raise
-        if os.name == 'posix' and isinstance(threading.current_thread(), threading._MainThread):
+        if os.name == "posix" and isinstance(threading.current_thread(), threading._MainThread):
             asyncio.get_child_watcher().attach_loop(self.eventloop)
 
     def _get_json_separators(self):
@@ -204,7 +204,7 @@ class Capture(object):
             return data[tag_start:tag_end], data[tag_end + 1:]
         return None, data
 
-    def _extract_tag_from_data(self, data, tag_name=b'packet'):
+    def _extract_tag_from_data(self, data, tag_name=b"packet"):
         """Gets data containing a (part of) tshark xml.
 
         If the given tag is found in it, returns the tag data and the remaining data.
@@ -213,8 +213,8 @@ class Capture(object):
         :param data: string of a partial tshark xml.
         :return: a tuple of (tag, data). tag will be None if none is found.
         """
-        opening_tag = b'<' + tag_name + b'>'
-        closing_tag = opening_tag.replace(b'<', b'</')
+        opening_tag = b"<" + tag_name + b">"
+        closing_tag = opening_tag.replace(b"<", b"</")
         tag_end = data.find(closing_tag)
         if tag_end != -1:
             tag_end += len(closing_tag)
@@ -235,7 +235,7 @@ class Capture(object):
         psml_structure, data = self.eventloop.run_until_complete(self._get_psml_struct(tshark_process.stdout))
         packets_captured = 0
 
-        data = b''
+        data = b""
         try:
             while True:
                 try:
@@ -244,7 +244,7 @@ class Capture(object):
                                                      got_first_packet=packets_captured > 0))
 
                 except EOFError:
-                    self._log.debug('EOF reached (sync)')
+                    self._log.debug("EOF reached (sync)")
                     break
 
                 if packet:
@@ -294,7 +294,7 @@ class Capture(object):
     async def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
         """A coroutine which goes through a stream and calls a given callback for each XML packet seen in it."""
         packets_captured = 0
-        self._log.debug('Starting to go through packets')
+        self._log.debug("Starting to go through packets")
 
         psml_struct, data = await self._get_psml_struct(fd)
 
@@ -303,7 +303,7 @@ class Capture(object):
                 packet, data = await self._get_packet_from_stream(fd, data, got_first_packet=packets_captured > 0,
                                                                   psml_structure=psml_struct)
             except EOFError:
-                self._log.debug('EOF reached')
+                self._log.debug("EOF reached")
                 break
 
             if packet:
@@ -311,7 +311,7 @@ class Capture(object):
                 try:
                     packet_callback(packet)
                 except StopCapture:
-                    self._log.debug('User-initiated capture stop in callback')
+                    self._log.debug("User-initiated capture stop in callback")
                     break
 
             if packet_count and packets_captured >= packet_count:
@@ -323,7 +323,7 @@ class Capture(object):
 
         A coroutine.
         """
-        data = b''
+        data = b""
         psml_struct = None
 
         if self._only_summaries:
@@ -331,7 +331,7 @@ class Capture(object):
             while not psml_struct:
                 new_data = await fd.read(self.SUMMARIES_BATCH_SIZE)
                 data += new_data
-                psml_struct, data = self._extract_tag_from_data(data, b'structure')
+                psml_struct, data = self._extract_tag_from_data(data, b"structure")
                 if psml_struct:
                     psml_struct = psml_structure_from_xml(psml_struct)
                 elif not new_data:
@@ -386,16 +386,16 @@ class Capture(object):
         Returns a new tshark process with previously-set parameters.
         """
         if self.use_json:
-            output_type = 'json'
+            output_type = "json"
             if not tshark_supports_json(self._get_tshark_version()):
                 raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
         else:
-            output_type = 'psml' if self._only_summaries else 'pdml'
-        parameters = [self._get_tshark_path(), '-l', '-n', '-T', output_type] + \
+            output_type = "psml" if self._only_summaries else "pdml"
+        parameters = [self._get_tshark_path(), "-l", "-n", "-T", output_type] + \
             self.get_parameters(packet_count=packet_count)
 
-        self._log.debug('Creating TShark subprocess with parameters: ' + ' '.join(parameters))
-        self._log.debug('Executable: %s' % parameters[0])
+        self._log.debug("Creating TShark subprocess with parameters: " + " ".join(parameters))
+        self._log.debug("Executable: %s" % parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
                                                               stdout=subprocess.PIPE,
                                                               stderr=self._stderr_output(),
@@ -404,11 +404,11 @@ class Capture(object):
         return tshark_process
 
     def _created_new_process(self, parameters, process, process_name="TShark"):
-        self._log.debug(process_name + ' subprocess created')
+        self._log.debug(process_name + " subprocess created")
         if process.returncode is not None and process.returncode != 0:
             raise TSharkCrashException(
-                '%s seems to have crashed. Try updating it. (command ran: "%s")' % (
-                    process_name, ' '.join(parameters)))
+                "%s seems to have crashed. Try updating it. (command ran: '%s')" % (
+                    process_name, " ".join(parameters)))
         self._running_processes.add(process)
 
     async def _cleanup_subprocess(self, process):
@@ -420,15 +420,15 @@ class Capture(object):
                 process.kill()
                 return await asyncio.wait_for(process.wait(), 1)
             except concurrent.futures.TimeoutError:
-                self._log.debug('Waiting for process to close failed, may have zombie process.')
+                self._log.debug("Waiting for process to close failed, may have zombie process.")
             except ProcessLookupError:
                 pass
             except OSError:
-                if os.name != 'nt':
+                if os.name != "nt":
                     raise
         elif process.returncode > 0:
-            raise TSharkCrashException('TShark seems to have crashed (retcode: %d). '
-                                       'Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.'
+            raise TSharkCrashException("TShark seems to have crashed (retcode: %d). "
+                                       "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark."
                                        % process.returncode)
 
     def close(self):
@@ -443,13 +443,18 @@ class Capture(object):
         if self._running_processes:
             self.close()
 
+    def __enter__(self): return self
+    async def __aenter__(self): return self
+    def __exit__(self, exc_type, exc_val, exc_tb): self.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb): await self.close_async()
+
     def get_parameters(self, packet_count=None):
         """
         Returns the special tshark parameters to be used according to the configuration of this class.
         """
         params = []
         if self._capture_filter:
-            params += ['-f', self._capture_filter]
+            params += ["-f", self._capture_filter]
         if self._display_filter:
             params += [get_tshark_display_filter_flag(self._get_tshark_version(),),
                        self._display_filter]
@@ -457,7 +462,7 @@ class Capture(object):
         if self.include_raw:
             params += ["-x"]
         if packet_count:
-            params += ['-c', str(packet_count)]
+            params += ["-c", str(packet_count)]
 
         if self._custom_parameters:
             if isinstance(self._custom_parameters, list):
@@ -469,23 +474,23 @@ class Capture(object):
                 raise Exception("Custom parameters type not supported.")
 
         if all(self.encryption):
-            params += ['-o', 'wlan.enable_decryption:TRUE', '-o', 'uat:80211_keys:"' + self.encryption[1] + '","' +
+            params += ["-o", "wlan.enable_decryption:TRUE", "-o", 'uat:80211_keys:"' + self.encryption[1] + '","' +
                                                                   self.encryption[0] + '"']
         if self._override_prefs:
             for preference_name, preference_value in self._override_prefs.items():
-                if all(self.encryption) and preference_name in ('wlan.enable_decryption', 'uat:80211_keys'):
+                if all(self.encryption) and preference_name in ("wlan.enable_decryption", "uat:80211_keys"):
                     continue  # skip if override preferences also given via --encryption options
-                params += ['-o', '{0}:{1}'.format(preference_name, preference_value)]
+                params += ["-o", "{0}:{1}".format(preference_name, preference_value)]
 
         if self._output_file:
-            params += ['-w', self._output_file]
+            params += ["-w", self._output_file]
 
         if self._decode_as:
             for criterion, decode_as_proto in self._decode_as.items():
-                params += ['-d', ','.join([criterion.strip(), decode_as_proto.strip()])]
+                params += ["-d", ",".join([criterion.strip(), decode_as_proto.strip()])]
 
         if self._disable_protocol:
-            params += ['--disable-protocol', self._disable_protocol.strip()]
+            params += ["--disable-protocol", self._disable_protocol.strip()]
 
         return params
 
@@ -496,4 +501,4 @@ class Capture(object):
             return self._packets_from_tshark_sync()
 
     def __repr__(self):
-        return '<%s (%d packets)>' % (self.__class__.__name__, len(self._packets))
+        return "<%s (%d packets)>" % (self.__class__.__name__, len(self._packets))

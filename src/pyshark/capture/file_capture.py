@@ -1,4 +1,5 @@
 import os
+
 from pyshark.capture.capture import Capture
 
 

@@ -1,6 +1,8 @@
-import pyshark
-import py
 import os
+
+import py
+
+import pyshark
 
 CONFIG_PATH = os.path.join(os.path.dirname(pyshark.__file__), 'config.ini')
 

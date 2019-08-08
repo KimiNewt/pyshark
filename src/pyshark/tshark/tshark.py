@@ -1,6 +1,4 @@
-"""
-Module used for the actual running of TShark
-"""
+"""Module used for the actual running of TShark"""
 from distutils.version import LooseVersion
 import os
 import subprocess

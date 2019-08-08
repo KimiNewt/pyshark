@@ -7,7 +7,6 @@ import sys
 import logging
 from distutils.version import LooseVersion
 
-
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version
 from pyshark.tshark.tshark_json import packet_from_json_packet

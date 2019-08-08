@@ -1,7 +1,6 @@
-"""
-This module contains functions to turn TShark XML parts into Packet objects.
-"""
+"""This module contains functions to turn TShark XML parts into Packet objects."""
 import lxml.objectify
+
 from pyshark.packet.layer import Layer
 from pyshark.packet.packet import Packet
 from pyshark.packet.packet_summary import PacketSummary

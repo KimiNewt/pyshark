@@ -1,6 +1,5 @@
 import datetime
 import os
-
 import binascii
 
 from pyshark.packet import consts

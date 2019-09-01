@@ -8,17 +8,14 @@ from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path
 
 
 class LiveCapture(Capture):
-    """
-    Represents a live capture on a network interface.
-    """
+    """Represents a live capture on a network interface."""
 
     def __init__(self, interface=None, bpf_filter=None, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', output_file=None, decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, capture_filter=None,
                  monitor_mode=False, use_json=False, include_raw=False, eventloop=None, custom_parameters=None,
                  debug=False):
-        """
-        Creates a new live capturer on a given interface. Does not start the actual capture itself.
+        """Creates a new live capturer on a given interface. Does not start the actual capture itself.
 
         :param interface: Name of the interface to sniff on or a list of names (str). If not given, runs on all interfaces.
         :param bpf_filter: BPF filter to use on packets.
@@ -49,8 +46,8 @@ class LiveCapture(Capture):
         self.bpf_filter = bpf_filter
         self.monitor_mode = monitor_mode
 
-        if sys.platform == 'win32' and monitor_mode:
-            raise WindowsError('Monitor mode is not supported by the Windows platform')
+        if sys.platform == "win32" and monitor_mode:
+            raise WindowsError("Monitor mode is not supported by the Windows platform")
 
         if interface is None:
             self.interfaces = get_tshark_interfaces(tshark_path)
@@ -65,7 +62,7 @@ class LiveCapture(Capture):
         """
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
         # Read from STDIN
-        params += ['-r', '-']
+        params += ["-r", "-"]
         return params
 
     def _get_dumpcap_parameters(self):
@@ -75,11 +72,11 @@ class LiveCapture(Capture):
             # Tshark versions older than 2.5 don't support pcapng. This flag forces dumpcap to output pcap.
             params += ["-P"]
         if self.bpf_filter:
-            params += ['-f', self.bpf_filter]
+            params += ["-f", self.bpf_filter]
         if self.monitor_mode:
-            params += ['-I']
+            params += ["-I"]
         for interface in self.interfaces:
-            params += ['-i', interface]
+            params += ["-i", interface]
         # Write to STDOUT
         params += ["-w", "-"]
         return params
@@ -101,12 +98,11 @@ class LiveCapture(Capture):
     sniff = Capture.load_packets
 
     def sniff_continuously(self, packet_count=None):
-        """
-        Captures from the set interface, returning a generator which returns packets continuously.
+        """Captures from the set interface, returning a generator which returns packets continuously.
 
         Can be used as follows:
         for packet in capture.sniff_continuously():
-            print 'Woo, another packet:', packet
+            print('Woo, another packet:', packet)
 
         Note: you can also call capture.apply_on_packets(packet_callback) which should have a slight performance boost.
 

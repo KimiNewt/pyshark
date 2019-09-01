@@ -26,16 +26,12 @@ class RawMustUseJsonException(Exception):
 
 
 class StopCapture(Exception):
-    """
-    Exception that the user can throw anywhere in packet-handling to stop the capture process.
-    """
+    """Exception that the user can throw anywhere in packet-handling to stop the capture process."""
     pass
 
 
 class Capture(object):
-    """
-    Base class for packet captures.
-    """
+    """Base class for packet captures."""
     DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logging.CRITICAL
@@ -83,8 +79,7 @@ class Capture(object):
                                                     % ", ".join(self.SUPPORTED_ENCRYPTION_STANDARDS))
 
     def __getitem__(self, item):
-        """
-        Gets the packet in the given index.
+        """Gets the packet in the given index.
 
         :param item: packet index
         :return: Packet object.
@@ -112,14 +107,12 @@ class Capture(object):
         self._current_packet = 0
 
     def reset(self):
-        """
-        Starts iterating packets from the first one.
-        """
+        """Starts iterating packets from the first one."""
         self._current_packet = 0
 
     def load_packets(self, packet_count=0, timeout=None):
-        """
-        Reads the packets from the source (cap, interface, etc.) and adds it to the internal list.
+        """Reads the packets from the source (cap, interface, etc.) and adds it to the internal list.
+
         If 0 as the packet_count is given, reads forever
 
         :param packet_count: The amount of packets to add to the packet list (0 to read forever)
@@ -140,9 +133,7 @@ class Capture(object):
             pass
 
     def set_debug(self, set_to=True, log_level=logging.DEBUG):
-        """
-        Sets the capture to debug mode (or turns it off if specified).
-        """
+        """Sets the capture to debug mode (or turns it off if specified)."""
         if set_to:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
@@ -151,9 +142,7 @@ class Capture(object):
         self.debug = set_to
 
     def _setup_eventloop(self):
-        """
-        Sets up a new eventloop as the current one according to the OS.
-        """
+        """Sets up a new eventloop as the current one according to the OS."""
         if os.name == "nt":
             self.eventloop = asyncio.ProactorEventLoop()
         else:
@@ -225,8 +214,8 @@ class Capture(object):
         return None, data
 
     def _packets_from_tshark_sync(self, packet_count=None, existing_process=None):
-        """
-        Returns a generator of packets.
+        """Returns a generator of packets.
+
         This is the sync version of packets_from_tshark. It wait for the completion of each coroutine and
          reimplements reading packets in a sync way, yielding each packet as it arrives.
 
@@ -259,8 +248,8 @@ class Capture(object):
                 self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
 
     def apply_on_packets(self, callback, timeout=None, packet_count=None):
-        """
-        Runs through all packets and calls the given callback (a function) with each one as it is read.
+        """Runs through all packets and calls the given callback (a function) with each one as it is read.
+        
         If the capture is infinite (i.e. a live capture), it will run forever, otherwise it will complete after all
         packets have been read.
 
@@ -291,7 +280,6 @@ class Capture(object):
         finally:
             if close_tshark:
                 await self.close_async()
-                #yield From(self._cleanup_subprocess(tshark_process))
 
     async def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
         """A coroutine which goes through a stream and calls a given callback for each XML packet seen in it."""
@@ -384,9 +372,7 @@ class Capture(object):
         return self.__tshark_version
 
     async def _get_tshark_process(self, packet_count=None, stdin=None):
-        """
-        Returns a new tshark process with previously-set parameters.
-        """
+        """Returns a new tshark process with previously-set parameters."""
         if self.use_json:
             output_type = "json"
             if not tshark_supports_json(self._get_tshark_version()):
@@ -414,9 +400,7 @@ class Capture(object):
         self._running_processes.add(process)
 
     async def _cleanup_subprocess(self, process):
-        """
-        Kill the given process and properly closes any pipes connected to it.
-        """
+        """Kill the given process and properly closes any pipes connected to it."""
         if process.returncode is None:
             try:
                 process.kill()
@@ -451,9 +435,7 @@ class Capture(object):
     async def __aexit__(self, exc_type, exc_val, exc_tb): await self.close_async()
 
     def get_parameters(self, packet_count=None):
-        """
-        Returns the special tshark parameters to be used according to the configuration of this class.
-        """
+        """Returns the special tshark parameters to be used according to the configuration of this class."""
         params = []
         if self._capture_filter:
             params += ["-f", self._capture_filter]

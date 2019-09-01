@@ -26,8 +26,8 @@ class InMemCapture(Capture):
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False,
                  linktype=LinkTypes.ETHERNET, include_raw=False, eventloop=None, custom_parameters=None,
                  debug=False):
-        """
-        Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
+        """Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
+
         Significantly faster if packets are added in a batch.
 
         :param bpf_filter: BPF filter to use on packets.
@@ -56,9 +56,7 @@ class InMemCapture(Capture):
         self._current_tshark = None
 
     def get_parameters(self, packet_count=None):
-        """
-        Returns the special tshark parameters to be used according to the configuration of this class.
-        """
+        """Returns the special tshark parameters to be used according to the configuration of this class."""
         params = super(InMemCapture, self).get_parameters(packet_count=packet_count)
         params += ['-i', '-']
         return params
@@ -93,8 +91,7 @@ class InMemCapture(Capture):
         self._current_tshark.stdin.write(packet)
 
     def parse_packet(self, binary_packet):
-        """
-        Parses a single binary packet and returns its parsed version.
+        """Parses a single binary packet and returns its parsed version.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
@@ -103,8 +100,7 @@ class InMemCapture(Capture):
         return self.parse_packets([binary_packet])[0]
 
     def parse_packets(self, binary_packets):
-        """
-        Parses binary packets and return a list of parsed packets.
+        """Parses binary packets and return a list of parsed packets.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
@@ -112,8 +108,7 @@ class InMemCapture(Capture):
         return asyncio.get_event_loop().run_until_complete(self.parse_packets_async(binary_packets))
 
     async def parse_packets_async(self, binary_packets):
-        """
-        A coroutine which parses binary packets and return a list of parsed packets.
+        """A coroutine which parses binary packets and return a list of parsed packets.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
@@ -169,8 +164,8 @@ class InMemCapture(Capture):
         return pkt
 
     def feed_packets(self, binary_packets, linktype=LinkTypes.ETHERNET):
-        """
-        Gets a list of binary packets, parses them using tshark and returns their parsed values.
+        """Gets a list of binary packets, parses them using tshark and returns their parsed values.
+
         Keeps the packets in the internal packet list as well.
 
         By default, assumes the packets are ethernet packets. For another link type, supply the linktype argument (most

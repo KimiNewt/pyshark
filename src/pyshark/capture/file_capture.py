@@ -4,17 +4,14 @@ from pyshark.capture.capture import Capture
 
 
 class FileCapture(Capture):
-    """
-    A class representing a capture read from a file.
-    """
+    """A class representing a capture read from a file."""
 
     def __init__(self, input_file=None, keep_packets=True, display_filter=None, only_summaries=False,
-                 decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
+                 decryption_key=None, encryption_type="wpa-pwk", decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None,
                  use_json=False, output_file=None, include_raw=False, eventloop=None, custom_parameters=None,
                  debug=False):
-        """
-        Creates a packet capture object by reading from file.
+        """Creates a packet capture object by reading from file.
 
         :param keep_packets: Whether to keep packets after reading them via next(). Used to conserve memory when reading
         large caps (can only be used along with the "lazy" option!)
@@ -47,15 +44,15 @@ class FileCapture(Capture):
             self.input_filename = input_file.name
         if not os.path.exists(self.input_filename):
             raise FileNotFoundError(
-                    '[Errno 2] No such file or directory: '
+                    "[Errno 2] No such file or directory: "
                     + str(self.input_filename)
                     )
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
 
     def next(self):
-        """
-        Returns the next packet in the cap.
+        """Returns the next packet in the cap.
+
         If the capture's keep_packets flag is True, will also keep it in the internal packet list.
         """
         if not self.keep_packets:
@@ -74,14 +71,14 @@ class FileCapture(Capture):
                 self.next()
             except StopIteration:
                 # We read the whole file, and there's still not such packet.
-                raise KeyError('Packet of index %d does not exist in capture' % packet_index)
+                raise KeyError("Packet of index %d does not exist in capture" % packet_index)
         return super(FileCapture, self).__getitem__(packet_index)
 
     def get_parameters(self, packet_count=None):
-        return super(FileCapture, self).get_parameters(packet_count=packet_count) + ['-r', self.input_filename]
+        return super(FileCapture, self).get_parameters(packet_count=packet_count) + ["-r", self.input_filename]
 
     def __repr__(self):
         if self.keep_packets:
-            return '<%s %s>' % (self.__class__.__name__, self.input_filename)
+            return "<%s %s>" % (self.__class__.__name__, self.input_filename)
         else:
-            return '<%s %s (%d packets)>' % (self.__class__.__name__, self.input_filename, len(self._packets))
+            return "<%s %s (%d packets)>" % (self.__class__.__name__, self.input_filename, len(self._packets))

@@ -192,7 +192,7 @@ class Capture(object):
 
         if found_separator:
             tag_end += len(found_separator) - end_tag_strip_length
-            return data[tag_start:tag_end], data[tag_end + 1:]
+            return data[tag_start:tag_end].strip().strip(b","), data[tag_end + 1:]
         return None, data
 
     def _extract_tag_from_data(self, data, tag_name=b"packet"):

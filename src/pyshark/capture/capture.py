@@ -8,7 +8,7 @@ import logging
 from distutils.version import LooseVersion
 
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
-    tshark_supports_json, TSharkVersionException, get_tshark_version
+    tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
 from pyshark.tshark.tshark_json import packet_from_json_packet
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
@@ -58,6 +58,7 @@ class Capture(object):
         self._running_processes = set()
         self._decode_as = decode_as
         self._disable_protocol = disable_protocol
+        self._json_has_duplicate_keys = True
         self._log = logging.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
@@ -346,7 +347,7 @@ class Capture(object):
 
         if packet:
             if self.use_json:
-                packet = packet_from_json_packet(packet)
+                packet = packet_from_json_packet(packet, deduplicate_fields=self._json_has_duplicate_keys)
             else:
                 packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
             return packet, existing_data
@@ -373,14 +374,18 @@ class Capture(object):
 
     async def _get_tshark_process(self, packet_count=None, stdin=None):
         """Returns a new tshark process with previously-set parameters."""
+        output_parameters = []
         if self.use_json:
             output_type = "json"
             if not tshark_supports_json(self._get_tshark_version()):
                 raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
+            if tshark_supports_duplicate_keys(self._get_tshark_version()):
+                output_parameters.append("--no-duplicate-keys")
+                self._json_has_duplicate_keys = False
         else:
             output_type = "psml" if self._only_summaries else "pdml"
         parameters = [self._get_tshark_path(), "-l", "-n", "-T", output_type] + \
-            self.get_parameters(packet_count=packet_count)
+            self.get_parameters(packet_count=packet_count) + output_parameters
 
         self._log.debug("Creating TShark subprocess with parameters: " + " ".join(parameters))
         self._log.debug("Executable: %s" % parameters[0])

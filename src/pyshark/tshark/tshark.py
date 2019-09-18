@@ -76,6 +76,10 @@ def get_tshark_version(tshark_path=None):
     return LooseVersion(version_string)
 
 
+def tshark_supports_duplicate_keys(tshark_version):
+    return tshark_version >= LooseVersion("2.6.7")
+
+
 def tshark_supports_json(tshark_version):
     return tshark_version >= LooseVersion("2.2.0")
 

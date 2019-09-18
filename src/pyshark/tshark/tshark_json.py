@@ -1,5 +1,11 @@
 import json
 
+try:
+    import ujson
+    USE_UJSON = True
+except ImportError:
+    USE_UJSON = False
+
 from pyshark.packet.layer import JsonLayer
 from pyshark.packet.packet import Packet
 
@@ -20,10 +26,21 @@ def duplicate_object_hook(ordered_pairs):
     return json_dict
 
 
-def packet_from_json_packet(json_pkt):
-    # NOTE: We can use ujson here for ~25% speed-up, however since we can't use hooks in ujson
-    # we lose the ability to view duplicates. This might still be a good option later on.
-    pkt_dict = json.loads(json_pkt.decode('utf-8'), object_pairs_hook=duplicate_object_hook)
+def packet_from_json_packet(json_pkt, deduplicate_fields=True):
+    """Creates a Pyshark Packet from a tshark json single packet.
+
+    Before tshark 2.6, there could be duplicate keys in a packet json, which creates the need for
+    deduplication and slows it down significantly.
+    """
+    if deduplicate_fields:
+        # NOTE: We can use ujson here for ~25% speed-up, however since we can't use hooks in ujson
+        # we lose the ability to view duplicates. This might still be a good option later on.
+        pkt_dict = json.loads(json_pkt.decode('utf-8'), object_pairs_hook=duplicate_object_hook)
+    else:
+        if USE_UJSON:
+            pkt_dict = ujson.loads(json_pkt)
+        else:
+            pkt_dict = json.loads(json_pkt.decode('utf-8'))
     # We use the frame dict here and not the object access because it's faster.
     frame_dict = pkt_dict['_source']['layers'].pop('frame')
     layers = []

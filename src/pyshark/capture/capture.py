@@ -460,7 +460,7 @@ class Capture(object):
                 for key, val in self._custom_parameters.items():
                     params += [key, val]
             else:
-                raise Exception("Custom parameters type not supported.")
+                raise TypeError("Custom parameters type not supported.")
 
         if all(self.encryption):
             params += ["-o", "wlan.enable_decryption:TRUE", "-o", 'uat:80211_keys:"' + self.encryption[1] + '","' +

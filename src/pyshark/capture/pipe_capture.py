@@ -1,5 +1,5 @@
 from pyshark.capture.capture import Capture
-
+import os
 
 class PipeCapture(Capture):
     def __init__(self, pipe, display_filter=None, only_summaries=False,
@@ -46,5 +46,5 @@ class PipeCapture(Capture):
 
     def close(self):
         # Close pipe
-        self._pipe.close()
+        os.close(self._pipe)
         super(PipeCapture, self).close()

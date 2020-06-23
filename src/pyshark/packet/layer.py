@@ -272,7 +272,7 @@ class JsonLayer(Layer):
         """
         if self._showname_fields_converted_to_regular:
             return
-        for field_name in self._all_fields:
+        for field_name in list(self._all_fields):
             if ":" in field_name:
                 field_value = self._all_fields.pop(field_name)
                 if isinstance(field_value, dict):

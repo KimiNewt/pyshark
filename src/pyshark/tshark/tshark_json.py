@@ -55,5 +55,5 @@ def packet_from_json_packet(json_pkt, deduplicate_fields=True):
     return Packet(layers=layers, frame_info=JsonLayer('frame', frame_dict),
                   number=int(frame_dict.get('frame.number', 0)),
                   length=int(frame_dict['frame.len']),
-                  sniff_time=frame_dict['frame.time'],
+                  sniff_time=frame_dict['frame.time_epoch'],
                   interface_captured=frame_dict.get('frame.interface_id'))

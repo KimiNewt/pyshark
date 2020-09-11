@@ -1,4 +1,6 @@
 import asyncio
+import datetime
+import itertools
 import subprocess
 import os
 import struct
@@ -85,39 +87,51 @@ class InMemCapture(Capture):
         else:
             return ("}%s%s" % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
 
-    def _write_packet(self, packet):
+    def _write_packet(self, packet, sniff_time):
+        if sniff_time is None:
+            now = time.time()
+        elif isinstance(sniff_time, datetime.datetime):
+            now = sniff_time.timestamp()
+        else:
+            now = float(sniff_time)
+        secs = int(now)
+        usecs = int((now * 1000000) % 1000000)
         # Write packet header
-        self._current_tshark.stdin.write(struct.pack("IIII", int(time.time()), 0, len(packet), len(packet)))
+        self._current_tshark.stdin.write(struct.pack("IIII", secs, usecs, len(packet), len(packet)))
         self._current_tshark.stdin.write(packet)
 
-    def parse_packet(self, binary_packet):
+    def parse_packet(self, binary_packet, sniff_time=None):
         """Parses a single binary packet and returns its parsed version.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         Use parse_packets when parsing multiple packets for faster parsing
         """
-        return self.parse_packets([binary_packet])[0]
+        if sniff_time is not None:
+            sniff_time = [sniff_time]
+        return self.parse_packets([binary_packet], sniff_time)[0]
 
-    def parse_packets(self, binary_packets):
+    def parse_packets(self, binary_packets, sniff_times=None):
         """Parses binary packets and return a list of parsed packets.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         """
-        return asyncio.get_event_loop().run_until_complete(self.parse_packets_async(binary_packets))
+        return asyncio.get_event_loop().run_until_complete(self.parse_packets_async(binary_packets, sniff_times))
 
-    async def parse_packets_async(self, binary_packets):
+    async def parse_packets_async(self, binary_packets, sniff_times=None):
         """A coroutine which parses binary packets and return a list of parsed packets.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         """
         parsed_packets = []
+        if sniff_times is None:
+            sniff_times = []
         if not self._current_tshark:
             await self._get_tshark_process()
-        for binary_packet in binary_packets:
-            self._write_packet(binary_packet)
+        for binary_packet, sniff_time in itertools.zip_longest(binary_packets, sniff_times):
+            self._write_packet(binary_packet, sniff_time)
 
         def callback(pkt):
             parsed_packets.append(pkt)

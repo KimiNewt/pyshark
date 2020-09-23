@@ -101,4 +101,4 @@ def get_tshark_interfaces(tshark_path=None):
     with open(os.devnull, "w") as null:
         tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode("utf-8")
 
-    return [line.split(".")[0] for line in tshark_interfaces.splitlines()]
+    return [line.split(" ")[1] for line in tshark_interfaces.splitlines() if not '\\\\.\\' in line]

@@ -13,6 +13,11 @@ from pyshark.tshark.tshark_json import packet_from_json_packet
 from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
 
+if sys.version_info < (3, 8):
+    asyncTimeoutError = concurrent.futures.TimeoutError
+else:
+    asyncTimeoutError = asyncio.exceptions.TimeoutError
+
 class TSharkCrashException(Exception):
     pass
 
@@ -130,7 +135,7 @@ class Capture(object):
         try:
             self.apply_on_packets(keep_packet, timeout=timeout, packet_count=packet_count)
             self.loaded = True
-        except (concurrent.futures.TimeoutError, asyncio.exceptions.TimeoutError):
+        except asyncTimeoutError:
             pass
 
     def set_debug(self, set_to=True, log_level=logging.DEBUG):
@@ -410,7 +415,7 @@ class Capture(object):
             try:
                 process.kill()
                 return await asyncio.wait_for(process.wait(), 1)
-            except (concurrent.futures.TimeoutError, asyncio.exceptions.TimeoutError):
+            except asyncTimeoutError:
                 self._log.debug("Waiting for process to close failed, may have zombie process.")
             except ProcessLookupError:
                 pass

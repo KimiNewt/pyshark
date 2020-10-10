@@ -130,7 +130,7 @@ class Capture(object):
         try:
             self.apply_on_packets(keep_packet, timeout=timeout, packet_count=packet_count)
             self.loaded = True
-        except concurrent.futures.TimeoutError:
+        except asyncio.exceptions.TimeoutError:
             pass
 
     def set_debug(self, set_to=True, log_level=logging.DEBUG):

@@ -48,6 +48,6 @@ def test_get_tshark_interfaces(mock_check_output):
         b'1. wlan0\n2. any\n3. lo (Loopback)\n4. eth0\n5. docker0\n'
     )
     actual = get_tshark_interfaces()
-    expected = ['1', '2', '3', '4', '5']
+    expected = ['wlan0', 'any', 'lo', 'eth0', 'docker0']
     assert actual == expected
 

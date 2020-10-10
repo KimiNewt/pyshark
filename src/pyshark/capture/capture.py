@@ -130,7 +130,7 @@ class Capture(object):
         try:
             self.apply_on_packets(keep_packet, timeout=timeout, packet_count=packet_count)
             self.loaded = True
-        except asyncio.exceptions.TimeoutError:
+        except (concurrent.futures.TimeoutError, asyncio.exceptions.TimeoutError):
             pass
 
     def set_debug(self, set_to=True, log_level=logging.DEBUG):
@@ -410,7 +410,7 @@ class Capture(object):
             try:
                 process.kill()
                 return await asyncio.wait_for(process.wait(), 1)
-            except asyncio.exceptions.TimeoutError:
+            except (concurrent.futures.TimeoutError, asyncio.exceptions.TimeoutError):
                 self._log.debug("Waiting for process to close failed, may have zombie process.")
             except ProcessLookupError:
                 pass

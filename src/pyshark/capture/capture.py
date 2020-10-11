@@ -62,6 +62,7 @@ class Capture(object):
         self._log = logging.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
+        self._eof_reached = False
         self.__tshark_version = None
 
         if include_raw and not use_json:
@@ -237,6 +238,7 @@ class Capture(object):
 
                 except EOFError:
                     self._log.debug("EOF reached (sync)")
+                    self._eof_reached = True
                     break
 
                 if packet:
@@ -295,6 +297,7 @@ class Capture(object):
                                                                   psml_structure=psml_struct)
             except EOFError:
                 self._log.debug("EOF reached")
+                self._eof_reached = True
                 break
 
             if packet:
@@ -357,6 +360,7 @@ class Capture(object):
 
         if not new_data:
             # Reached EOF
+            self._eof_reached = True
             raise EOFError()
         return None, existing_data
 
@@ -418,9 +422,10 @@ class Capture(object):
                 if os.name != "nt":
                     raise
         elif process.returncode > 0:
-            raise TSharkCrashException("TShark seems to have crashed (retcode: %d). "
-                                       "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark."
-                                       % process.returncode)
+            if process.returncode != 1 or self._eof_reached:
+                raise TSharkCrashException("TShark seems to have crashed (retcode: %d). "
+                                           "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark."
+                                           % process.returncode)
 
     def close(self):
         self.eventloop.run_until_complete(self.close_async())

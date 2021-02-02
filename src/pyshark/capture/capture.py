@@ -361,7 +361,7 @@ class Capture(object):
 
         if packet:
             if self.use_json:
-				packet = packet_from_json_packet(packet, self._field_param, deduplicate_fields=self._json_has_duplicate_keys)
+                packet = packet_from_json_packet(packet, self._field_param, deduplicate_fields=self._json_has_duplicate_keys)
             else:
                 packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
             return packet, existing_data

@@ -100,7 +100,7 @@ class InMemCapture(Capture):
         self._current_tshark.stdin.write(struct.pack("IIII", secs, usecs, len(packet), len(packet)))
         self._current_tshark.stdin.write(packet)
 
-    def parse_packet(self, binary_packet, sniff_time=None):
+    def parse_packet(self, binary_packet, sniff_time=None, timeout=DEFAULT_TIMEOUT):
         """Parses a single binary packet and returns its parsed version.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
@@ -109,17 +109,17 @@ class InMemCapture(Capture):
         """
         if sniff_time is not None:
             sniff_time = [sniff_time]
-        return self.parse_packets([binary_packet], sniff_time)[0]
+        return self.parse_packets([binary_packet], sniff_time, timeout)[0]
 
-    def parse_packets(self, binary_packets, sniff_times=None):
+    def parse_packets(self, binary_packets, sniff_times=None, timeout=DEFAULT_TIMEOUT):
         """Parses binary packets and return a list of parsed packets.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         """
-        return asyncio.get_event_loop().run_until_complete(self.parse_packets_async(binary_packets, sniff_times))
+        return asyncio.get_event_loop().run_until_complete(self.parse_packets_async(binary_packets, sniff_times, timeout))
 
-    async def parse_packets_async(self, binary_packets, sniff_times=None):
+    async def parse_packets_async(self, binary_packets, sniff_times=None, timeout=DEFAULT_TIMEOUT):
         """A coroutine which parses binary packets and return a list of parsed packets.
 
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
@@ -138,13 +138,13 @@ class InMemCapture(Capture):
             if len(parsed_packets) == len(binary_packets):
                 raise StopCapture()
 
-        await self._get_parsed_packet_from_tshark(callback)
+        await self._get_parsed_packet_from_tshark(callback, timeout)
         return parsed_packets
 
-    async def _get_parsed_packet_from_tshark(self, callback):
+    async def _get_parsed_packet_from_tshark(self, callback, timeout):
         await self._current_tshark.stdin.drain()
         try:
-            await asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False), DEFAULT_TIMEOUT)
+            await asyncio.wait_for(self.packets_from_tshark(callback, close_tshark=False), timeout)
         except asyncio.TimeoutError:
             await self.close_async()
             raise asyncio.TimeoutError("Timed out while waiting for tshark to parse packet. "
@@ -155,7 +155,7 @@ class InMemCapture(Capture):
         self._current_tshark = None
         await super(InMemCapture, self).close_async()
 
-    def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET):
+    def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET, timeout=DEFAULT_TIMEOUT):
         """
         DEPRECATED. Use parse_packet instead.
         This function adds the packet to the packets list, and also closes and reopens tshark for
@@ -172,12 +172,12 @@ class InMemCapture(Capture):
         """
         warnings.warn("Deprecated method. Use InMemCapture.parse_packet() instead.")
         self._current_linktype = linktype
-        pkt = self.parse_packet(binary_packet)
+        pkt = self.parse_packet(binary_packet, timeout=timeout)
         self.close()
         self._packets.append(pkt)
         return pkt
 
-    def feed_packets(self, binary_packets, linktype=LinkTypes.ETHERNET):
+    def feed_packets(self, binary_packets, linktype=LinkTypes.ETHERNET, timeout=DEFAULT_TIMEOUT):
         """Gets a list of binary packets, parses them using tshark and returns their parsed values.
 
         Keeps the packets in the internal packet list as well.
@@ -186,7 +186,7 @@ class InMemCapture(Capture):
         can be found in the class LinkTypes)
         """
         self._current_linktype = linktype
-        parsed_packets = self.parse_packets(binary_packets)
+        parsed_packets = self.parse_packets(binary_packets, timeout=timeout)
         self._packets.extend(parsed_packets)
         self.close()
         return parsed_packets

@@ -49,22 +49,22 @@ def packet_from_json_packet(json_pkt, field_param=False, deduplicate_fields=True
     #    layer_dict = pkt_dict['_source'].pop('layers')
         if pkt_dict:
             for key, val in pkt_dict['_source']['layers'].items():
-                # Separate layer and name within the key.
-                layer = key.split('.', 1)
-                name = key.replace('.', '_').replace('_', '.', 1)
+                # Separate layer and name within the key and normalize '-' syntax.
+                layer = key.split('.', 1)[0].replace('-', '_')
+                name = key.replace('.', '_').replace('_', '.', 1).replace('-', '_')
                 # Convert list to string (as necessary).
                 if len(val) == 1:
                     val = val[0]
                 # Build frame dict
-                if layer[0] == 'frame':
+                if layer == 'frame':
                     frame_dict[name] = val
                 else:
                     try:
-                        frame_dict[layer[0]][name] = val
+                        frame_dict[layer][name] = val
                     except KeyError:
-                        frame_dict[layer[0]] = {name: val}
+                        frame_dict[layer] = {name: val}
         # Add all layers
-        for layer in pkt_dict['_source']['layers']['frame.protocols'][0].split(':'):
+        for layer in pkt_dict['_source']['layers']['frame.protocols'][0].replace('-', '_').split(':'):
             layer_dict = frame_dict.pop(layer, None)
             if layer_dict is not None:
                 layers.append(JsonLayer(layer, layer_dict))

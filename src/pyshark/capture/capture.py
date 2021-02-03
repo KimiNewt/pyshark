@@ -76,7 +76,7 @@ class Capture(object):
         if include_raw and not use_json:
             raise RawMustUseJsonException("use_json must be True if include_raw")
 
-        if '-e' in custom_parameters and not use_json:
+        if custom_parameters and '-e' in custom_parameters and not use_json:
             raise FieldMustUseJsonException("use_json must be True to properly parse '-e' fields")
 
         if self.debug:

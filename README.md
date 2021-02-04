@@ -232,5 +232,15 @@ exists in each capture class.
 >>> pyshark.LiveCapture.SUPPORTED_ENCRYPTION_STANDARDS
 ('wep', 'wpa-pwd', 'wpa-psk')
 ```
+
+### Reading from a file using a display filter
+
+Pyshark display filters can be helpful in analyzing application focused traffic.
+BPF filters do not offer as much flexibility as Wireshark's display filters.
+
+```python
+>>> cap1 = pyshark.FileCapture('/tmp/capture1.cap', display_filter="dns")
+>>> cap2 = pyshark.LiveCapture(interface='en0', display_filter="tcp.analysis.retransmission")
+```
 ## License
 This project is licensed under MIT. Contributions to this project are accepted under the same license. 

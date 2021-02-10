@@ -4,7 +4,7 @@ import sys
 from distutils.version import LooseVersion
 
 from pyshark.capture.capture import Capture
-from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path
+from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path, get_tshark_display_filter_flag
 
 
 class LiveCapture(Capture):
@@ -75,6 +75,11 @@ class LiveCapture(Capture):
             params += ["-f", self.bpf_filter]
         if self.monitor_mode:
             params += ["-I"]
+        if self._capture_filter:
+            params += ["-f", self._capture_filter]
+        if self._display_filter:
+            params += [get_tshark_display_filter_flag(self._get_tshark_version(),),
+                       self._display_filter]
         for interface in self.interfaces:
             params += ["-i", interface]
         # Write to STDOUT

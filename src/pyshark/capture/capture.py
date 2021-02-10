@@ -452,11 +452,6 @@ class Capture(object):
     def get_parameters(self, packet_count=None):
         """Returns the special tshark parameters to be used according to the configuration of this class."""
         params = []
-        if self._capture_filter:
-            params += ["-f", self._capture_filter]
-        if self._display_filter:
-            params += [get_tshark_display_filter_flag(self._get_tshark_version(),),
-                       self._display_filter]
         # Raw is only enabled when JSON is also enabled.
         if self.include_raw:
             params += ["-x"]

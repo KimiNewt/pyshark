@@ -6,7 +6,7 @@ class LiveRingCapture(LiveCapture):
     Represents a live ringbuffer capture on a network interface.
     """
 
-    def __init__(self, ring_file_size=1024, num_ring_files=1, ring_file_name='/tmp/pyshark.pcap', interface=None,
+    def __init__(self, ring_file_size=1024, num_ring_files=2, ring_file_name='/tmp/pyshark.pcap', interface=None,
                  bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
                  encryption_type='wpa-pwk', decode_as=None, disable_protocol=None,
                  tshark_path=None, override_prefs=None, include_raw=False, eventloop=None,
@@ -16,6 +16,7 @@ class LiveRingCapture(LiveCapture):
         :param ring_file_size: Size of the ring file in kB, default is 1024
         :param num_ring_files: Number of ring files to keep, default is 1
         :param ring_file_name: Name of the ring file, default is /tmp/pyshark.pcap
+                               Windows users shall define path for Windows
         :param interface: Name of the interface to sniff on or a list of names (str). If not given, runs on all interfaces.
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.

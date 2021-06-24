@@ -6,9 +6,9 @@ from pyshark.packet.packet import Packet
 from pyshark.packet.packet_summary import PacketSummary
 
 # Prepare dictionary used with str.translate for removing invalid XML characters
-DEL_BAD_XML_CHARS = { c: None for c in range(0x00, 0x20) if not c in (0x09, 0x0a, 0x0d) }
-DEL_BAD_XML_CHARS.update({ c: None for c in range(0xd800, 0xe000) })
-DEL_BAD_XML_CHARS.update({ c: None for c in range(0xfffe, 0x10000) })
+DEL_BAD_XML_CHARS = {bad_char: None for bad_char in range(0x00, 0x20) if not bad_char in (0x09, 0x0a, 0x0d)}
+DEL_BAD_XML_CHARS.update({bad_char: None for bad_char in range(0xd800, 0xe000)})
+DEL_BAD_XML_CHARS.update({bad_char: None for bad_char in range(0xfffe, 0x10000)})
 
 def psml_structure_from_xml(psml_structure):
     if not isinstance(psml_structure, lxml.objectify.ObjectifiedElement):

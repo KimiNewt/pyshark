@@ -12,6 +12,7 @@ setup(
     install_requires=['lxml', 'py'],
     tests_require=['pytest'],
     url="https://github.com/KimiNewt/pyshark",
+    license="MIT",
     long_description=long_description,
     author="KimiNewt",
     description="Python wrapper for tshark, allowing python packet parsing using wireshark dissectors",

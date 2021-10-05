@@ -62,7 +62,7 @@ class LiveCapture(Capture):
         """
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
         # Read from STDIN
-        params += ["-r", "-"]
+        params += ["-i", "-"]
         return params
 
     def _get_dumpcap_parameters(self):

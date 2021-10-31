@@ -9,7 +9,7 @@ Extended documentation: http://kiminewt.github.io/pyshark
 **Python2 deprecation** - This package no longer supports Python2. If you wish to still use it in Python2, you can:
 * Use version 0.3.8
 * Install pyshark-legacy via pypi
-* Clone the pyshark-legacy [repo (https://github.com/KimiNewt/pyshark-legacy)], where bugfixes will be applied.
+* Clone the pyshark-legacy [repo](https://github.com/KimiNewt/pyshark-legacy), where bugfixes will be applied.
 
 **Looking for contributors** - for various reasons I have a hard time finding time to maintain and enhance the package at the moment. Any pull-requests will be reviewed and if any one is interested and is suitable, I will be happy to include them in the project. Feel free to mail me at dorgreen1 at gmail.
 

@@ -29,6 +29,8 @@ class UnknownEncyptionStandardException(Exception):
 class RawMustUseJsonException(Exception):
     """If the use_raw argument is True, so should the use_json argument"""
 
+class FieldMustUseJsonException(Exception):
+    """If custom parameters include '-e', use_json argument should be True"""
 
 class StopCapture(Exception):
     """Exception that the user can throw anywhere in packet-handling to stop the capture process."""
@@ -69,9 +71,13 @@ class Capture(object):
         self._custom_parameters = custom_parameters
         self._eof_reached = False
         self.__tshark_version = None
+        self._field_param = False
 
         if include_raw and not use_json:
             raise RawMustUseJsonException("use_json must be True if include_raw")
+
+        if custom_parameters and '-e' in custom_parameters and not use_json:
+            raise FieldMustUseJsonException("use_json must be True to properly parse '-e' fields")
 
         if self.debug:
             self.set_debug()
@@ -257,7 +263,7 @@ class Capture(object):
 
     def apply_on_packets(self, callback, timeout=None, packet_count=None):
         """Runs through all packets and calls the given callback (a function) with each one as it is read.
-        
+
         If the capture is infinite (i.e. a live capture), it will run forever, otherwise it will complete after all
         packets have been read.
 
@@ -355,7 +361,7 @@ class Capture(object):
 
         if packet:
             if self.use_json:
-                packet = packet_from_json_packet(packet, deduplicate_fields=self._json_has_duplicate_keys)
+                packet = packet_from_json_packet(packet, self._field_param, deduplicate_fields=self._json_has_duplicate_keys)
             else:
                 packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
             return packet, existing_data
@@ -469,6 +475,10 @@ class Capture(object):
             elif isinstance(self._custom_parameters, dict):
                 for key, val in self._custom_parameters.items():
                     params += [key, val]
+            # Add minimum fields if fields are being used.
+            if '-e' in self._custom_parameters:
+                params += ['-e', 'null.family', '-e', 'frame', '-e', 'frame.len', '-e', 'frame.protocols', '-e', 'frame.number', '-e', 'frame.interface_name', '-e', 'frame.interface_id', '-e', 'frame.time_epoch']
+                self._field_param = True
             else:
                 raise TypeError("Custom parameters type not supported.")
 

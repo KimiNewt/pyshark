@@ -26,7 +26,7 @@ def duplicate_object_hook(ordered_pairs):
     return json_dict
 
 
-def packet_from_json_packet(json_pkt, deduplicate_fields=True):
+def packet_from_json_packet(json_pkt, field_param=False, deduplicate_fields=True):
     """Creates a Pyshark Packet from a tshark json single packet.
 
     Before tshark 2.6, there could be duplicate keys in a packet json, which creates the need for
@@ -41,16 +41,43 @@ def packet_from_json_packet(json_pkt, deduplicate_fields=True):
             pkt_dict = ujson.loads(json_pkt)
         else:
             pkt_dict = json.loads(json_pkt.decode('utf-8'))
-    # We use the frame dict here and not the object access because it's faster.
-    frame_dict = pkt_dict['_source']['layers'].pop('frame')
+    frame_dict = {}
     layers = []
-    for layer in frame_dict['frame.protocols'].split(':'):
-        layer_dict = pkt_dict['_source']['layers'].pop(layer, None)
-        if layer_dict is not None:
-            layers.append(JsonLayer(layer, layer_dict))
-    # Add all leftovers
-    for name, layer in pkt_dict['_source']['layers'].items():
-        layers.append(JsonLayer(name, layer))
+    # Using "-T json -e <field>"
+    if field_param:
+    #    for layer in frame_dict['frame.protocols'][0].split(':'):
+    #    layer_dict = pkt_dict['_source'].pop('layers')
+        if pkt_dict:
+            for key, val in pkt_dict['_source']['layers'].items():
+                # Separate layer and name within the key and normalize '-' syntax.
+                layer = key.split('.', 1)[0].replace('-', '_')
+                name = key.replace('.', '_').replace('_', '.', 1).replace('-', '_')
+                # Convert list to string (as necessary).
+                if len(val) == 1:
+                    val = val[0]
+                # Build frame dict
+                if layer == 'frame':
+                    frame_dict[name] = val
+                else:
+                    try:
+                        frame_dict[layer][name] = val
+                    except KeyError:
+                        frame_dict[layer] = {name: val}
+        # Add all layers
+        for layer in pkt_dict['_source']['layers']['frame.protocols'][0].replace('-', '_').split(':'):
+            layer_dict = frame_dict.pop(layer, None)
+            if layer_dict is not None:
+                layers.append(JsonLayer(layer, layer_dict))
+    else:
+        # We use the frame dict here and not the object access because it's faster.
+        frame_dict = pkt_dict['_source']['layers'].pop('frame')
+        for layer in frame_dict['frame.protocols'].split(':'):
+            layer_dict = pkt_dict['_source']['layers'].pop(layer, None)
+            if layer_dict is not None:
+                layers.append(JsonLayer(layer, layer_dict))
+        # Add all leftovers
+        for name, layer in pkt_dict['_source']['layers'].items():
+            layers.append(JsonLayer(name, layer))
 
     return Packet(layers=layers, frame_info=JsonLayer('frame', frame_dict),
                   number=int(frame_dict.get('frame.number', 0)),

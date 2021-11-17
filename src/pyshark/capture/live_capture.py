@@ -55,6 +55,16 @@ class LiveCapture(Capture):
             self.interfaces = [interface]
         else:
             self.interfaces = interface
+        self.check_valid_interfaces(tshark_path=tshark_path)
+        
+    def check_valid_interfaces(self, tshark_path=None):
+        """ 
+        Check that all interfaces are valid, if not it will raise a RuntimeError exception
+        """
+        valid_interfaces = get_tshark_interfaces(tshark_path)
+        for each_interface in self.interfaces:
+            if each_interface not in valid_interfaces:
+                raise RuntimeError(f"Interface '{each_interface}' does not exist, unable to initiate capture")
 
     def get_parameters(self, packet_count=None):
         """

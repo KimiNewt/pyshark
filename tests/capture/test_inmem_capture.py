@@ -29,7 +29,7 @@ def test_can_read_multiple_binary_packet(inmem_capture):
         assert pkt.eth.src == 'aa:bb:cc:dd:ee:f' + str(i + 1)
 
 def test_fed_packets_are_added_to_the_list(inmem_capture):
-    inmem_capture.feed_packet(arp_packet())
+    inmem_capture.feed_packets([arp_packet()])
     assert len(inmem_capture) == 1
 
     inmem_capture.feed_packets([arp_packet(), arp_packet()])

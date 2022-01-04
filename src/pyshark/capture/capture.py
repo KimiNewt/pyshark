@@ -153,7 +153,7 @@ class Capture(object):
             self.eventloop = asyncio.ProactorEventLoop()
         else:
             try:
-                self.eventloop = asyncio.get_event_loop()
+                self.eventloop = asyncio.get_event_loop_policy().get_event_loop()
             except RuntimeError:
                 if threading.current_thread() != threading.main_thread():
                     # Ran not in main thread, make a new eventloop

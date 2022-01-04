@@ -117,7 +117,7 @@ class InMemCapture(Capture):
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         """
-        return asyncio.get_event_loop().run_until_complete(self.parse_packets_async(binary_packets, sniff_times, timeout))
+        return asyncio.get_event_loop_policy().get_event_loop().run_until_complete(self.parse_packets_async(binary_packets, sniff_times, timeout))
 
     async def parse_packets_async(self, binary_packets, sniff_times=None, timeout=DEFAULT_TIMEOUT):
         """A coroutine which parses binary packets and return a list of parsed packets.

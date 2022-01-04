@@ -5,7 +5,7 @@ import subprocess
 import concurrent.futures
 import sys
 import logging
-from distutils.version import LooseVersion
+from packaging import version
 
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
@@ -33,7 +33,6 @@ class RawMustUseJsonException(Exception):
 class StopCapture(Exception):
     """Exception that the user can throw anywhere in packet-handling to stop the capture process."""
     pass
-
 
 class Capture(object):
     """Base class for packet captures."""
@@ -172,7 +171,7 @@ class Capture(object):
         The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
         commas, parenthesis).
         """
-        if self._get_tshark_version() >= LooseVersion("3.0.0"):
+        if self._get_tshark_version() >= version.parse("3.0.0"):
             return ("%s  },%s" % (os.linesep, os.linesep)).encode(), ("}%s]" % os.linesep).encode(), (
                     1 + len(os.linesep))
         else:

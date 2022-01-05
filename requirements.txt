@@ -3,3 +3,4 @@ py
 pytest
 mock
 lxml
+packaging

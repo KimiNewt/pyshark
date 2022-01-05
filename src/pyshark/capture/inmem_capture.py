@@ -59,7 +59,8 @@ class InMemCapture(Capture):
 
     def get_parameters(self, packet_count=None):
         """Returns the special tshark parameters to be used according to the configuration of this class."""
-        params = super(InMemCapture, self).get_parameters(packet_count=packet_count)
+        params = super(InMemCapture, self).get_parameters(
+            packet_count=packet_count)
         params += ['-i', '-']
         return params
 
@@ -70,7 +71,8 @@ class InMemCapture(Capture):
         self._current_tshark = proc
 
         # Create PCAP header
-        header = struct.pack("IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 0x7fff, self._current_linktype)
+        header = struct.pack("IHHIIII", 0xa1b2c3d4, 2, 4,
+                             0, 0, 0x7fff, self._current_linktype)
         proc.stdin.write(header)
 
         return proc
@@ -97,7 +99,8 @@ class InMemCapture(Capture):
         secs = int(now)
         usecs = int((now * 1000000) % 1000000)
         # Write packet header
-        self._current_tshark.stdin.write(struct.pack("IIII", secs, usecs, len(packet), len(packet)))
+        self._current_tshark.stdin.write(struct.pack(
+            "IIII", secs, usecs, len(packet), len(packet)))
         self._current_tshark.stdin.write(packet)
 
     def parse_packet(self, binary_packet, sniff_time=None, timeout=DEFAULT_TIMEOUT):
@@ -117,6 +120,8 @@ class InMemCapture(Capture):
         DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
         working with it.
         """
+        if self.eventloop is not None:
+            return self.eventloop.run_until_complete(self.parse_packets_async(binary_packets, sniff_times, timeout))
         return asyncio.get_event_loop_policy().get_event_loop().run_until_complete(self.parse_packets_async(binary_packets, sniff_times, timeout))
 
     async def parse_packets_async(self, binary_packets, sniff_times=None, timeout=DEFAULT_TIMEOUT):
@@ -170,7 +175,8 @@ class InMemCapture(Capture):
         By default, assumes the packet is an ethernet packet. For another link type, supply the linktype argument (most
         can be found in the class LinkTypes)
         """
-        warnings.warn("Deprecated method. Use InMemCapture.parse_packet() instead.")
+        warnings.warn(
+            "Deprecated method. Use InMemCapture.parse_packet() instead.")
         self._current_linktype = linktype
         pkt = self.parse_packet(binary_packet, timeout=timeout)
         self.close()

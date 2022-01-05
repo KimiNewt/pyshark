@@ -447,7 +447,10 @@ class Capture(object):
                                            % process.returncode)
 
     def close(self):
-        self.eventloop.run_until_complete(self.close_async())
+        if sys.version_info >= (3, 7):
+            self.eventloop.create_task(self.close_async())
+        else:
+            self.eventloop.ensure_future(self.close_async())
 
     async def close_async(self):
         for process in self._running_processes.copy():

@@ -167,8 +167,17 @@ class Capture(object):
                     asyncio.set_event_loop(self.eventloop)
                 else:
                     raise
-        if os.name == "posix" and isinstance(threading.current_thread(), threading._MainThread):
-            asyncio.get_child_watcher().attach_loop(self.eventloop)
+            if os.name == "posix" and isinstance(threading.current_thread(), threading._MainThread):
+                # The default child watchers (ThreadedChildWatcher) attach_loop method is empty!
+                # While using pyshark with ThreadedChildWatcher, asyncio could raise a ChildProcessError
+                # "Unknown child process pid %d, will report returncode 255"
+                # This led to a TSharkCrashException in _cleanup_subprocess.
+                # Using the SafeChildWatcher fixes this issue, but it is slower.
+                # SafeChildWatcher O(n) -> large numbers of processes are slow
+                # ThreadedChildWatcher O(1) -> independent of process number
+                # asyncio.get_child_watcher().attach_loop(self.eventloop)
+                asyncio.set_child_watcher(asyncio.SafeChildWatcher())
+                asyncio.get_child_watcher().attach_loop(self.eventloop)
 
     def _get_json_separators(self):
         """"Returns the separators between packets in a JSON output
@@ -419,7 +428,8 @@ class Capture(object):
         return tshark_process
 
     def _created_new_process(self, parameters, process, process_name="TShark"):
-        self._log.debug(process_name + " subprocess created")
+        self._log.debug(
+            process_name + f" subprocess (pid {process.pid}) created")
         if process.returncode is not None and process.returncode != 0:
             raise TSharkCrashException(
                 "%s seems to have crashed. Try updating it. (command ran: '%s')" % (
@@ -428,6 +438,7 @@ class Capture(object):
 
     async def _cleanup_subprocess(self, process):
         """Kill the given process and properly closes any pipes connected to it."""
+        self._log.debug(f"Cleanup Subprocess (pid {process.pid})")
         if process.returncode is None:
             try:
                 process.kill()
@@ -442,9 +453,8 @@ class Capture(object):
                     raise
         elif process.returncode > 0:
             if process.returncode != 1 or self._eof_reached:
-                raise TSharkCrashException("TShark seems to have crashed (retcode: %d). "
-                                           "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark."
-                                           % process.returncode)
+                raise TSharkCrashException(f"TShark (pid {process.pid}) seems to have crashed (retcode: {process.returncode}). "
+                                           "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
 
     def close(self):
         self.eventloop.create_task(self.close_async())

@@ -18,6 +18,7 @@ def arp_packet(last_byte='f'):
 
 def test_can_read_binary_packet(inmem_capture):
     pkt = inmem_capture.parse_packet(arp_packet('f'))
+    inmem_capture.close()
     assert pkt.eth.src == 'aa:bb:cc:dd:ee:ff'
 
 

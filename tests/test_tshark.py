@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from packaging import version
 
 try:
     import mock
@@ -28,16 +28,16 @@ def test_get_tshark_version(mock_check_output):
         b'1998-2014 Gerald Combs <gerald@wireshark.org> and contributors.\n'
     )
     actual = get_tshark_version()
-    expected = '1.12.1'
+    expected = version.parse('1.12.1')
     assert actual == expected
 
 
 def test_get_display_filter_flag():
-    actual = get_tshark_display_filter_flag(LooseVersion('1.10.0'))
+    actual = get_tshark_display_filter_flag(version.parse('1.10.0'))
     expected = '-Y'
     assert actual == expected
 
-    actual = get_tshark_display_filter_flag(LooseVersion('1.6.0'))
+    actual = get_tshark_display_filter_flag(version.parse('1.6.0'))
     expected = '-R'
     assert actual == expected
 

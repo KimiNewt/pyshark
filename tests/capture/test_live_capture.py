@@ -7,7 +7,7 @@ import pytest
 import pyshark
 
 
-@pytest.yield_fixture(params=[["wlan0"], ["wlan0mon", "wlan1mon"]])
+@pytest.fixture(params=[["wlan0"], ["wlan0mon", "wlan1mon"]])
 def interfaces(request):
     with mock.patch("pyshark.tshark.tshark.get_tshark_interfaces", return_value=request.param):
         yield request.param

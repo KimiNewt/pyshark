@@ -5,7 +5,7 @@ import subprocess
 import concurrent.futures
 import sys
 import logging
-from distutils.version import LooseVersion
+from packaging import version
 
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
@@ -17,6 +17,7 @@ if sys.version_info < (3, 8):
     asyncTimeoutError = concurrent.futures.TimeoutError
 else:
     asyncTimeoutError = asyncio.exceptions.TimeoutError
+
 
 class TSharkCrashException(Exception):
     pass
@@ -64,14 +65,16 @@ class Capture(object):
         self._decode_as = decode_as
         self._disable_protocol = disable_protocol
         self._json_has_duplicate_keys = True
-        self._log = logging.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
+        self._log = logging.Logger(
+            self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
         self._eof_reached = False
         self.__tshark_version = None
 
         if include_raw and not use_json:
-            raise RawMustUseJsonException("use_json must be True if include_raw")
+            raise RawMustUseJsonException(
+                "use_json must be True if include_raw")
 
         if self.debug:
             self.set_debug()
@@ -134,7 +137,8 @@ class Capture(object):
                 raise StopCapture()
 
         try:
-            self.apply_on_packets(keep_packet, timeout=timeout, packet_count=packet_count)
+            self.apply_on_packets(
+                keep_packet, timeout=timeout, packet_count=packet_count)
             self.loaded = True
         except asyncTimeoutError:
             pass
@@ -143,7 +147,8 @@ class Capture(object):
         """Sets the capture to debug mode (or turns it off if specified)."""
         if set_to:
             handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+            handler.setFormatter(logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
             self._log.addHandler(handler)
             self._log.level = log_level
         self.debug = set_to
@@ -154,7 +159,7 @@ class Capture(object):
             self.eventloop = asyncio.ProactorEventLoop()
         else:
             try:
-                self.eventloop = asyncio.get_event_loop()
+                self.eventloop = asyncio.get_event_loop_policy().get_event_loop()
             except RuntimeError:
                 if threading.current_thread() != threading.main_thread():
                     # Ran not in main thread, make a new eventloop
@@ -162,8 +167,17 @@ class Capture(object):
                     asyncio.set_event_loop(self.eventloop)
                 else:
                     raise
-        if os.name == "posix" and isinstance(threading.current_thread(), threading._MainThread):
-            asyncio.get_child_watcher().attach_loop(self.eventloop)
+            if os.name == "posix" and isinstance(threading.current_thread(), threading._MainThread):
+                # The default child watchers (ThreadedChildWatcher) attach_loop method is empty!
+                # While using pyshark with ThreadedChildWatcher, asyncio could raise a ChildProcessError
+                # "Unknown child process pid %d, will report returncode 255"
+                # This led to a TSharkCrashException in _cleanup_subprocess.
+                # Using the SafeChildWatcher fixes this issue, but it is slower.
+                # SafeChildWatcher O(n) -> large numbers of processes are slow
+                # ThreadedChildWatcher O(1) -> independent of process number
+                # asyncio.get_child_watcher().attach_loop(self.eventloop)
+                asyncio.set_child_watcher(asyncio.SafeChildWatcher())
+                asyncio.get_child_watcher().attach_loop(self.eventloop)
 
     def _get_json_separators(self):
         """"Returns the separators between packets in a JSON output
@@ -172,9 +186,9 @@ class Capture(object):
         The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
         commas, parenthesis).
         """
-        if self._get_tshark_version() >= LooseVersion("3.0.0"):
+        if self._get_tshark_version() >= version.parse("3.0.0"):
             return ("%s  },%s" % (os.linesep, os.linesep)).encode(), ("}%s]" % os.linesep).encode(), (
-                    1 + len(os.linesep))
+                1 + len(os.linesep))
         else:
             return ("}%s%s  ," % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
 
@@ -229,8 +243,10 @@ class Capture(object):
         :param packet_count: If given, stops after this amount of packets is captured.
         """
         # NOTE: This has code duplication with the async version, think about how to solve this
-        tshark_process = existing_process or self.eventloop.run_until_complete(self._get_tshark_process())
-        psml_structure, data = self.eventloop.run_until_complete(self._get_psml_struct(tshark_process.stdout))
+        tshark_process = existing_process or self.eventloop.run_until_complete(
+            self._get_tshark_process())
+        psml_structure, data = self.eventloop.run_until_complete(
+            self._get_psml_struct(tshark_process.stdout))
         packets_captured = 0
 
         data = b""
@@ -253,11 +269,12 @@ class Capture(object):
                     break
         finally:
             if tshark_process in self._running_processes:
-                self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
+                self.eventloop.run_until_complete(
+                    self._cleanup_subprocess(tshark_process))
 
     def apply_on_packets(self, callback, timeout=None, packet_count=None):
         """Runs through all packets and calls the given callback (a function) with each one as it is read.
-        
+
         If the capture is infinite (i.e. a live capture), it will run forever, otherwise it will complete after all
         packets have been read.
 
@@ -330,7 +347,8 @@ class Capture(object):
             while not psml_struct:
                 new_data = await fd.read(self.SUMMARIES_BATCH_SIZE)
                 data += new_data
-                psml_struct, data = self._extract_tag_from_data(data, b"structure")
+                psml_struct, data = self._extract_tag_from_data(
+                    data, b"structure")
                 if psml_struct:
                     psml_struct = psml_structure_from_xml(psml_struct)
                 elif not new_data:
@@ -355,9 +373,11 @@ class Capture(object):
 
         if packet:
             if self.use_json:
-                packet = packet_from_json_packet(packet, deduplicate_fields=self._json_has_duplicate_keys)
+                packet = packet_from_json_packet(
+                    packet, deduplicate_fields=self._json_has_duplicate_keys)
             else:
-                packet = packet_from_xml_packet(packet, psml_structure=psml_structure)
+                packet = packet_from_xml_packet(
+                    packet, psml_structure=psml_structure)
             return packet, existing_data
 
         new_data = await stream.read(self.DEFAULT_BATCH_SIZE)
@@ -387,7 +407,8 @@ class Capture(object):
         if self.use_json:
             output_type = "json"
             if not tshark_supports_json(self._get_tshark_version()):
-                raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
+                raise TSharkVersionException(
+                    "JSON only supported on Wireshark >= 2.2.0")
             if tshark_supports_duplicate_keys(self._get_tshark_version()):
                 output_parameters.append("--no-duplicate-keys")
                 self._json_has_duplicate_keys = False
@@ -396,7 +417,8 @@ class Capture(object):
         parameters = [self._get_tshark_path(), "-l", "-n", "-T", output_type] + \
             self.get_parameters(packet_count=packet_count) + output_parameters
 
-        self._log.debug("Creating TShark subprocess with parameters: " + " ".join(parameters))
+        self._log.debug(
+            "Creating TShark subprocess with parameters: " + " ".join(parameters))
         self._log.debug("Executable: %s" % parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
                                                               stdout=subprocess.PIPE,
@@ -406,7 +428,8 @@ class Capture(object):
         return tshark_process
 
     def _created_new_process(self, parameters, process, process_name="TShark"):
-        self._log.debug(process_name + " subprocess created")
+        self._log.debug(
+            process_name + f" subprocess (pid {process.pid}) created")
         if process.returncode is not None and process.returncode != 0:
             raise TSharkCrashException(
                 "%s seems to have crashed. Try updating it. (command ran: '%s')" % (
@@ -415,12 +438,14 @@ class Capture(object):
 
     async def _cleanup_subprocess(self, process):
         """Kill the given process and properly closes any pipes connected to it."""
+        self._log.debug(f"Cleanup Subprocess (pid {process.pid})")
         if process.returncode is None:
             try:
                 process.kill()
                 return await asyncio.wait_for(process.wait(), 1)
             except asyncTimeoutError:
-                self._log.debug("Waiting for process to close failed, may have zombie process.")
+                self._log.debug(
+                    "Waiting for process to close failed, may have zombie process.")
             except ProcessLookupError:
                 pass
             except OSError:
@@ -428,12 +453,11 @@ class Capture(object):
                     raise
         elif process.returncode > 0:
             if process.returncode != 1 or self._eof_reached:
-                raise TSharkCrashException("TShark seems to have crashed (retcode: %d). "
-                                           "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark."
-                                           % process.returncode)
+                raise TSharkCrashException(f"TShark (pid {process.pid}) seems to have crashed (retcode: {process.returncode}). "
+                                           "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
 
     def close(self):
-        self.eventloop.run_until_complete(self.close_async())
+        self.eventloop.create_task(self.close_async())
 
     async def close_async(self):
         for process in self._running_processes.copy():
@@ -447,7 +471,9 @@ class Capture(object):
     def __enter__(self): return self
     async def __aenter__(self): return self
     def __exit__(self, exc_type, exc_val, exc_tb): self.close()
-    async def __aexit__(self, exc_type, exc_val, exc_tb): await self.close_async()
+
+    async def __aexit__(self, exc_type, exc_val,
+                        exc_tb): await self.close_async()
 
     def get_parameters(self, packet_count=None):
         """Returns the special tshark parameters to be used according to the configuration of this class."""
@@ -479,14 +505,16 @@ class Capture(object):
             for preference_name, preference_value in self._override_prefs.items():
                 if all(self.encryption) and preference_name in ("wlan.enable_decryption", "uat:80211_keys"):
                     continue  # skip if override preferences also given via --encryption options
-                params += ["-o", "{0}:{1}".format(preference_name, preference_value)]
+                params += ["-o",
+                           "{0}:{1}".format(preference_name, preference_value)]
 
         if self._output_file:
             params += ["-w", self._output_file]
 
         if self._decode_as:
             for criterion, decode_as_proto in self._decode_as.items():
-                params += ["-d", ",".join([criterion.strip(), decode_as_proto.strip()])]
+                params += ["-d",
+                           ",".join([criterion.strip(), decode_as_proto.strip()])]
 
         if self._disable_protocol:
             params += ["--disable-protocol", self._disable_protocol.strip()]

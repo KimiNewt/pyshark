@@ -67,7 +67,7 @@ def get_tshark_version(tshark_path=None):
         version_output = subprocess.check_output(parameters, stderr=null).decode("ascii")
 
     version_line = version_output.splitlines()[0]
-    pattern = '.*\s(\d+\.\d+\.\d+).*'  # match " #.#.#" version pattern
+    pattern = r'.*\s(\d+\.\d+\.\d+).*'  # match " #.#.#" version pattern
     m = re.match(pattern, version_line)
     if not m:
         raise TSharkVersionException("Unable to parse TShark version from: {}".format(version_line))

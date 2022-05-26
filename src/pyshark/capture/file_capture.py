@@ -42,7 +42,7 @@ class FileCapture(Capture):
         self.input_filename = input_file
         if not isinstance(input_file, str):
             self.input_filename = input_file.name
-        if not os.path.exists(self.input_filename):
+        if self.input_filename != "-" and not os.path.exists(self.input_filename):
             raise FileNotFoundError(
                     "[Errno 2] No such file or directory: "
                     + str(self.input_filename)

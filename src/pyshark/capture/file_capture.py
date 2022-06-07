@@ -1,4 +1,4 @@
-import os
+import pathlib
 
 from pyshark.capture.capture import Capture
 from pyshark.packet.packet import Packet
@@ -37,18 +37,21 @@ class FileCapture(Capture):
         super(FileCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                           decryption_key=decryption_key, encryption_type=encryption_type,
                                           decode_as=decode_as, disable_protocol=disable_protocol,
-                                          tshark_path=tshark_path,override_prefs=override_prefs,
+                                          tshark_path=tshark_path, override_prefs=override_prefs,
                                           use_json=use_json, output_file=output_file,
                                           include_raw=include_raw, eventloop=eventloop,
                                           custom_parameters=custom_parameters, debug=debug)
-        self.input_filename = input_file
-        if not isinstance(input_file, str):
-            self.input_filename = input_file.name
-        if not os.path.exists(self.input_filename):
-            raise FileNotFoundError(
-                    "[Errno 2] No such file or directory: "
-                    + str(self.input_filename)
-                    )
+        self.input_filepath = pathlib.Path(input_file)
+        if not self.input_filepath.exists():
+            raise FileNotFoundError(f"[Errno 2] No such file or directory: {self.input_filepath}")
+        if not self.input_filepath.is_file():
+            raise FileNotFoundError(f"{self.input_filepath} is a directory")
+        try:
+            with self.input_filepath.open("rb"):
+                pass
+        except PermissionError:
+            raise PermissionError(f"Permission denied for file {self.input_filepath}")
+
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
 
@@ -77,10 +80,12 @@ class FileCapture(Capture):
         return super(FileCapture, self).__getitem__(packet_index)
 
     def get_parameters(self, packet_count=None):
-        return super(FileCapture, self).get_parameters(packet_count=packet_count) + ["-r", self.input_filename]
+        return super(FileCapture, self).get_parameters(packet_count=packet_count) + [
+            "-r", self.input_filepath.as_posix()]
 
     def __repr__(self):
         if self.keep_packets:
-            return "<%s %s>" % (self.__class__.__name__, self.input_filename)
+            return "<%s %s>" % (self.__class__.__name__, self.input_filepath.as_posix())
         else:
-            return "<%s %s (%d packets)>" % (self.__class__.__name__, self.input_filename, len(self._packets))
+            return "<%s %s (%d packets)>" % (self.__class__.__name__, self.input_filepath.as_posix(),
+                                             len(self._packets))

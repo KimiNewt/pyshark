@@ -2,9 +2,7 @@ from pyshark import LiveCapture
 
 
 class LiveRingCapture(LiveCapture):
-    """
-    Represents a live ringbuffer capture on a network interface.
-    """
+    """Represents a live ringbuffer capture on a network interface."""
 
     def __init__(self, ring_file_size=1024, num_ring_files=1, ring_file_name='/tmp/pyshark.pcap', interface=None,
                  bpf_filter=None, display_filter=None, only_summaries=False, decryption_key=None,
@@ -42,9 +40,7 @@ class LiveRingCapture(LiveCapture):
         self.ring_file_name = ring_file_name
 
     def get_parameters(self, packet_count=None):
-        """
-        Returns the special tshark parameters to be used according to the configuration of this class.
-        """
         params = super(LiveRingCapture, self).get_parameters(packet_count=packet_count)
-        params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files), '-w', self.ring_file_name, '-P']
+        params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files),
+                   '-w', self.ring_file_name, '-P']
         return params

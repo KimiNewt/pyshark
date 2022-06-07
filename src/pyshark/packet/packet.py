@@ -1,14 +1,16 @@
 import datetime
 import os
 import binascii
+import typing
 
 from pyshark.packet import consts
 from pyshark.packet.common import Pickleable
+from pyshark.packet.layer import Layer
 
 
 class Packet(Pickleable):
-    """
-    A packet object which contains layers.
+    """A packet object which contains layers.
+
     Layers can be accessed via index or name.
     """
 
@@ -50,8 +52,7 @@ class Packet(Pickleable):
         raise KeyError('Layer does not exist in packet')
 
     def __contains__(self, item):
-        """
-        Checks if the layer is inside the packet.
+        """Checks if the layer is inside the packet.
 
         :param item: name of the layer
         """
@@ -64,7 +65,7 @@ class Packet(Pickleable):
     def __dir__(self):
         return dir(type(self)) + list(self.__dict__.keys()) + [l.layer_name for l in self.layers]
 
-    def get_raw_packet(self):
+    def get_raw_packet(self) -> bytes:
         assert "FRAME_RAW" in self, "Packet contains no raw data. In order to contains it, " \
                                     "make sure that use_json and include_raw are set to True " \
                                     "in the Capture object"
@@ -81,7 +82,7 @@ class Packet(Pickleable):
         return True
 
     @property
-    def sniff_time(self):
+    def sniff_time(self) -> datetime.datetime:
         try:
             timestamp = float(self.sniff_timestamp)
         except ValueError:
@@ -105,10 +106,8 @@ class Packet(Pickleable):
 
     @property
     def _packet_string(self):
-        """
-        A simple pretty string that represents the packet.
-        """
-        return 'Packet (Length: %s)%s' %(self.length, os.linesep)
+        """A simple pretty string that represents the packet."""
+        return 'Packet (Length: %s)%s' % (self.length, os.linesep)
 
     def pretty_print(self):
         for layer in self.layers:
@@ -126,19 +125,19 @@ class Packet(Pickleable):
         raise AttributeError("No attribute named %s" % item)
 
     @property
-    def highest_layer(self):
+    def highest_layer(self) -> Layer:
         return self.layers[-1].layer_name.upper()
 
     @property
-    def transport_layer(self):
+    def transport_layer(self) -> Layer:
         for layer in consts.TRANSPORT_LAYERS:
             if layer in self:
                 return layer
 
-    def get_multiple_layers(self, layer_name):
+    def get_multiple_layers(self, layer_name) -> typing.List[Layer]:
+        """Returns a list of all the layers in the packet that are of the layer type (an incase-sensitive string).
+
+        This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLAN)
+        which cannot be retrieved by easier means.
         """
-        Returns a list of all the layers in the packet that are of the layer type (an incase-sensitive string).
-        This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLAN) which cannot be
-        retrieved by easier means.
-        """
-        return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]   
+        return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]

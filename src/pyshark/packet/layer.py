@@ -1,4 +1,5 @@
 import os
+import typing
 
 import py
 
@@ -7,9 +8,7 @@ from pyshark.packet.fields import LayerField, LayerFieldsContainer
 
 
 class Layer(Pickleable):
-    """
-    An object representing a Packet layer.
-    """
+    """An object representing a Packet layer."""
     DATA_LAYER = 'data'
 
     def __init__(self, xml_obj=None, raw_mode=False):
@@ -30,7 +29,7 @@ class Layer(Pickleable):
             else:
                 self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
 
-    def __getattr__(self, item):
+    def __getattr__(self, item) -> LayerFieldsContainer:
         val = self.get_field(item)
         if val is None:
             raise AttributeError()
@@ -39,9 +38,9 @@ class Layer(Pickleable):
         return val
 
     def get(self, item, default=None):
-        """
-        Works the same way as getattr, but returns the given default if not the field was not found
-        """
+        """Gets a field in the layer, or the default if not found.
+
+        Works the same way as getattr, but returns the given default if not the field was not found"""
         try:
             return getattr(self, item)
         except AttributeError:
@@ -50,10 +49,8 @@ class Layer(Pickleable):
     def __dir__(self):
         return dir(type(self)) + list(self.__dict__.keys()) + self.field_names
 
-    def get_field(self, name):
-        """
-        Gets the XML field object of the given name.
-        """
+    def get_field(self, name) -> LayerFieldsContainer:
+        """Gets the XML field object of the given name."""
         # Quicker in case the exact name was used.
         field = self._all_fields.get(name)
         if field is not None:
@@ -63,10 +60,11 @@ class Layer(Pickleable):
             if self._sanitize_field_name(name) == self._sanitize_field_name(field_name):
                 return field
 
-    def get_field_value(self, name, raw=False):
-        """
-        Tries getting the value of the given field.
-        Tries it in the following order: show (standard nice display), value (raw value), showname (extended nice display).
+    def get_field_value(self, name, raw=False) -> typing.Union[LayerFieldsContainer, None]:
+        """Tries getting the value of the given field.
+
+        Tries it in the following order: show (standard nice display), value (raw value),
+        showname (extended nice display).
 
         :param name: The name of the field
         :param raw: Only return raw value
@@ -74,7 +72,7 @@ class Layer(Pickleable):
         """
         field = self.get_field(name)
         if field is None:
-            return
+            return None
 
         if raw:
             return field.raw_value
@@ -82,20 +80,15 @@ class Layer(Pickleable):
         return field
 
     @property
-    def _field_prefix(self):
-        """
-        Prefix to field names in the XML.
-        """
+    def _field_prefix(self) -> str:
+        """Prefix to field names in the XML."""
         if self.layer_name == 'geninfo':
             return ''
         return self.layer_name + '.'
-        
+
     @property
-    def field_names(self):
-        """
-        Gets all XML field names of this layer.
-        :return: list of strings
-        """
+    def field_names(self) -> typing.List[str]:
+        """Gets all XML field names of this layer."""
         return [self._sanitize_field_name(field_name)
                 for field_name in self._all_fields]
 
@@ -106,8 +99,9 @@ class Layer(Pickleable):
         return self._layer_name
 
     def _sanitize_field_name(self, field_name):
-        """
-        Sanitizes an XML field name (since it might have characters which would make it inaccessible as a python attribute).
+        """Sanitizes an XML field name
+
+        An xml field might have characters which would make it inaccessible as a python attribute).
         """
         field_name = field_name.replace(self._field_prefix, '')
         return field_name.replace('.', '_').replace('-', '_').lower()
@@ -144,9 +138,7 @@ class Layer(Pickleable):
         return all_fields
 
     def _get_all_field_lines(self):
-        """
-        Returns all lines that represent the fields of the layer (both their names and values).
-        """
+        """Returns all lines that represent the fields of the layer (both their names and values)."""
         for field in self._get_all_fields_with_alternates():
             # Change to yield from
             for line in self._get_field_or_layer_repr(field):
@@ -177,18 +169,19 @@ class Layer(Pickleable):
         elif field.raw_value:
             return "%s: %s" % (self._sanitize_field_name(field.name), field.raw_value)
 
-    def get_field_by_showname(self, showname):
-        """
-        Gets a field by its "showname"
-        (the name that appears in Wireshark's detailed display i.e. in 'User-Agent: Mozilla...', 'User-Agent' is the
-         showname)
+    def get_field_by_showname(self, showname) -> typing.Union[LayerFieldsContainer, None]:
+        """Gets a field by its "showname"
 
-         Returns None if not found.
+        This is the name that appears in Wireshark's detailed display i.e. in 'User-Agent: Mozilla...',
+        'User-Agent' is the .showname
+
+        Returns None if not found.
         """
         for field in self._get_all_fields_with_alternates():
             if field.showname_key == showname:
                 # Return it if "XXX: whatever == XXX"
                 return field
+        return None
 
 
 class JsonLayer(Layer):
@@ -338,9 +331,9 @@ class JsonLayer(Layer):
 
         return LayerFieldsContainer(LayerField(name=name, value=field))
 
-    def has_field(self, dotted_name):
-        """
-        Checks whether the layer has the given field name.
+    def has_field(self, dotted_name) -> bool:
+        """Checks whether the layer has the given field name.
+
         Can get a dotted name, i.e. layer.sublayer.subsublayer.field
         """
         parts = dotted_name.split('.')

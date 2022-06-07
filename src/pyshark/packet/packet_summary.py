@@ -1,6 +1,6 @@
 class PacketSummary(object):
-    """
-    A simple object containing a psml summary.
+    """A simple object containing a psml summary.
+
     Can contain various summary information about a packet.
     """
 
@@ -23,5 +23,5 @@ class PacketSummary(object):
         return self.summary_line
 
     @property
-    def summary_line(self):
+    def summary_line(self) -> str:
         return ' '.join([self._fields[key] for key in self._field_order])

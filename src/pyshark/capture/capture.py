@@ -7,6 +7,7 @@ import sys
 import logging
 from packaging import version
 
+from pyshark.packet.packet import Packet
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
 from pyshark.tshark.tshark_json import packet_from_json_packet
@@ -36,7 +37,7 @@ class StopCapture(Exception):
     pass
 
 
-class Capture(object):
+class Capture:
     """Base class for packet captures."""
     DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
@@ -99,12 +100,12 @@ class Capture(object):
     def __len__(self):
         return len(self._packets)
 
-    def next(self):
+    def next(self) -> Packet:
         return self.next_packet()
 
     # Allows for child classes to call next() from super() without 2to3 "fixing"
     # the call
-    def next_packet(self):
+    def next_packet(self) -> Packet:
         if self._current_packet >= len(self._packets):
             raise StopIteration()
         cur_packet = self._packets[self._current_packet]

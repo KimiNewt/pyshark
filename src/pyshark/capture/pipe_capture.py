@@ -1,13 +1,14 @@
-from pyshark.capture.capture import Capture
 import os
+
+from pyshark.capture.capture import Capture
+
 
 class PipeCapture(Capture):
     def __init__(self, pipe, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
-                 disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False, include_raw=False,
-                 eventloop=None, custom_parameters=None, debug=False):
-        """
-        Receives a file-like and reads the packets from there (pcap format).
+                 disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False,
+                 include_raw=False, eventloop=None, custom_parameters=None, debug=False):
+        """Receives a file-like and reads the packets from there (pcap format).
 
         :param bpf_filter: BPF filter to use on packets.
         :param display_filter: Display (wireshark) filter to use.

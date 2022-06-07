@@ -1,6 +1,7 @@
 import os
 
 from pyshark.capture.capture import Capture
+from pyshark.packet.packet import Packet
 
 
 class FileCapture(Capture):
@@ -50,7 +51,7 @@ class FileCapture(Capture):
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
 
-    def next(self):
+    def next(self) -> Packet:
         """Returns the next packet in the cap.
 
         If the capture's keep_packets flag is True, will also keep it in the internal packet list.

@@ -2,9 +2,7 @@ from pyshark import LiveCapture
 
 
 class RemoteCapture(LiveCapture):
-    """
-    A capture which is performed on a remote machine which has an rpcapd service running.
-    """
+    """A capture which is performed on a remote machine which has an rpcapd service running."""
 
     def __init__(self, remote_host, remote_interface, remote_port=2002, bpf_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,

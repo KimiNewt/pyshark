@@ -1,6 +1,5 @@
 import os
 import asyncio
-import sys
 from packaging import version
 
 from pyshark.capture.capture import Capture
@@ -54,9 +53,7 @@ class LiveCapture(Capture):
             self.interfaces = interface
 
     def get_parameters(self, packet_count=None):
-        """
-        Returns the special tshark parameters to be used according to the configuration of this class.
-        """
+        """Returns the special tshark parameters to be used according to the configuration of this class."""
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
         # Read from STDIN
         params += ["-i", "-"]

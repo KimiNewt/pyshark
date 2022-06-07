@@ -45,6 +45,7 @@ class InMemCapture(Capture):
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
+        or else a list of parameters in the format ["--foo", "bar", "--baz", "foo"].
         """
         super(InMemCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                            decryption_key=decryption_key, encryption_type=encryption_type,

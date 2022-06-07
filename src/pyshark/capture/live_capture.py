@@ -33,7 +33,8 @@ class LiveCapture(Capture):
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         :param use_json: Uses tshark in JSON mode (EXPERIMENTAL). It is a good deal faster than XML
         but also has less information. Available from Wireshark 2.2.0.
-        :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
+        :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"} or
+        else a list of parameters in the format ["--foo", "bar", "--baz", "foo"].
         """
         super(LiveCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
                                           decryption_key=decryption_key, encryption_type=encryption_type,

@@ -71,6 +71,7 @@ class Capture:
         self._closed = False
         self._custom_parameters = custom_parameters
         self._eof_reached = False
+        self._last_error_line = None
         self.__tshark_version = None
 
         if include_raw and not use_json:
@@ -390,12 +391,17 @@ class Capture:
             raise EOFError()
         return None, existing_data
 
+    async def _handle_process_stderr_forever(self, stderr):
+        while True:
+            stderr_line = await stderr.readline()
+            if not stderr_line:
+                break
+            stderr_line = stderr_line.decode().strip()
+            self._last_error_line = stderr_line
+            self._log.debug(stderr_line)
+
     def _get_tshark_path(self):
         return get_process_path(self.tshark_path)
-
-    def _stderr_output(self):
-        # Ignore stderr output unless in debug mode (sent to console)
-        return None if self.debug else subprocess.DEVNULL
 
     def _get_tshark_version(self):
         if self.__tshark_version is None:
@@ -423,8 +429,9 @@ class Capture:
         self._log.debug("Executable: %s" % parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
                                                               stdout=subprocess.PIPE,
-                                                              stderr=self._stderr_output(),
+                                                              stderr=subprocess.PIPE,
                                                               stdin=stdin)
+        asyncio.create_task(self._handle_process_stderr_forever(tshark_process.stderr))
         self._created_new_process(parameters, tshark_process)
         return tshark_process
 
@@ -454,7 +461,8 @@ class Capture:
                     raise
         elif process.returncode > 0:
             if process.returncode != 1 or self._eof_reached:
-                raise TSharkCrashException(f"TShark (pid {process.pid}) seems to have crashed (retcode: {process.returncode}). "
+                raise TSharkCrashException(f"TShark (pid {process.pid}) seems to have crashed (retcode: {process.returncode}).\n"
+                                           f"Last error line: {self._last_error_line}\n"
                                            "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
 
     def close(self):

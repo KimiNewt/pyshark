@@ -46,11 +46,6 @@ class FileCapture(Capture):
             raise FileNotFoundError(f"[Errno 2] No such file or directory: {self.input_filepath}")
         if not self.input_filepath.is_file():
             raise FileNotFoundError(f"{self.input_filepath} is a directory")
-        try:
-            with self.input_filepath.open("rb"):
-                pass
-        except PermissionError:
-            raise PermissionError(f"Permission denied for file {self.input_filepath}")
 
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
@@ -82,6 +77,13 @@ class FileCapture(Capture):
     def get_parameters(self, packet_count=None):
         return super(FileCapture, self).get_parameters(packet_count=packet_count) + [
             "-r", self.input_filepath.as_posix()]
+
+    def _verify_capture_parameters(self):
+        try:
+            with self.input_filepath.open("rb"):
+                pass
+        except PermissionError:
+            raise PermissionError(f"Permission denied for file {self.input_filepath}")
 
     def __repr__(self):
         if self.keep_packets:

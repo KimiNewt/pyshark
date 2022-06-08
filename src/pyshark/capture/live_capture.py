@@ -1,9 +1,15 @@
 import os
 import asyncio
+import subprocess
+
 from packaging import version
 
 from pyshark.capture.capture import Capture
 from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path
+
+
+class UnknownInterfaceException(Exception):
+    pass
 
 
 class LiveCapture(Capture):
@@ -46,8 +52,9 @@ class LiveCapture(Capture):
         self.bpf_filter = bpf_filter
         self.monitor_mode = monitor_mode
 
+        self._all_interfaces = get_tshark_interfaces(tshark_path)
         if interface is None:
-            self.interfaces = get_tshark_interfaces(tshark_path)
+            self.interfaces = self._all_interfaces
         elif isinstance(interface, str):
             self.interfaces = [interface]
         else:
@@ -59,6 +66,12 @@ class LiveCapture(Capture):
         # Read from STDIN
         params += ["-i", "-"]
         return params
+
+    def _verify_capture_parameters(self):
+        for each_interface in self.interfaces:
+            if each_interface not in self._all_interfaces:
+                raise UnknownInterfaceException(
+                    f"Interface '{each_interface}' does not exist, unable to initiate capture.")
 
     def _get_dumpcap_parameters(self):
         # Don't report packet counts.
@@ -83,7 +96,8 @@ class LiveCapture(Capture):
 
         self._log.debug("Creating Dumpcap subprocess with parameters: %s" % " ".join(dumpcap_params))
         dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
-                                                               stderr=self._stderr_output())
+                                                               stderr=subprocess.PIPE)
+        self._create_stderr_handling_task(dumpcap_process.stderr)
         self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
 
         tshark = await super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=read)

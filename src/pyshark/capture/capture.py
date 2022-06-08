@@ -72,6 +72,7 @@ class Capture:
         self._custom_parameters = custom_parameters
         self._eof_reached = False
         self._last_error_line = None
+        self._stderr_handling_tasks = []
         self.__tshark_version = None
 
         if include_raw and not use_json:
@@ -154,6 +155,13 @@ class Capture:
             self._log.addHandler(handler)
             self._log.level = log_level
         self.debug = set_to
+
+    def _verify_capture_parameters(self):
+        """Optionally verify that the capture's parameters are valid.
+
+        Should raise an exception if they are not valid.
+        """
+        pass
 
     def _setup_eventloop(self):
         """Sets up a new eventloop as the current one according to the OS."""
@@ -391,6 +399,9 @@ class Capture:
             raise EOFError()
         return None, existing_data
 
+    def _create_stderr_handling_task(self, stderr):
+        self._stderr_handling_tasks.append(asyncio.create_task(self._handle_process_stderr_forever(stderr)))
+
     async def _handle_process_stderr_forever(self, stderr):
         while True:
             stderr_line = await stderr.readline()
@@ -410,6 +421,8 @@ class Capture:
 
     async def _get_tshark_process(self, packet_count=None, stdin=None):
         """Returns a new tshark process with previously-set parameters."""
+        self._verify_capture_parameters()
+
         output_parameters = []
         if self.use_json:
             output_type = "json"
@@ -431,7 +444,7 @@ class Capture:
                                                               stdout=subprocess.PIPE,
                                                               stderr=subprocess.PIPE,
                                                               stdin=stdin)
-        asyncio.create_task(self._handle_process_stderr_forever(tshark_process.stderr))
+        self._create_stderr_handling_task(tshark_process.stderr)
         self._created_new_process(parameters, tshark_process)
         return tshark_process
 
@@ -472,6 +485,9 @@ class Capture:
         for process in self._running_processes.copy():
             await self._cleanup_subprocess(process)
         self._running_processes.clear()
+
+        # Wait for all stderr handling to finish
+        await asyncio.gather(*self._stderr_handling_tasks)
 
     def __del__(self):
         if self._running_processes:

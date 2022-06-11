@@ -5,7 +5,7 @@ import typing
 
 from pyshark.packet import consts
 from pyshark.packet.common import Pickleable
-from pyshark.packet.layer import Layer
+from pyshark.packet.layers.base import BaseLayer
 
 
 class Packet(Pickleable):
@@ -19,7 +19,7 @@ class Packet(Pickleable):
         """
         Creates a Packet object with the given layers and info.
 
-        :param layers: A list of Layer objects.
+        :param layers: A list of BaseLayer objects.
         :param frame_info: Layer object for the entire packet frame (information like frame length, packet number, etc.
         :param length: Length of the actual packet.
         :param captured_length: The length of the packet that was actually captured (could be less then length)
@@ -42,7 +42,7 @@ class Packet(Pickleable):
         Gets a layer according to its index or its name
 
         :param item: layer index or name
-        :return: Layer object.
+        :return: BaseLayer object.
         """
         if isinstance(item, int):
             return self.layers[item]
@@ -125,16 +125,16 @@ class Packet(Pickleable):
         raise AttributeError("No attribute named %s" % item)
 
     @property
-    def highest_layer(self) -> Layer:
+    def highest_layer(self) -> BaseLayer:
         return self.layers[-1].layer_name.upper()
 
     @property
-    def transport_layer(self) -> Layer:
+    def transport_layer(self) -> BaseLayer:
         for layer in consts.TRANSPORT_LAYERS:
             if layer in self:
                 return layer
 
-    def get_multiple_layers(self, layer_name) -> typing.List[Layer]:
+    def get_multiple_layers(self, layer_name) -> typing.List[BaseLayer]:
         """Returns a list of all the layers in the packet that are of the layer type (an incase-sensitive string).
 
         This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLAN)

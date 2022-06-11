@@ -69,6 +69,14 @@ class XmlLayer(base.BaseLayer):
             return base.DATA_LAYER_NAME
         return super().layer_name
 
+    def __getattr__(self, item):
+        val = self.get_field(item)
+        if val is None:
+            raise AttributeError()
+        if self.raw_mode:
+            return val.raw_value
+        return val
+
     @property
     def _field_prefix(self) -> str:
         """Prefix to field names in the XML."""
@@ -100,29 +108,9 @@ class XmlLayer(base.BaseLayer):
     def _get_all_field_lines(self):
         """Returns all lines that represent the fields of the layer (both their names and values)."""
         for field in self._get_all_fields_with_alternates():
-            # Change to yield from
-            for line in self._get_field_or_layer_repr(field):
-                yield line
+            yield from self._get_field_or_layer_repr(field)
 
     def _get_field_or_layer_repr(self, field):
-        if isinstance(field, XmlLayer):
-            yield "\t" + field.layer_name + ":" + os.linesep
-            for line in field._get_all_field_lines():
-                yield "\t" + line
-        elif isinstance(field, list):
-            for subfield_or_layer in field:
-                yield from self._get_field_or_layer_repr(subfield_or_layer)
-        else:
-            field_repr = self._get_field_repr(field)
-            if field_repr:
-                yield '\t' + field_repr + os.linesep
-
-    def _get_field_repr(self, field):
-        if field.hide:
-            return
-        if field.showname:
-            return field.showname
-        elif field.show:
-            return field.show
-        elif field.raw_value:
-            return "%s: %s" % (self._sanitize_field_name(field.name), field.raw_value)
+        field_repr = self._get_field_repr(field)
+        if field_repr:
+            yield f"\t{field_repr}{os.linesep}"

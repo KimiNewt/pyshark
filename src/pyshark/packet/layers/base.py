@@ -42,8 +42,6 @@ class BaseLayer(common.Pickleable):
         val = self.get_field(item)
         if val is None:
             raise AttributeError()
-        if self.raw_mode:
-            return val.raw_value
         return val
 
     def pretty_print(self, writer=None):

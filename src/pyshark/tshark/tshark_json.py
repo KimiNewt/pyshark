@@ -1,12 +1,13 @@
 import json
 
+from pyshark.packet.layers.json_layer import JsonLayer
+
 try:
     import ujson
     USE_UJSON = True
 except ImportError:
     USE_UJSON = False
 
-from pyshark.packet.layer import JsonLayer
 from pyshark.packet.packet import Packet
 
 

@@ -1,14 +1,12 @@
-try:
-    import mock
-except ModuleNotFoundError:
-    from unittest import mock
 import time
-import pytest
-from multiprocessing import Process, Queue
-from multiprocessing.queues import Empty
 from asyncio import TimeoutError
+from multiprocessing import Process
+from multiprocessing import Queue
+from multiprocessing.queues import Empty
+from unittest import mock
 
-import sys
+import pytest
+
 from pyshark.packet.packet_summary import PacketSummary
 
 
@@ -55,7 +53,7 @@ def test_getting_packet_summary(simple_summary_capture):
 
 
 def _iterate_capture_object(cap_obj, q):
-    for packet in cap_obj:
+    for _ in cap_obj:
         pass
     q.put(True)
 

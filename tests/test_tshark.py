@@ -1,9 +1,6 @@
 from packaging import version
 
-try:
-    import mock
-except ModuleNotFoundError:
-    from unittest import mock
+from unittest import mock
 
 from pyshark.tshark.tshark import (
     get_tshark_display_filter_flag,

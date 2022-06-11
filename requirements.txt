@@ -1,6 +1,5 @@
 # Development requirements. Only required for testing
 py
 pytest
-mock
 lxml
 packaging

@@ -13,10 +13,10 @@ def test_capture_gets_multiple_decoding_parameters():
     params = c.get_parameters()
     decode_index = params.index('-d')
     possible_results = ['tcp.port==8888,http', 'tcp.port==6666,dns']
-    assert params[decode_index + 1] in possible_results  
+    assert params[decode_index + 1] in possible_results
     possible_results.remove(params[decode_index + 1])
     decode_index = params.index('-d', decode_index + 1)
-    assert params[decode_index + 1] == possible_results[0] 
+    assert params[decode_index + 1] == possible_results[0]
 
 
 def test_capture_gets_override_perfs():
@@ -40,6 +40,7 @@ def test_capture_gets_multiple_override_perfs():
         assert override_actual_value in expected_results
         # increment index
         start_idx = override_index + 1
+
 
 def test_capture_gets_encryption_and_override_perfs():
     temp_c = Capture()

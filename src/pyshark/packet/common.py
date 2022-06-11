@@ -22,3 +22,13 @@ class SlotsPickleable(object):
     def __setstate__(self, data):
         for key, val in data.items():
             setattr(self, key, val)
+
+
+class StrWriter:
+    """A class which mocks the py.io.TerminalWriter to write to an internal buffer"""
+
+    def __init__(self):
+        self.buffer = ""
+
+    def write(self, text, *_, **__):
+        self.buffer += text

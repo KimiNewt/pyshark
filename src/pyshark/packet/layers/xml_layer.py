@@ -1,0 +1,128 @@
+import os
+import typing
+
+import py
+
+from pyshark.packet.fields import LayerField, LayerFieldsContainer
+from pyshark.packet.layers import base
+
+
+class XmlLayer(base.BaseLayer):
+
+    def __init__(self, xml_obj=None, raw_mode=False):
+        super().__init__(xml_obj.attrib['name'])
+        self.raw_mode = raw_mode
+
+        self._all_fields = {}
+
+        # We copy over all the fields from the XML object
+        # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
+        # so we'd rather not save them.
+        for field in xml_obj.findall('.//field'):
+            attributes = dict(field.attrib)
+            field_obj = LayerField(**attributes)
+            if attributes['name'] in self._all_fields:
+                # Field name already exists, add this field to the container.
+                self._all_fields[attributes['name']].add_field(field_obj)
+            else:
+                self._all_fields[attributes['name']] = LayerFieldsContainer(field_obj)
+
+    def get_field(self, name) -> typing.Union[LayerFieldsContainer, None]:
+        """Gets the XML field object of the given name."""
+        # Quicker in case the exact name was used.
+        field = self._all_fields.get(name)
+        if field is not None:
+            return field
+
+        for field_name, field in self._all_fields.items():
+            if self._sanitize_field_name(name) == self._sanitize_field_name(field_name):
+                return field
+        return None
+
+    def get_field_value(self, name, raw=False) -> typing.Union[LayerFieldsContainer, None]:
+        """Tries getting the value of the given field.
+
+        Tries it in the following order: show (standard nice display), value (raw value),
+        showname (extended nice display).
+
+        :param name: The name of the field
+        :param raw: Only return raw value
+        :return: str of value
+        """
+        field = self.get_field(name)
+        if field is None:
+            return None
+
+        if raw:
+            return field.raw_value
+
+        return field
+
+    @property
+    def field_names(self) -> typing.List[str]:
+        """Gets all XML field names of this layer."""
+        return [self._sanitize_field_name(field_name) for field_name in self._all_fields]
+
+    @property
+    def layer_name(self):
+        if self._layer_name == 'fake-field-wrapper':
+            return base.DATA_LAYER_NAME
+        return super().layer_name
+
+    @property
+    def _field_prefix(self) -> str:
+        """Prefix to field names in the XML."""
+        if self.layer_name == 'geninfo':
+            return ''
+        return self.layer_name + '.'
+
+    def _sanitize_field_name(self, field_name):
+        """Sanitizes an XML field name
+
+        An xml field might have characters which would make it inaccessible as a python attribute).
+        """
+        field_name = field_name.replace(self._field_prefix, '')
+        return field_name.replace('.', '_').replace('-', '_').lower()
+
+    def _pretty_print_layer_fields(self, terminal_writer: py.io.TerminalWriter):
+        for field_line in self._get_all_field_lines():
+            if ':' in field_line:
+                field_name, field_line = field_line.split(':', 1)
+                terminal_writer.write(field_name + ':', green=True, bold=True)
+            terminal_writer.write(field_line, bold=True)
+
+    def _get_all_fields_with_alternates(self):
+        all_fields = list(self._all_fields.values())
+        all_fields += sum([field.alternate_fields for field in all_fields
+                           if isinstance(field, LayerFieldsContainer)], [])
+        return all_fields
+
+    def _get_all_field_lines(self):
+        """Returns all lines that represent the fields of the layer (both their names and values)."""
+        for field in self._get_all_fields_with_alternates():
+            # Change to yield from
+            for line in self._get_field_or_layer_repr(field):
+                yield line
+
+    def _get_field_or_layer_repr(self, field):
+        if isinstance(field, XmlLayer):
+            yield "\t" + field.layer_name + ":" + os.linesep
+            for line in field._get_all_field_lines():
+                yield "\t" + line
+        elif isinstance(field, list):
+            for subfield_or_layer in field:
+                yield from self._get_field_or_layer_repr(subfield_or_layer)
+        else:
+            field_repr = self._get_field_repr(field)
+            if field_repr:
+                yield '\t' + field_repr + os.linesep
+
+    def _get_field_repr(self, field):
+        if field.hide:
+            return
+        if field.showname:
+            return field.showname
+        elif field.show:
+            return field.show
+        elif field.raw_value:
+            return "%s: %s" % (self._sanitize_field_name(field.name), field.raw_value)

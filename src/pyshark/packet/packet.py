@@ -11,7 +11,7 @@ from pyshark.packet.layers.base import BaseLayer
 class Packet(Pickleable):
     """A packet object which contains layers.
 
-    BaseLayers can be accessed via index or name.
+    Layers can be accessed via index or name.
     """
 
     def __init__(self, layers=None, frame_info=None, number=None,
@@ -20,7 +20,7 @@ class Packet(Pickleable):
         Creates a Packet object with the given layers and info.
 
         :param layers: A list of BaseLayer objects.
-        :param frame_info: BaseLayer object for the entire packet frame (information like frame length, packet number, etc.
+        :param frame_info: Layer object for the entire packet frame (information like frame length, packet number, etc.
         :param length: Length of the actual packet.
         :param captured_length: The length of the packet that was actually captured (could be less then length)
         :param sniff_time: The time the packet was captured (timestamp)
@@ -49,7 +49,7 @@ class Packet(Pickleable):
         for layer in self.layers:
             if layer.layer_name == item.lower():
                 return layer
-        raise KeyError('BaseLayer does not exist in packet')
+        raise KeyError('Layer does not exist in packet')
 
     def __contains__(self, item):
         """Checks if the layer is inside the packet.

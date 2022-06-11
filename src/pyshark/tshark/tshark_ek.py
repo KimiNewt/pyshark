@@ -6,7 +6,7 @@ try:
 except ImportError:
     USE_UJSON = False
 
-from pyshark.packet.ek_layer import EkLayer
+from pyshark.packet.layers.ek_layer import EkLayer
 from pyshark.packet.packet import Packet
 
 

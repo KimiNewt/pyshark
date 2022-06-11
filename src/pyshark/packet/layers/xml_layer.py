@@ -8,6 +8,10 @@ from pyshark.packet.layers import base
 
 
 class XmlLayer(base.BaseLayer):
+    __slots__ = [
+        "raw_mode",
+        "_all_fields"
+    ] + base.BaseLayer.__slots__
 
     def __init__(self, xml_obj=None, raw_mode=False):
         super().__init__(xml_obj.attrib['name'])

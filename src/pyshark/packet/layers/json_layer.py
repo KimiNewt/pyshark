@@ -8,6 +8,15 @@ from pyshark.packet.layers.base import BaseLayer
 
 
 class JsonLayer(BaseLayer):
+    __slots__ = [
+        "duplicate_layers",
+        "_showname_fields_converted_to_regular",
+        "_full_name",
+        "_is_intermediate",
+        "_wrapped_fields",
+        "value",
+        "_all_fields"
+    ] + BaseLayer.__slots__
 
     def __init__(self, layer_name, layer_dict, full_name=None, is_intermediate=False):
         """Creates a JsonLayer. All sublayers and fields are created lazily later."""

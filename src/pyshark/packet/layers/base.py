@@ -8,8 +8,9 @@ from pyshark.packet import common
 DATA_LAYER_NAME = "DATA"
 
 
-class BaseLayer(common.Pickleable):
+class BaseLayer(common.SlotsPickleable):
     """An object representing a Packet layer."""
+    __slots__ = ["_layer_name"]
 
     def __init__(self, layer_name):
         self._layer_name = layer_name
@@ -36,7 +37,7 @@ class BaseLayer(common.Pickleable):
             return default
 
     def __dir__(self):
-        return dir(type(self)) + list(self.__dict__.keys()) + self.field_names
+        return dir(type(self)) + self.field_names
 
     def __getattr__(self, item):
         val = self.get_field(item)

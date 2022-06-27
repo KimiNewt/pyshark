@@ -7,6 +7,7 @@ import sys
 import logging
 
 from pyshark.packet.packet import Packet
+from pyshark.tshark.output_parser import tshark_ek
 from pyshark.tshark.output_parser import tshark_json
 from pyshark.tshark.output_parser import tshark_xml
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
@@ -46,13 +47,14 @@ class Capture:
                  decryption_key=None, encryption_type="wpa-pwd", output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
                  override_prefs=None, capture_filter=None, use_json=False, include_raw=False,
-                 custom_parameters=None, debug=False):
+                 use_ek=False, custom_parameters=None, debug=False):
 
         self.loaded = False
         self.tshark_path = tshark_path
         self._override_prefs = override_prefs
         self.debug = debug
         self.use_json = use_json
+        self._use_ek = use_ek
         self.include_raw = include_raw
         self._packets = []
         self._current_packet = 0
@@ -72,9 +74,9 @@ class Capture:
         self._stderr_handling_tasks = []
         self.__tshark_version = None
 
-        if include_raw and not use_json:
+        if include_raw and not (use_json or use_ek):
             raise RawMustUseJsonException(
-                "use_json must be True if include_raw")
+                "use_json/use_ek must be True if include_raw")
 
         if self.debug:
             self.set_debug()
@@ -310,13 +312,17 @@ class Capture:
         self._verify_capture_parameters()
 
         output_parameters = []
-        if self.use_json:
-            output_type = "json"
+        if self.use_json or self._use_ek:
             if not tshark_supports_json(self._get_tshark_version()):
                 raise TSharkVersionException(
                     "JSON only supported on Wireshark >= 2.2.0")
+
+        if self.use_json:
+            output_type = "json"
             if tshark_supports_duplicate_keys(self._get_tshark_version()):
                 output_parameters.append("--no-duplicate-keys")
+        elif self._use_ek:
+            output_type = "ek"
         else:
             output_type = "psml" if self._only_summaries else "pdml"
         parameters = [self._get_tshark_path(), "-l", "-n", "-T", output_type] + \
@@ -366,6 +372,8 @@ class Capture:
     def _setup_tshark_output_parser(self):
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())
+        if self._use_ek:
+            return tshark_ek.TsharkEkJsonParser()
         return tshark_xml.TsharkXmlParser(parse_summaries=self._only_summaries)
 
     def close(self):

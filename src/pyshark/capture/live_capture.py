@@ -18,7 +18,8 @@ class LiveCapture(Capture):
     def __init__(self, interface=None, bpf_filter=None, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', output_file=None, decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, capture_filter=None,
-                 monitor_mode=False, use_json=False, include_raw=False, eventloop=None, custom_parameters=None,
+                 monitor_mode=False, use_json=False, use_ek=False,
+                 include_raw=False, eventloop=None, custom_parameters=None,
                  debug=False):
         """Creates a new live capturer on a given interface. Does not start the actual capture itself.
 
@@ -37,8 +38,8 @@ class LiveCapture(Capture):
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param capture_filter: Capture (wireshark) filter to use.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
-        :param use_json: Uses tshark in JSON mode (EXPERIMENTAL). It is a good deal faster than XML
-        but also has less information. Available from Wireshark 2.2.0.
+        :param use_ek: Uses tshark in EK JSON mode. It is faster than XML but has slightly less data.
+        :param use_json: DEPRECATED. Use use_ek instead.
         :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"} or
         else a list of parameters in the format ["--foo", "bar", "--baz", "foo"].
         """
@@ -46,7 +47,8 @@ class LiveCapture(Capture):
                                           decryption_key=decryption_key, encryption_type=encryption_type,
                                           output_file=output_file, decode_as=decode_as, disable_protocol=disable_protocol,
                                           tshark_path=tshark_path, override_prefs=override_prefs,
-                                          capture_filter=capture_filter, use_json=use_json, include_raw=include_raw,
+                                          capture_filter=capture_filter, use_json=use_json, use_ek=use_ek,
+                                          include_raw=include_raw,
                                           eventloop=eventloop, custom_parameters=custom_parameters,
                                           debug=debug)
         self.bpf_filter = bpf_filter

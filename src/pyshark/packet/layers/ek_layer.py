@@ -7,13 +7,14 @@ from pyshark.packet.layers.base import BaseLayer
 
 
 class EkLayer(BaseLayer):
-    __slots__ = ["_layer_name", "_fields_dict", "_fields_tree"]
+    __slots__ = ["_layer_name", "_fields_dict"]
 
     def __init__(self, layer_name, layer_dict):
         super().__init__(layer_name)
         self._fields_dict = layer_dict
 
-    def get_field(self, name) -> typing.Union["EkMultiField", None, str]:
+    def get_field(self, name) -> typing.Union["EkMultiField", None, str, int, bool]:
+        name = name.replace(".", "_")
         if name in self._fields_dict:
             # For cases like "text"
             return self._fields_dict[name]
@@ -27,11 +28,16 @@ class EkLayer(BaseLayer):
 
     @property
     def field_names(self):
+        return list({field_name.split("_", 1)[0] for field_name in self.all_field_names})
+
+    @property
+    def all_field_names(self):
+        """Gets all field names, including subfields"""
         names = set()
         for field_name in self._fields_dict:
             for prefix in self._get_possible_layer_prefixes():
                 if field_name.startswith(prefix):
-                    names.add(_remove_ek_prefix(prefix, field_name).split("_", 1)[0])
+                    names.add(_remove_ek_prefix(prefix, field_name))
                     break
         return list(names)
 
@@ -44,13 +50,13 @@ class EkLayer(BaseLayer):
         field_ek_name = f"{prefix}_{name}"
         if field_ek_name in self._fields_dict:
             if self._field_has_subfields(field_ek_name):
-                return EkMultiField(self, self._fields_dict, field_ek_name,
+                return EkMultiField(self, self._fields_dict, name,
                                     value=self._fields_dict[field_ek_name])
             return self._fields_dict[field_ek_name]
 
         for possible_nested_name in self._fields_dict:
             if possible_nested_name.startswith(f"{field_ek_name}_"):
-                return EkMultiField(self, self._fields_dict, field_ek_name, value=None)
+                return EkMultiField(self, self._fields_dict, name, value=None)
 
         return None
 
@@ -89,24 +95,28 @@ class EkLayer(BaseLayer):
 
 
 class EkMultiField:
-    __slots__ = ["_containing_layer", "_field_ek_name", "_all_fields", "value"]
+    __slots__ = ["_containing_layer", "_full_name", "_all_fields", "value"]
 
-    def __init__(self, containing_layer, all_fields, field_ek_name, value=None):
+    def __init__(self, containing_layer: EkLayer, all_fields, full_name, value=None):
         self._containing_layer = containing_layer
-        self._field_ek_name = field_ek_name
+        self._full_name = full_name
         self._all_fields = all_fields
         self.value = value
 
     def get_field(self, field_name):
-        return self._containing_layer.get_field(f"{self._field_ek_name}_{field_name}")
+        return self._containing_layer.get_field(f"{self._full_name}_{field_name}")
 
     @property
     def subfields(self):
-        return _get_subfields(self._all_fields, self._field_ek_name)
+        names = []
+        for field_name in self._containing_layer.all_field_names:
+            if field_name != self._full_name and field_name.startswith(self._full_name):
+                names.append(field_name[len(self._full_name):].split("_")[1])
+        return names
 
     @property
     def field_name(self):
-        return self._field_ek_name.split("_")[-1]
+        return self._full_name.split("_")[-1]
 
     def __getattr__(self, item):
         value = self.get_field(item)

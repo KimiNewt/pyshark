@@ -17,8 +17,35 @@ def test_can_access_subfield(parsed_packet):
     assert parsed_packet.tcp.flags.ack is True
 
 
-def test_can_duplicate_fields(parsed_packet):
-    all_tcp_opts = parsed_packet.tcp.option_kind.all_fields
-    assert {opt.get_default_value() for opt in all_tcp_opts} == {"1", "1", "8"}
+def test_can_access_subfield_by_dot_notations(parsed_packet):
+    assert parsed_packet.tcp.get_field("flags.ack") is True
 
 
+def test_can_parse_duplicate_fields(parsed_packet):
+    assert parsed_packet.tcp.options.timestamp.tsecr == "360352231"
+    assert parsed_packet.tcp.options.nop == ["01", "01"]
+
+
+def test_gets_layer_field_names(parsed_packet):
+    assert set(parsed_packet.tcp.field_names) == {"checksum",
+                                                  "nxtseq",
+                                                  "flags",
+                                                  "dstport",
+                                                  "ack",
+                                                  "stream",
+                                                  "port",
+                                                  "seq",
+                                                  "srcport",
+                                                  "urgent",
+                                                  "option",
+                                                  "analysis",
+                                                  "options",
+                                                  "window",
+                                                  "payload",
+                                                  "len",
+                                                  "time",
+                                                  "hdr"}
+
+
+def test_gets_field_subfield_names(parsed_packet):
+    assert set(parsed_packet.tcp.options.timestamp.subfields) == {"tsecr", "tsval"}

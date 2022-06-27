@@ -21,7 +21,7 @@ class EkLayer(BaseLayer):
 
         for prefix in self._get_possible_layer_prefixes():
             nested_field = self._get_nested_field(prefix, name)
-            if nested_field:
+            if nested_field is not None:
                 return nested_field
 
         return None
@@ -108,11 +108,11 @@ class EkMultiField:
 
     @property
     def subfields(self):
-        names = []
+        names = set()
         for field_name in self._containing_layer.all_field_names:
-            if field_name != self._full_name and field_name.startswith(self._full_name):
-                names.append(field_name[len(self._full_name):].split("_")[1])
-        return names
+            if field_name != self._full_name and field_name.startswith(f"{self._full_name}_"):
+                names.add(field_name[len(self._full_name):].split("_")[1])
+        return list(names)
 
     @property
     def field_name(self):
@@ -120,7 +120,7 @@ class EkMultiField:
 
     def __getattr__(self, item):
         value = self.get_field(item)
-        if not value:
+        if value is None:
             raise AttributeError(f"Subfield {item} not found")
         return value
 

@@ -5,13 +5,12 @@ import subprocess
 import concurrent.futures
 import sys
 import logging
-from packaging import version
 
 from pyshark.packet.packet import Packet
+from pyshark.tshark.output_parser import tshark_json
+from pyshark.tshark.output_parser import tshark_xml
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
-from pyshark.tshark.tshark_json import packet_from_json_packet
-from pyshark.tshark.tshark_xml import packet_from_xml_packet, psml_structure_from_xml
 
 
 if sys.version_info < (3, 8):
@@ -39,7 +38,6 @@ class StopCapture(Exception):
 
 class Capture:
     """Base class for packet captures."""
-    DEFAULT_BATCH_SIZE = 2 ** 16
     SUMMARIES_BATCH_SIZE = 64
     DEFAULT_LOG_LEVEL = logging.CRITICAL
     SUPPORTED_ENCRYPTION_STANDARDS = ["wep", "wpa-pwk", "wpa-pwd", "wpa-psk"]
@@ -65,7 +63,6 @@ class Capture:
         self._running_processes = set()
         self._decode_as = decode_as
         self._disable_protocol = disable_protocol
-        self._json_has_duplicate_keys = True
         self._log = logging.Logger(
             self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
@@ -189,61 +186,6 @@ class Capture:
                 asyncio.set_child_watcher(asyncio.SafeChildWatcher())
                 asyncio.get_child_watcher().attach_loop(self.eventloop)
 
-    def _get_json_separators(self):
-        """"Returns the separators between packets in a JSON output
-
-        Returns a tuple of (packet_separator, end_of_file_separator, characters_to_disregard).
-        The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
-        commas, parenthesis).
-        """
-        if self._get_tshark_version() >= version.parse("3.0.0"):
-            return ("%s  },%s" % (os.linesep, os.linesep)).encode(), ("}%s]" % os.linesep).encode(), (
-                1 + len(os.linesep))
-        else:
-            return ("}%s%s  ," % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
-
-    def _extract_packet_json_from_data(self, data, got_first_packet=True):
-        tag_start = 0
-        if not got_first_packet:
-            tag_start = data.find(b"{")
-            if tag_start == -1:
-                return None, data
-        packet_separator, end_separator, end_tag_strip_length = self._get_json_separators()
-        found_separator = None
-
-        tag_end = data.find(packet_separator)
-        if tag_end == -1:
-            # Not end of packet, maybe it has end of entire file?
-            tag_end = data.find(end_separator)
-            if tag_end != -1:
-                found_separator = end_separator
-        else:
-            # Found a single packet, just add the separator without extras
-            found_separator = packet_separator
-
-        if found_separator:
-            tag_end += len(found_separator) - end_tag_strip_length
-            return data[tag_start:tag_end].strip().strip(b","), data[tag_end + 1:]
-        return None, data
-
-    def _extract_tag_from_data(self, data, tag_name=b"packet"):
-        """Gets data containing a (part of) tshark xml.
-
-        If the given tag is found in it, returns the tag data and the remaining data.
-        Otherwise returns None and the same data.
-
-        :param data: string of a partial tshark xml.
-        :return: a tuple of (tag, data). tag will be None if none is found.
-        """
-        opening_tag = b"<" + tag_name + b">"
-        closing_tag = opening_tag.replace(b"<", b"</")
-        tag_end = data.find(closing_tag)
-        if tag_end != -1:
-            tag_end += len(closing_tag)
-            tag_start = data.find(opening_tag)
-            return data[tag_start:tag_end], data[tag_end:]
-        return None, data
-
     def _packets_from_tshark_sync(self, packet_count=None, existing_process=None):
         """Returns a generator of packets.
 
@@ -255,8 +197,7 @@ class Capture:
         # NOTE: This has code duplication with the async version, think about how to solve this
         tshark_process = existing_process or self.eventloop.run_until_complete(
             self._get_tshark_process())
-        psml_structure, data = self.eventloop.run_until_complete(
-            self._get_psml_struct(tshark_process.stdout))
+        parser = self._setup_tshark_output_parser()
         packets_captured = 0
 
         data = b""
@@ -264,8 +205,8 @@ class Capture:
             while True:
                 try:
                     packet, data = self.eventloop.run_until_complete(
-                        self._get_packet_from_stream(tshark_process.stdout, data, psml_structure=psml_structure,
-                                                     got_first_packet=packets_captured > 0))
+                        parser.get_packets_from_stream(tshark_process.stdout, data,
+                                                       got_first_packet=packets_captured > 0))
 
                 except EOFError:
                     self._log.debug("EOF reached (sync)")
@@ -321,12 +262,13 @@ class Capture:
         packets_captured = 0
         self._log.debug("Starting to go through packets")
 
-        psml_struct, data = await self._get_psml_struct(fd)
+        parser = self._setup_tshark_output_parser()
+        data = b""
 
         while True:
             try:
-                packet, data = await self._get_packet_from_stream(fd, data, got_first_packet=packets_captured > 0,
-                                                                  psml_structure=psml_struct)
+                packet, data = await parser.get_packets_from_stream(fd, data,
+                                                                    got_first_packet=packets_captured > 0)
             except EOFError:
                 self._log.debug("EOF reached")
                 self._eof_reached = True
@@ -342,62 +284,6 @@ class Capture:
 
             if packet_count and packets_captured >= packet_count:
                 break
-
-    async def _get_psml_struct(self, fd):
-        """Gets the current PSML (packet summary xml) structure in a tuple ((None, leftover_data)),
-        only if the capture is configured to return it, else returns (None, leftover_data).
-
-        A coroutine.
-        """
-        data = b""
-        psml_struct = None
-
-        if self._only_summaries:
-            # If summaries are read, we need the psdml structure which appears on top of the file.
-            while not psml_struct:
-                new_data = await fd.read(self.SUMMARIES_BATCH_SIZE)
-                data += new_data
-                psml_struct, data = self._extract_tag_from_data(
-                    data, b"structure")
-                if psml_struct:
-                    psml_struct = psml_structure_from_xml(psml_struct)
-                elif not new_data:
-                    return None, data
-            return psml_struct, data
-        else:
-            return None, data
-
-    async def _get_packet_from_stream(self, stream, existing_data, got_first_packet=True, psml_structure=None):
-        """A coroutine which returns a single packet if it can be read from the given StreamReader.
-
-        :return a tuple of (packet, remaining_data). The packet will be None if there was not enough XML data to create
-        a packet. remaining_data is the leftover data which was not enough to create a packet from.
-        :raises EOFError if EOF was reached.
-        """
-        # yield each packet in existing_data
-        if self.use_json:
-            packet, existing_data = self._extract_packet_json_from_data(existing_data,
-                                                                        got_first_packet=got_first_packet)
-        else:
-            packet, existing_data = self._extract_tag_from_data(existing_data)
-
-        if packet:
-            if self.use_json:
-                packet = packet_from_json_packet(
-                    packet, deduplicate_fields=self._json_has_duplicate_keys)
-            else:
-                packet = packet_from_xml_packet(
-                    packet, psml_structure=psml_structure)
-            return packet, existing_data
-
-        new_data = await stream.read(self.DEFAULT_BATCH_SIZE)
-        existing_data += new_data
-
-        if not new_data:
-            # Reached EOF
-            self._eof_reached = True
-            raise EOFError()
-        return None, existing_data
 
     def _create_stderr_handling_task(self, stderr):
         self._stderr_handling_tasks.append(asyncio.create_task(self._handle_process_stderr_forever(stderr)))
@@ -431,7 +317,6 @@ class Capture:
                     "JSON only supported on Wireshark >= 2.2.0")
             if tshark_supports_duplicate_keys(self._get_tshark_version()):
                 output_parameters.append("--no-duplicate-keys")
-                self._json_has_duplicate_keys = False
         else:
             output_type = "psml" if self._only_summaries else "pdml"
         parameters = [self._get_tshark_path(), "-l", "-n", "-T", output_type] + \
@@ -477,6 +362,11 @@ class Capture:
                 raise TSharkCrashException(f"TShark (pid {process.pid}) seems to have crashed (retcode: {process.returncode}).\n"
                                            f"Last error line: {self._last_error_line}\n"
                                            "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
+
+    def _setup_tshark_output_parser(self):
+        if self.use_json:
+            return tshark_json.TsharkJsonParser(self._get_tshark_version())
+        return tshark_xml.TsharkXmlParser(parse_summaries=self._only_summaries)
 
     def close(self):
         self.eventloop.create_task(self.close_async())

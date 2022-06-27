@@ -1,6 +1,6 @@
 import pytest
 
-from pyshark.tshark import tshark_xml
+from pyshark.tshark.output_parser import tshark_xml
 
 
 @pytest.fixture

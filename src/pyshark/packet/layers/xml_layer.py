@@ -118,3 +118,25 @@ class XmlLayer(base.BaseLayer):
         field_repr = self._get_field_repr(field)
         if field_repr:
             yield f"\t{field_repr}{os.linesep}"
+
+    def _get_field_repr(self, field):
+        if field.hide:
+            return
+        if field.showname:
+            return field.showname
+        elif field.show:
+            return field.show
+        elif field.raw_value:
+            return "%s: %s" % (self._sanitize_field_name(field.name), field.raw_value)
+
+    def get_field_by_showname(self, showname) -> typing.Union[LayerFieldsContainer, None]:
+        """Gets a field by its "showname"
+        This is the name that appears in Wireshark's detailed display i.e. in 'User-Agent: Mozilla...',
+        'User-Agent' is the .showname
+        Returns None if not found.
+        """
+        for field in self._get_all_fields_with_alternates():
+            if field.showname_key == showname:
+                # Return it if "XXX: whatever == XXX"
+                return field
+        return None

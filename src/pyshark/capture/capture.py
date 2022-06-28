@@ -6,6 +6,7 @@ import concurrent.futures
 import sys
 import logging
 
+from pyshark import ek_field_mapping
 from pyshark.packet.packet import Packet
 from pyshark.tshark.output_parser import tshark_ek
 from pyshark.tshark.output_parser import tshark_json
@@ -373,6 +374,7 @@ class Capture:
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())
         if self._use_ek:
+            ek_field_mapping.MAPPING.load_mapping(str(self._get_tshark_version()))
             return tshark_ek.TsharkEkJsonParser()
         return tshark_xml.TsharkXmlParser(parse_summaries=self._only_summaries)
 

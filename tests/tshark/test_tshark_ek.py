@@ -12,7 +12,7 @@ def parsed_packet(data_directory):
 
 
 def test_can_access_simple_field(parsed_packet):
-    assert parsed_packet.tcp.checksum.value == "0x0000b71f"
+    assert parsed_packet.tcp.checksum.value == 0x0000b71f
 
 
 def test_can_access_subfield(parsed_packet):
@@ -24,7 +24,7 @@ def test_can_access_subfield_by_dot_notations(parsed_packet):
 
 
 def test_can_parse_duplicate_fields(parsed_packet):
-    assert parsed_packet.tcp.options.timestamp.tsecr == "360352231"
+    assert parsed_packet.tcp.options.timestamp.tsecr == 360352231
     assert parsed_packet.tcp.options.nop == ["01", "01"]
 
 

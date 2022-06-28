@@ -111,9 +111,17 @@ def get_ek_field_mapping(tshark_path=None):
     with open(os.devnull, "w") as null:
         mapping = subprocess.check_output(parameters, stderr=null).decode("ascii")
 
-    return json.loads(
+    mapping = json.loads(
         mapping,
-        object_pairs_hook=_duplicate_object_hook)["mappings"]["doc"]["properties"]["layers"]["properties"]
+        object_pairs_hook=_duplicate_object_hook)["mappings"]
+    if "doc" in mapping:
+        mapping = mapping["doc"]
+    elif "pcap_file" in mapping:
+        mapping = mapping["pcap_file"]
+    else:
+        raise TSharkVersionException(f"Your tshark version does not support elastic-mapping. Please upgrade.")
+
+    return mapping["properties"]["layers"]["properties"]
 
 
 def _duplicate_object_hook(ordered_pairs):

@@ -111,4 +111,22 @@ def get_ek_field_mapping(tshark_path=None):
     with open(os.devnull, "w") as null:
         mapping = subprocess.check_output(parameters, stderr=null).decode("ascii")
 
-    return json.loads(mapping)["mappings"]["doc"]["properties"]["layers"]["properties"]
+    return json.loads(
+        mapping,
+        object_pairs_hook=_duplicate_object_hook)["mappings"]["doc"]["properties"]["layers"]["properties"]
+
+
+def _duplicate_object_hook(ordered_pairs):
+    """Make lists out of duplicate keys."""
+    json_dict = {}
+    for key, val in ordered_pairs:
+        existing_val = json_dict.get(key)
+        if not existing_val:
+            json_dict[key] = val
+        else:
+            # There are duplicates without any data for some reason, if it's that - drop it
+            # Otherwise, override
+            if val.get("properties") != {}:
+                json_dict[key] = val
+
+    return json_dict

@@ -1,10 +1,13 @@
 import pytest
 
+from pyshark import ek_field_mapping
+from pyshark.tshark import tshark
 from pyshark.tshark.output_parser import tshark_ek
 
 
 @pytest.fixture
 def parsed_packet(data_directory):
+    ek_field_mapping.MAPPING.load_mapping(str(tshark.get_tshark_version()))
     return tshark_ek.packet_from_ek_packet(data_directory.joinpath("packet_ek.json").read_bytes())
 
 

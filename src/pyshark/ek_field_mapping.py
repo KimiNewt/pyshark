@@ -1,4 +1,3 @@
-import datetime
 import json
 
 from pyshark import cache

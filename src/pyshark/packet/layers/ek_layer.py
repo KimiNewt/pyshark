@@ -3,6 +3,7 @@ import os
 import py
 import typing
 
+from pyshark import ek_field_mapping
 from pyshark.packet.layers.base import BaseLayer
 
 
@@ -17,7 +18,7 @@ class EkLayer(BaseLayer):
         name = name.replace(".", "_")
         if name in self._fields_dict:
             # For cases like "text"
-            return self._fields_dict[name]
+            return self._get_field_value(name)
 
         for prefix in self._get_possible_layer_prefixes():
             nested_field = self._get_nested_field(prefix, name)
@@ -41,6 +42,11 @@ class EkLayer(BaseLayer):
                     break
         return list(names)
 
+    def _get_field_value(self, full_field_name):
+        """Gets the field value, optionally casting it using the cached field mapping"""
+        field_value = self._fields_dict[full_field_name]
+        return ek_field_mapping.MAPPING.cast_field_value(self._layer_name, full_field_name, field_value)
+
     def _get_nested_field(self, prefix, name):
         """Gets a field that is directly on the layer
 
@@ -51,8 +57,8 @@ class EkLayer(BaseLayer):
         if field_ek_name in self._fields_dict:
             if self._field_has_subfields(field_ek_name):
                 return EkMultiField(self, self._fields_dict, name,
-                                    value=self._fields_dict[field_ek_name])
-            return self._fields_dict[field_ek_name]
+                                    value=self._get_field_value(field_ek_name))
+            return self._get_field_value(field_ek_name)
 
         for possible_nested_name in self._fields_dict:
             if possible_nested_name.startswith(f"{field_ek_name}_"):

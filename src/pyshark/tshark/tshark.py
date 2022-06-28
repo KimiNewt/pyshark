@@ -1,4 +1,6 @@
 """Module used for the actual running of TShark"""
+import json
+
 from packaging import version
 import os
 import subprocess
@@ -102,3 +104,11 @@ def get_tshark_interfaces(tshark_path=None):
         tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode("utf-8")
 
     return [line.split(" ")[1] for line in tshark_interfaces.splitlines() if not '\\\\.\\' in line]
+
+
+def get_ek_field_mapping(tshark_path=None):
+    parameters = [get_process_path(tshark_path), "-G", "elastic-mapping"]
+    with open(os.devnull, "w") as null:
+        mapping = subprocess.check_output(parameters, stderr=null).decode("ascii")
+
+    return json.loads(mapping)["mappings"]["doc"]["properties"]["layers"]["properties"]

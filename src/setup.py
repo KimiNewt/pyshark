@@ -9,7 +9,7 @@ setup(
     version="0.4.6",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
-    install_requires=['lxml', 'py', 'packaging'],
+    install_requires=['lxml', 'py', 'packaging', 'appdirs'],
     tests_require=['pytest'],
     url="https://github.com/KimiNewt/pyshark",
     license="MIT",

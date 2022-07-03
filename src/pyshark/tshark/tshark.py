@@ -33,7 +33,9 @@ def get_process_path(tshark_path=None, process_name="tshark"):
 
     # Add the user provided path to the search list
     if tshark_path is not None:
-        possible_paths.insert(0, tshark_path)
+        user_tshark_path = os.path.join(os.path.dirname(tshark_path),
+                                        "%s.exe" % process_name if sys.platform.startswith("win") else process_name)
+        possible_paths.insert(0, user_tshark_path)
 
     # Windows search order: configuration file"s path, common paths.
     if sys.platform.startswith("win"):

@@ -27,6 +27,10 @@ class EkLayer(BaseLayer):
 
         return None
 
+    def has_field(self, name) -> bool:
+        """Checks if the field exists, either a nested field or a regular field"""
+        return name in self.field_names or name in self.all_field_names
+
     @property
     def field_names(self):
         return list({field_name.split("_", 1)[0] for field_name in self.all_field_names})

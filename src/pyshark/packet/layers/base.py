@@ -23,6 +23,9 @@ class BaseLayer(common.SlotsPickleable):
         """Gets all XML field names of this layer."""
         raise NotImplementedError()
 
+    def has_field(self, name):
+        return name in self.field_names
+
     @property
     def layer_name(self):
         return self._layer_name

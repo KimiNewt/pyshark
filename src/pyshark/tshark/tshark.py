@@ -28,8 +28,11 @@ def get_process_path(tshark_path=None, process_name="tshark"):
     :param tshark_path: Path of the tshark binary
     :raises TSharkNotFoundException in case TShark is not found in any location.
     """
+    possible_paths = []
+    # Check if `config.ini` exists in the current directory or the pyshark directory
     config = get_config()
-    possible_paths = [config.get(process_name, "%s_path" % process_name)]
+    if config:
+        possible_paths.append(config.get(process_name, "%s_path" % process_name))
 
     # Add the user provided path to the search list
     if tshark_path is not None:

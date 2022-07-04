@@ -374,7 +374,8 @@ class Capture:
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())
         if self._use_ek:
-            ek_field_mapping.MAPPING.load_mapping(str(self._get_tshark_version()))
+            ek_field_mapping.MAPPING.load_mapping(str(self._get_tshark_version()),
+                                                  tshark_path=self.tshark_path)
             return tshark_ek.TsharkEkJsonParser()
         return tshark_xml.TsharkXmlParser(parse_summaries=self._only_summaries)
 

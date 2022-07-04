@@ -20,7 +20,7 @@ class _EkFieldMapping:
     def __init__(self):
         self._protocol_to_mapping = {}
 
-    def load_mapping(self, tshark_version):
+    def load_mapping(self, tshark_version, tshark_path=None):
         if self._protocol_to_mapping:
             return
 
@@ -28,7 +28,7 @@ class _EkFieldMapping:
         if mapping_cache_file.exists():
             self._protocol_to_mapping = json.load(mapping_cache_file.open())
         else:
-            self._protocol_to_mapping = tshark.get_ek_field_mapping()
+            self._protocol_to_mapping = tshark.get_ek_field_mapping(tshark_path=tshark_path)
             mapping_cache_file.open("w").write(json.dumps(self._protocol_to_mapping))
 
     def cast_field_value(self, protocol, field_name, field_value):

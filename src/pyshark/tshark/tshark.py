@@ -53,6 +53,8 @@ def get_process_path(tshark_path=None, process_name="tshark"):
         )
         for path in os_path.split(":"):
             possible_paths.append(os.path.join(path, process_name))
+    if sys.platform.startswith("darwin"):
+        possible_paths.append(f"/Applications/Wireshark.app/Contents/MacOS/{process_name}")
 
     for path in possible_paths:
         if os.path.exists(path):

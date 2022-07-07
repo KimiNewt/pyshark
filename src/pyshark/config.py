@@ -10,9 +10,9 @@ pyshark_config_path = Path(pyshark.__file__).parent / 'config.ini'
 
 
 def get_config():
-    if Path.exists(fp_config_path):
+    if fp_config_path.exists():
         config_path = fp_config_path
-    elif Path.exists(pyshark_config_path):
+    elif pyshark_config_path.exists():
         config_path = pyshark_config_path
     else:
         return None

@@ -5,6 +5,7 @@ import subprocess
 import concurrent.futures
 import sys
 import logging
+import warnings
 
 from pyshark import ek_field_mapping
 from pyshark.packet.packet import Packet
@@ -166,7 +167,17 @@ class Capture:
     def _setup_eventloop(self):
         """Sets up a new eventloop as the current one according to the OS."""
         if os.name == "nt":
-            self.eventloop = asyncio.ProactorEventLoop()
+            current_eventloop = asyncio.get_event_loop_policy().get_event_loop()
+            if isinstance(current_eventloop, asyncio.ProactorEventLoop):
+                self.eventloop = current_eventloop
+            else:
+                # On Python before 3.8, Proactor is not the default eventloop type, so we have to create a new one.
+                # If there was an existing eventloop this can create issues, since we effectively disable it here.
+                if asyncio.Task.all_tasks():
+                    warnings.warn("The running eventloop has tasks but pyshark must set a new eventloop to continue. "
+                                  "Existing tasks may not run.")
+                self.eventloop = asyncio.ProactorEventLoop()
+                asyncio.set_event_loop(self.eventloop)
         else:
             try:
                 self.eventloop = asyncio.get_event_loop_policy().get_event_loop()
@@ -289,7 +300,7 @@ class Capture:
                 break
 
     def _create_stderr_handling_task(self, stderr):
-        self._stderr_handling_tasks.append(asyncio.create_task(self._handle_process_stderr_forever(stderr)))
+        self._stderr_handling_tasks.append(asyncio.ensure_future(self._handle_process_stderr_forever(stderr)))
 
     async def _handle_process_stderr_forever(self, stderr):
         while True:
@@ -380,7 +391,7 @@ class Capture:
         return tshark_xml.TsharkXmlParser(parse_summaries=self._only_summaries)
 
     def close(self):
-        self.eventloop.create_task(self.close_async())
+        self.eventloop.run_until_complete(self.close_async())
 
     async def close_async(self):
         for process in self._running_processes.copy():

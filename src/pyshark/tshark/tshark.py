@@ -18,6 +18,9 @@ class TSharkVersionException(Exception):
     pass
 
 
+_TSHARK_INTERFACE_ALIAS_PATTERN = re.compile(r"[0-9]*\. ([^\s]*)(?: \((.*)\))?")
+
+
 def get_process_path(tshark_path=None, process_name="tshark"):
     """Finds the path of the tshark executable.
 
@@ -110,7 +113,21 @@ def get_tshark_interfaces(tshark_path=None):
     with open(os.devnull, "w") as null:
         tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode("utf-8")
 
-    return [line.split(" ")[1] for line in tshark_interfaces.splitlines() if not '\\\\.\\' in line]
+    return [line.split(" ")[1] for line in tshark_interfaces.splitlines() if '\\\\.\\' not in line]
+
+
+def get_all_tshark_interfaces_names(tshark_path=None):
+    """Returns a list of all possible interface names. Some interfaces may have aliases"""
+    parameters = [get_process_path(tshark_path), "-D"]
+    with open(os.devnull, "w") as null:
+        tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode("utf-8")
+
+    all_interface_names = []
+    for line in tshark_interfaces.splitlines():
+        matches = _TSHARK_INTERFACE_ALIAS_PATTERN.findall(line)
+        if matches:
+            all_interface_names.extend([name for name in matches[0] if name])
+    return all_interface_names
 
 
 def get_ek_field_mapping(tshark_path=None):

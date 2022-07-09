@@ -5,6 +5,7 @@ import subprocess
 from packaging import version
 
 from pyshark.capture.capture import Capture
+from pyshark.tshark import tshark
 from pyshark.tshark.tshark import get_tshark_interfaces, get_process_path
 
 
@@ -54,9 +55,9 @@ class LiveCapture(Capture):
         self.bpf_filter = bpf_filter
         self.monitor_mode = monitor_mode
 
-        self._all_interfaces = get_tshark_interfaces(tshark_path)
+        all_interfaces = get_tshark_interfaces(tshark_path)
         if interface is None:
-            self.interfaces = self._all_interfaces
+            self.interfaces = all_interfaces
         elif isinstance(interface, str):
             self.interfaces = [interface]
         else:
@@ -70,10 +71,16 @@ class LiveCapture(Capture):
         return params
 
     def _verify_capture_parameters(self):
+        all_interfaces_names = tshark.get_all_tshark_interfaces_names(self.tshark_path)
+        all_interfaces_lowercase = [interface.lower() for interface in all_interfaces_names]
         for each_interface in self.interfaces:
-            if each_interface not in self._all_interfaces:
+            if each_interface.isnumeric():
+                continue
+            if each_interface.lower() not in all_interfaces_lowercase:
                 raise UnknownInterfaceException(
-                    f"Interface '{each_interface}' does not exist, unable to initiate capture.")
+                    f"Interface '{each_interface}' does not exist, unable to initiate capture. "
+                    f"Perhaps permissions are missing?\n"
+                    f"Possible interfaces: {os.linesep.join(all_interfaces_names)}")
 
     def _get_dumpcap_parameters(self):
         # Don't report packet counts.

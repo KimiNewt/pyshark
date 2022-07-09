@@ -45,7 +45,7 @@ class BaseLayer(common.SlotsPickleable):
     def __getattr__(self, item):
         val = self.get_field(item)
         if val is None:
-            raise AttributeError()
+            raise AttributeError(f"{item} does not exist in Layer")
         return val
 
     def pretty_print(self, writer=None):

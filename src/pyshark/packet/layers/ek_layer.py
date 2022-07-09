@@ -1,3 +1,4 @@
+import abc
 import os
 
 import py
@@ -7,14 +8,42 @@ from pyshark import ek_field_mapping
 from pyshark.packet.layers.base import BaseLayer
 
 
-class EkLayer(BaseLayer):
+class _EkLayerHelperFuncsMixin(abc.ABC):
+    """For methods shared between the EK layer and sublayers"""
+
+    def get_field_as_list(self, name) -> list:
+        """Helper function to get a certain field always as a list.
+
+        Some fields may appear once or more in the packet. The field will appear as a list if it appears more
+        than once. In order to avoid checking certain fields if they're lists or not, this function will
+        return the field inside a list at all times.
+
+        For example, in a DNS packet there may be one or more responses.
+        A packet with with one response (www.google.com) will return:
+            >>> print(pkt.dns.resp_name)
+            "www.google.com"
+        While a packet with two responses will return:
+            >>> print(pkt.dns.resp_name)
+            ["www.google.com", "www.google2.com"]
+
+        To avoid this changing behaviour, use:
+            >>> print(pkt.dns.get_field_as_list("resp_name"))
+            ["www.google.com"]
+        """
+        field_value = self.get_field(name)
+        if isinstance(field_value, list):
+            return field_value
+        return [field_value]
+
+
+class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
     __slots__ = ["_layer_name", "_fields_dict"]
 
     def __init__(self, layer_name, layer_dict):
         super().__init__(layer_name)
         self._fields_dict = layer_dict
 
-    def get_field(self, name) -> typing.Union["EkMultiField", None, str, int, bool]:
+    def get_field(self, name) -> typing.Union["EkMultiField", None, str, int, bool, bytes, list]:
         name = name.replace(".", "_")
         if name in self._fields_dict:
             # For cases like "text"
@@ -104,7 +133,7 @@ class EkLayer(BaseLayer):
         return [f"{self._layer_name}_{self._layer_name}", self._layer_name]
 
 
-class EkMultiField:
+class EkMultiField(_EkLayerHelperFuncsMixin):
     __slots__ = ["_containing_layer", "_full_name", "_all_fields", "value"]
 
     def __init__(self, containing_layer: EkLayer, all_fields, full_name, value=None):

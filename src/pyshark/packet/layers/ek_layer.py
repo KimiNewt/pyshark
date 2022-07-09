@@ -86,8 +86,8 @@ class EkLayer(BaseLayer):
         prefix = "\t" * indent
         if isinstance(field, EkMultiField):
             terminal_writer.write(f"{prefix}{field_name}: ", green=True, bold=True)
-            if field.value:
-                terminal_writer.write(field.value)
+            if field.value is not None:
+                terminal_writer.write(str(field.value))
             terminal_writer.write(os.linesep)
             for subfield in field.subfields:
                 self._pretty_print_field(subfield, field.get_field(subfield), terminal_writer,

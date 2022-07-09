@@ -31,4 +31,4 @@ class StrWriter:
         self.buffer = ""
 
     def write(self, text, *_, **__):
-        self.buffer += text
+        self.buffer += str(text)

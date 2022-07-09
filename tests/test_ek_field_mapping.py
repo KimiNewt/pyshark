@@ -26,6 +26,7 @@ def mapping():
     ("ip_ip_src_rt", str),
     ("ip_ip_geoip_lat", float),
     ("ip_ip_tos_reliability", str),
+    ("ip_ip_reassembled_data", bytes),
     ("missing_field", str),
 ])
 def test_can_find_field_type_in_mapping(mapping, field_name, expected_type):
@@ -39,6 +40,7 @@ def test_can_find_field_type_in_mapping(mapping, field_name, expected_type):
     ("ip_ip_tos_reliability", "foo", "foo"),
     ("ip_ip_checksum", "0x3006", 0x3006),
     ("ip_ip_checksum", ["0x3006", "0x5"], [0x3006, 0x5]),
+    ("ip_ip_reassembled_data", "ff:e0", b"\xff\xe0"),
 ])
 def test_casts_field_value_to_correct_value(mapping, field_name, str_value, casted_value):
     assert mapping.cast_field_value("ip", field_name, str_value) == casted_value

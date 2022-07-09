@@ -1,3 +1,4 @@
+import binascii
 import json
 
 from pyshark import cache
@@ -42,6 +43,11 @@ class _EkFieldMapping:
             return field_value
         if field_type == int and field_value.startswith("0x"):
             return int(field_value, 16)
+        if field_type == bytes:
+            try:
+                return binascii.unhexlify(field_value.replace(":", ""))
+            except binascii.Error:
+                return field_value
         return field_type(field_value)
 
     def get_field_type(self, protocol, field_name):
@@ -72,6 +78,8 @@ class _EkFieldMapping:
             # We don't use datetime.datetime because these can be timedeltas as well.
             # Better let the user decide.
             return float
+        if field_type == "byte":
+            return bytes
         # Other known types are IP. Retain as str
         return str
 

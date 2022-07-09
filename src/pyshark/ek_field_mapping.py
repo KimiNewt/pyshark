@@ -33,6 +33,8 @@ class _EkFieldMapping:
 
     def cast_field_value(self, protocol, field_name, field_value):
         """Casts the field value to its proper type according to the mapping"""
+        if isinstance(field_value, list):
+            return [self.cast_field_value(protocol, field_name, item) for item in field_value]
         if not isinstance(field_value, str):
             return field_value
         field_type = self.get_field_type(protocol, field_name)

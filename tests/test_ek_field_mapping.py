@@ -32,14 +32,15 @@ def test_can_find_field_type_in_mapping(mapping, field_name, expected_type):
     assert mapping.get_field_type("ip", field_name) == expected_type
 
 
-@pytest.mark.parametrize(["field_name", "expected_type", "str_value", "casted_value"], [
-    ("ip_ip_hdr_len", int, "20", 20),
-    ("ip_ip_src_rt", str, "1.1.1.1", "1.1.1.1"),
-    ("ip_ip_geoip_lat", float, "15.5", 15.5),
-    ("ip_ip_tos_reliability", str, "foo", "foo"),
-    ("ip_ip_checksum", str, "0x3006", 0x3006),
+@pytest.mark.parametrize(["field_name", "str_value", "casted_value"], [
+    ("ip_ip_hdr_len", "20", 20),
+    ("ip_ip_src_rt", "1.1.1.1", "1.1.1.1"),
+    ("ip_ip_geoip_lat", "15.5", 15.5),
+    ("ip_ip_tos_reliability", "foo", "foo"),
+    ("ip_ip_checksum", "0x3006", 0x3006),
+    ("ip_ip_checksum", ["0x3006", "0x5"], [0x3006, 0x5]),
 ])
-def test_casts_field_value_to_correct_value(mapping, field_name, expected_type, str_value, casted_value):
+def test_casts_field_value_to_correct_value(mapping, field_name, str_value, casted_value):
     assert mapping.cast_field_value("ip", field_name, str_value) == casted_value
 
 

@@ -48,5 +48,5 @@ class LiveRingCapture(LiveCapture):
     def get_parameters(self, packet_count=None):
         params = super(LiveRingCapture, self).get_parameters(packet_count=packet_count)
         params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files),
-                   '-w', self.ring_file_name, '-P']
+                   '-w', self.ring_file_name, '-P', '-V']
         return params

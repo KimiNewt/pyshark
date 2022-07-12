@@ -1,8 +1,8 @@
 import os
 import typing
+import io
 
-import py
-
+from pyshark.packet.common import colored
 from pyshark.packet.fields import LayerField, LayerFieldsContainer
 from pyshark.packet.layers import base
 
@@ -96,12 +96,12 @@ class XmlLayer(base.BaseLayer):
         field_name = field_name.replace(self._field_prefix, '')
         return field_name.replace('.', '_').replace('-', '_').lower()
 
-    def _pretty_print_layer_fields(self, terminal_writer: py.io.TerminalWriter):
+    def _pretty_print_layer_fields(self, file: io.IOBase):
         for field_line in self._get_all_field_lines():
             if ':' in field_line:
                 field_name, field_line = field_line.split(':', 1)
-                terminal_writer.write(field_name + ':', green=True, bold=True)
-            terminal_writer.write(field_line, bold=True)
+                file.write(colored(field_name + ':', "green", attrs=["bold"]))
+            file.write(colored(field_line, attrs=["bold"]))
 
     def _get_all_fields_with_alternates(self):
         all_fields = list(self._all_fields.values())

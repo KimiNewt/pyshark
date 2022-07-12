@@ -1,9 +1,10 @@
 import abc
 import os
+import io
 
-import py
 import typing
 
+from pyshark.packet.common import colored
 from pyshark import ek_field_mapping
 from pyshark.packet.layers.base import BaseLayer
 
@@ -106,24 +107,24 @@ class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
                 return True
         return False
 
-    def _pretty_print_layer_fields(self, terminal_writer: py.io.TerminalWriter):
+    def _pretty_print_layer_fields(self, file: io.IOBase):
         for field_name in self.field_names:
             field = self.get_field(field_name)
-            self._pretty_print_field(field_name, field, terminal_writer, indent=1)
+            self._pretty_print_field(field_name, field, file, indent=1)
 
-    def _pretty_print_field(self, field_name, field, terminal_writer, indent=0):
+    def _pretty_print_field(self, field_name, field, file, indent=0):
         prefix = "\t" * indent
         if isinstance(field, EkMultiField):
-            terminal_writer.write(f"{prefix}{field_name}: ", green=True, bold=True)
+            file.write(colored(f"{prefix}{field_name}: ", "green", attrs=["bold"]))
             if field.value is not None:
-                terminal_writer.write(str(field.value))
-            terminal_writer.write(os.linesep)
+                file.write(str(field.value))
+            file.write(os.linesep)
             for subfield in field.subfields:
-                self._pretty_print_field(subfield, field.get_field(subfield), terminal_writer,
+                self._pretty_print_field(subfield, field.get_field(subfield), file,
                                          indent=indent + 1)
         else:
-            terminal_writer.write(f"{prefix}{field_name}: ", green=True, bold=True)
-            terminal_writer.write(f"{field}{os.linesep}")
+            file.write(colored(f"{prefix}{field_name}: ", "green", attrs=["bold"]))
+            file.write(f"{field}{os.linesep}")
 
     def _get_possible_layer_prefixes(self):
         """Gets the possible prefixes for a field under this layer.

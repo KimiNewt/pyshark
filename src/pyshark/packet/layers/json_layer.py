@@ -1,7 +1,7 @@
 import os
+import io
 
-import py
-
+from pyshark.packet.common import colored
 from pyshark.packet.fields import LayerField
 from pyshark.packet.fields import LayerFieldsContainer
 from pyshark.packet.layers.base import BaseLayer
@@ -79,12 +79,12 @@ class JsonLayer(BaseLayer):
                 return False
         return True
 
-    def _pretty_print_layer_fields(self, terminal_writer: py.io.TerminalWriter):
+    def _pretty_print_layer_fields(self, file: io.IOBase):
         for field_line in self._get_all_field_lines():
             if ':' in field_line:
                 field_name, field_line = field_line.split(':', 1)
-                terminal_writer.write(field_name + ':', green=True, bold=True)
-            terminal_writer.write(field_line, bold=True)
+                file.write(colored(field_name + ':', "green", ["bold"]))
+            file.write(colored(field_line, attrs=["bold"]))
 
     def _get_all_field_lines(self):
         """Returns all lines that represent the fields of the layer (both their names and values)."""

@@ -1,7 +1,7 @@
 import os
 import typing
-
-import py
+import io
+import sys
 
 from pyshark.packet import common
 
@@ -50,21 +50,22 @@ class BaseLayer(common.SlotsPickleable):
 
     def pretty_print(self, writer=None):
         if not writer:
-            writer = py.io.TerminalWriter()
+            writer = sys.stdout
         if self.layer_name == DATA_LAYER_NAME:
             writer.write('DATA')
             return
 
-        writer.write('Layer %s:' % self.layer_name.upper() + os.linesep, yellow=True, bold=True)
+        text = 'Layer %s:' % self.layer_name.upper() + os.linesep
+        writer.write(common.colored(text, color="yellow", attrs=["bold"]))
         self._pretty_print_layer_fields(writer)
 
-    def _pretty_print_layer_fields(self, terminal_writer: py.io.TerminalWriter):
+    def _pretty_print_layer_fields(self, terminal_writer: io.IOBase):
         raise NotImplementedError()
 
     def __repr__(self):
         return '<%s Layer>' % self.layer_name.upper()
 
     def __str__(self):
-        writer = common.StrWriter()
+        writer = io.StringIO()
         self.pretty_print(writer=writer)
-        return writer.buffer
+        return writer.getvalue()

@@ -48,7 +48,11 @@ class _EkFieldMapping:
                 return binascii.unhexlify(field_value.replace(":", ""))
             except binascii.Error:
                 return field_value
-        return field_type(field_value)
+
+        try:
+            return field_type(field_value)
+        except ValueError:
+            return field_value
 
     def get_field_type(self, protocol, field_name):
         """Gets the Python type for the given field (only for EK fields).

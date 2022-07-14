@@ -23,6 +23,7 @@ class TsharkEkJsonParser(BaseTsharkOutputParser):
     def _extract_packet_from_data(self, data, got_first_packet=True):
         """Returns a packet's data and any remaining data after reading that first packet"""
         start_index = 0
+        data = data.lstrip()
         if data.startswith(b'{"ind'):
             # Skip the 'index' JSONs, generated for Elastic.
             # See: https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=16656

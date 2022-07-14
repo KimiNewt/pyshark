@@ -38,7 +38,7 @@ class LiveRingCapture(LiveCapture):
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
                                               override_prefs=override_prefs, capture_filter=capture_filter, 
-                                              use_json=False, use_ek=False, include_raw=include_raw, eventloop=eventloop,
+                                              use_json=use_json, use_ek=use_ek, include_raw=include_raw, eventloop=eventloop,
                                               custom_parameters=custom_parameters, debug=debug)
 
         self.ring_file_size = ring_file_size
@@ -48,5 +48,5 @@ class LiveRingCapture(LiveCapture):
     def get_parameters(self, packet_count=None):
         params = super(LiveRingCapture, self).get_parameters(packet_count=packet_count)
         params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files),
-                   '-w', self.ring_file_name, '-P']
+                   '-w', self.ring_file_name, '-P', '-V']
         return params

@@ -17,7 +17,7 @@ class PacketSummary(object):
     def __repr__(self):
         protocol, src, dst = self._fields.get('Protocol', '?'), self._fields.get('Source', '?'),\
                              self._fields.get('Destination', '?')
-        return '<%s %s: %s to %s>' % (self.__class__.__name__, protocol, src, dst)
+        return f'<{self.__class__.__name__} {protocol}: {src} to {dst}>'
 
     def __str__(self):
         return self.summary_line

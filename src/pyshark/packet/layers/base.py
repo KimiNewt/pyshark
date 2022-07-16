@@ -55,7 +55,7 @@ class BaseLayer(common.SlotsPickleable):
             writer.write('DATA')
             return
 
-        text = 'Layer %s:' % self.layer_name.upper() + os.linesep
+        text = f'Layer {self.layer_name.upper()}{os.linesep}:'
         writer.write(common.colored(text, color="yellow", attrs=["bold"]))
         self._pretty_print_layer_fields(writer)
 
@@ -63,7 +63,7 @@ class BaseLayer(common.SlotsPickleable):
         raise NotImplementedError()
 
     def __repr__(self):
-        return '<%s Layer>' % self.layer_name.upper()
+        return f'<{self.layer_name.upper()} Layer>'
 
     def __str__(self):
         writer = io.StringIO()

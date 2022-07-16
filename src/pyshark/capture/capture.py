@@ -89,8 +89,8 @@ class Capture:
         if encryption_type and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS:
             self.encryption = (decryption_key, encryption_type.lower())
         else:
-            raise UnknownEncyptionStandardException("Only the following standards are supported: %s."
-                                                    % ", ".join(self.SUPPORTED_ENCRYPTION_STANDARDS))
+            standards = ", ".join(self.SUPPORTED_ENCRYPTION_STANDARDS)
+            raise UnknownEncyptionStandardException(f"Only the following standards are supported: {standards}.")
 
     def __getitem__(self, item):
         """Gets the packet in the given index.
@@ -342,7 +342,7 @@ class Capture:
 
         self._log.debug(
             "Creating TShark subprocess with parameters: " + " ".join(parameters))
-        self._log.debug("Executable: %s" % parameters[0])
+        self._log.debug("Executable: %s", parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
                                                               stdout=subprocess.PIPE,
                                                               stderr=subprocess.PIPE,
@@ -356,8 +356,7 @@ class Capture:
             process_name + f" subprocess (pid {process.pid}) created")
         if process.returncode is not None and process.returncode != 0:
             raise TSharkCrashException(
-                "%s seems to have crashed. Try updating it. (command ran: '%s')" % (
-                    process_name, " ".join(parameters)))
+                f"{process_name} seems to have crashed. Try updating it. (command ran: '{' '.join(parameters)}')")
         self._running_processes.add(process)
 
     async def _cleanup_subprocess(self, process):
@@ -442,8 +441,7 @@ class Capture:
             for preference_name, preference_value in self._override_prefs.items():
                 if all(self.encryption) and preference_name in ("wlan.enable_decryption", "uat:80211_keys"):
                     continue  # skip if override preferences also given via --encryption options
-                params += ["-o",
-                           "{0}:{1}".format(preference_name, preference_value)]
+                params += ["-o", f"{preference_name}:{preference_value}"]
 
         if self._output_file:
             params += ["-w", self._output_file]
@@ -465,4 +463,4 @@ class Capture:
             return self._packets_from_tshark_sync()
 
     def __repr__(self):
-        return "<%s (%d packets)>" % (self.__class__.__name__, len(self._packets))
+        return f"<{self.__class__.__name__} ({len(self._packets)} packets)>"

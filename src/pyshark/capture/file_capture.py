@@ -72,7 +72,7 @@ class FileCapture(Capture):
                 self.next()
             except StopIteration:
                 # We read the whole file, and there's still not such packet.
-                raise KeyError("Packet of index %d does not exist in capture" % packet_index)
+                raise KeyError(f"Packet of index {packet_index} does not exist in capture")
         return super(FileCapture, self).__getitem__(packet_index)
 
     def get_parameters(self, packet_count=None):
@@ -88,7 +88,6 @@ class FileCapture(Capture):
 
     def __repr__(self):
         if self.keep_packets:
-            return "<%s %s>" % (self.__class__.__name__, self.input_filepath.as_posix())
+            return f"<{self.__class__.__name__} {self.input_filepath.as_posix()}>"
         else:
-            return "<%s %s (%d packets)>" % (self.__class__.__name__, self.input_filepath.as_posix(),
-                                             len(self._packets))
+            return f"<{self.__class__.__name__} {self.input_filepath.as_posix()} ({len(self._packets)} packets)>"

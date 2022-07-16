@@ -53,7 +53,7 @@ class JsonLayer(BaseLayer):
                 # Might be a "fake" field in JSON
                 is_fake = self._is_fake_field(name)
                 if not is_fake:
-                    raise AttributeError("No such field %s" % name)
+                    raise AttributeError(f"No such field {name}")
             field = self._make_wrapped_field(name, field, is_fake=is_fake)
             self._wrapped_fields[name] = field
         return field
@@ -147,12 +147,12 @@ class JsonLayer(BaseLayer):
 
     def _get_internal_field_by_name(self, name):
         """Gets the field by name, or None if not found."""
-        field = self._all_fields.get(name, self._all_fields.get('%s.%s' % (self._full_name, name)))
+        field = self._all_fields.get(name, self._all_fields.get(f"{self._full_name}.{name}"))
         if field is not None:
             return field
         for field_name in self._all_fields:
             # Specific name
-            if field_name.endswith('.%s' % name):
+            if field_name.endswith(f'.{name}'):
                 return self._all_fields[field_name]
 
     def _is_fake_field(self, name):
@@ -165,7 +165,7 @@ class JsonLayer(BaseLayer):
         #               }
         # }
         # So in this case we must create a fake layer for "bar".
-        field_full_name = '%s.%s.' % (self._full_name, name)
+        field_full_name = f"{self._full_name}.{name}."
         for name, field in self._all_fields.items():
             if name.startswith(field_full_name):
                 return True
@@ -180,7 +180,7 @@ class JsonLayer(BaseLayer):
         it.
         """
         if not full_name:
-            full_name = '%s.%s' % (self._full_name, name)
+            full_name = f"{self._full_name}.{name}"
 
         if is_fake:
             # Populate with all fields that are supposed to be inside of it
@@ -189,7 +189,7 @@ class JsonLayer(BaseLayer):
         if isinstance(field, dict):
             if name.endswith('_tree'):
                 name = name.replace('_tree', '')
-                full_name = '%s.%s' % (self._full_name, name)
+                full_name = f'{self._full_name}.{name}'
             return JsonLayer(name, field, full_name=full_name, is_intermediate=is_fake)
         elif isinstance(field, list):
             # For whatever reason in list-type object it goes back to using the original parent name

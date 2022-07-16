@@ -127,7 +127,7 @@ class XmlLayer(base.BaseLayer):
         elif field.show:
             return field.show
         elif field.raw_value:
-            return "%s: %s" % (self._sanitize_field_name(field.name), field.raw_value)
+            return f"{self._sanitize_field_name(field.name)}: {field.raw_value}"
 
     def get_field_by_showname(self, showname) -> typing.Union[LayerFieldsContainer, None]:
         """Gets a field by its "showname"

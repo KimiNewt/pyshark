@@ -138,8 +138,13 @@ def get_ek_field_mapping(tshark_path=None):
     mapping = json.loads(
         mapping,
         object_pairs_hook=_duplicate_object_hook)["mappings"]
-    if "doc" in mapping:
+    # If using wireshark 4, the key "mapping" contains what we want,
+    if "dynamic" in mapping and "properties" in mapping:
+        pass
+    # if using wireshark 3.5 to < 4 the data in "mapping.doc",
+    elif "doc" in mapping:
         mapping = mapping["doc"]
+    # or "mapping.pcap_file" if using wireshark < 3.5
     elif "pcap_file" in mapping:
         mapping = mapping["pcap_file"]
     else:

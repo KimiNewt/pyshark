@@ -65,14 +65,18 @@ class LiveCapture(Capture):
 
     def get_parameters(self, packet_count=None):
         """Returns the special tshark parameters to be used according to the configuration of this class."""
-        params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
-        # Read from STDIN
-        params += ["-i", "-"]
+        params = super(LiveCapture, self).get_parameters(
+            packet_count=packet_count)
+        # Read directly from interfaces
+        for interface in self.interfaces:
+            params += ["-i", interface]
         return params
 
     def _verify_capture_parameters(self):
-        all_interfaces_names = tshark.get_all_tshark_interfaces_names(self.tshark_path)
-        all_interfaces_lowercase = [interface.lower() for interface in all_interfaces_names]
+        all_interfaces_names = tshark.get_all_tshark_interfaces_names(
+            self.tshark_path)
+        all_interfaces_lowercase = [interface.lower()
+                                    for interface in all_interfaces_names]
         for each_interface in self.interfaces:
             if each_interface.isnumeric():
                 continue
@@ -101,13 +105,16 @@ class LiveCapture(Capture):
     async def _get_tshark_process(self, packet_count=None, stdin=None):
         read, write = os.pipe()
 
-        dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
+        dumpcap_params = [get_process_path(
+            process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
 
-        self._log.debug("Creating Dumpcap subprocess with parameters: %s" % " ".join(dumpcap_params))
+        self._log.debug(
+            "Creating Dumpcap subprocess with parameters: %s" % " ".join(dumpcap_params))
         dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
                                                                stderr=subprocess.PIPE)
         self._create_stderr_handling_task(dumpcap_process.stderr)
-        self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
+        self._created_new_process(
+            dumpcap_params, dumpcap_process, process_name="Dumpcap")
 
         tshark = await super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=read)
         return tshark

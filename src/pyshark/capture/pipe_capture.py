@@ -4,7 +4,7 @@ from pyshark.capture.capture import Capture
 
 
 class PipeCapture(Capture):
-    def __init__(self, pipe, display_filter=None, only_summaries=False,
+    def __init__(self, pipe, bpf_filter=None, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False,
                  include_raw=False, eventloop=None, custom_parameters=None, debug=False):
@@ -33,6 +33,7 @@ class PipeCapture(Capture):
                                           tshark_path=tshark_path, override_prefs=override_prefs,
                                           use_json=use_json, include_raw=include_raw, eventloop=eventloop,
                                           custom_parameters=custom_parameters, debug=debug)
+        self.bpf_filter = bpf_filter
         self._pipe = pipe
 
     def get_parameters(self, packet_count=None):

@@ -77,9 +77,9 @@ def packet_from_xml_packet(xml_pkt, psml_structure=None):
     :return: Packet object.
     """
     if not isinstance(xml_pkt, lxml.objectify.ObjectifiedElement):
-        parser = lxml.objectify.makeparser(huge_tree=True, recover=True)
+        parser = lxml.objectify.makeparser(huge_tree=True, recover=True, encoding='utf-8')
         xml_pkt = xml_pkt.decode(errors='ignore').translate(DEL_BAD_XML_CHARS)
-        xml_pkt = lxml.objectify.fromstring(xml_pkt, parser)
+        xml_pkt = lxml.objectify.fromstring(xml_pkt.encode('utf-8'), parser)
     if psml_structure:
         return _packet_from_psml_packet(xml_pkt, psml_structure)
     return _packet_from_pdml_packet(xml_pkt)

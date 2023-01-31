@@ -48,7 +48,7 @@ class RemoteCapture(LiveCapture):
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         """
-        interface = "rpcap://%s:%d/%s" % (remote_host, remote_port, remote_interface)
+        interface =  f'rpcap://{remote_host}:{remote_port}/{remote_interface}'
         super(RemoteCapture, self).__init__(
             interface,
             *args,

@@ -49,11 +49,11 @@ def test_capture_gets_encryption_and_override_perfs():
                     encryption_type=valid_encryption_type,
                     override_prefs={'esp.enable_null_encryption_decode_heuristic': 'TRUE',
                                     'wlan.enable_decryption': 'TRUE',
-                                    'uat:80211_keys': '"{0}","helloworld"'.format(valid_encryption_type)})
+                                    'uat:80211_keys': f'"{valid_encryption_type}","helloworld"'})
         params = c.get_parameters()
         expected_results = ('esp.enable_null_encryption_decode_heuristic:TRUE',
                             'wlan.enable_decryption:TRUE',
-                            'uat:80211_keys:"{0}","helloworld"'.format(valid_encryption_type))
+                            f'uat:80211_keys:"{valid_encryption_type}","helloworld"')
         start_idx = 0
         actual_parameter_options = []
         while True:

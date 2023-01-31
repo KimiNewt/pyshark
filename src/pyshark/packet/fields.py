@@ -26,7 +26,7 @@ class LayerField(SlotsPickleable):
             self.hide = False
 
     def __repr__(self):
-        return '<LayerField %s: %s>' % (self.name, self.get_default_value())
+        return f'<LayerField {self.name}: {self.get_default_value()}>'
 
     def get_default_value(self) -> str:
         """Gets the best 'value' string this field has."""

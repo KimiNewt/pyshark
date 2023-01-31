@@ -96,7 +96,7 @@ class Packet(Pickleable):
         if self.transport_layer != self.highest_layer and self.transport_layer is not None:
             transport_protocol = self.transport_layer + '/'
 
-        return '<%s%s Packet>' % (transport_protocol, self.highest_layer)
+        return f'<{transport_protocol}{self.highest_layer} Packet>'
 
     def __str__(self):
         s = self._packet_string
@@ -107,7 +107,7 @@ class Packet(Pickleable):
     @property
     def _packet_string(self):
         """A simple pretty string that represents the packet."""
-        return 'Packet (Length: %s)%s' % (self.length, os.linesep)
+        return f'Packet (Length: {self.length}){os.linesep}'
 
     def pretty_print(self):
         for layer in self.layers:
@@ -122,7 +122,7 @@ class Packet(Pickleable):
         for layer in self.layers:
             if layer.layer_name == item:
                 return layer
-        raise AttributeError("No attribute named %s" % item)
+        raise AttributeError(f"No attribute named {item}")
 
     @property
     def highest_layer(self) -> BaseLayer:

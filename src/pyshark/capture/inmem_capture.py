@@ -87,9 +87,9 @@ class InMemCapture(Capture):
         commas, parenthesis).
         """
         if self._get_tshark_version() >= version.parse("2.6.7"):
-            return ("%s  }" % os.linesep).encode(), ("}%s]" % os.linesep).encode(), 0
+            return f"{os.linesep}  }}".encode(), f"}}{os.linesep}]".encode(), 0
         else:
-            return ("}%s%s" % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
+            return f'}}{os.linesep}{os.linesep}'.encode(), f"}}{os.linesep}{os.linesep}]", 1
 
     def _write_packet(self, packet, sniff_time):
         if sniff_time is None:

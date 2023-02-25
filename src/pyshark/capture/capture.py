@@ -211,13 +211,16 @@ class Capture:
         # NOTE: This has code duplication with the async version, think about how to solve this
         tshark_process = existing_process or self.eventloop.run_until_complete(
             self._get_tshark_process())
-        parser = self._setup_tshark_output_parser()
+        
         packets_captured = 0
 
         data = b""
         try:
             while True:
                 try:
+                    """
+                    REDIS
+                    """
                     packet, data = self.eventloop.run_until_complete(
                         parser.get_packets_from_stream(tshark_process.stdout, data,
                                                        got_first_packet=packets_captured > 0))
@@ -381,12 +384,21 @@ class Capture:
                                            "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
 
     def _setup_tshark_output_parser(self):
+        """
+        This function defines the output mode of tshark (tshark -T <mode>).
+        
+            if self.use_redis:
+                return tshark_json.
+        """
+        
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())
+        
         if self._use_ek:
             ek_field_mapping.MAPPING.load_mapping(str(self._get_tshark_version()),
                                                   tshark_path=self.tshark_path)
             return tshark_ek.TsharkEkJsonParser()
+        
         return tshark_xml.TsharkXmlParser(parse_summaries=self._only_summaries)
 
     def close(self):

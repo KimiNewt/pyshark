@@ -16,7 +16,12 @@ except ImportError:
 
 
 class TsharkJsonParser(BaseTsharkOutputParser):
-
+    """
+    Trought _parse_single_packet method the class invoke packet_from_json_packet funcion to return a 'Pyshark Packet'.
+    
+    Implementing REDIS as Output message-broker could start from here.
+    """
+    
     def __init__(self, tshark_version=None):
         super().__init__()
         self._tshark_version = tshark_version

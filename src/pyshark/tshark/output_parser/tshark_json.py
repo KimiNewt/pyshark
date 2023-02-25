@@ -16,9 +16,6 @@ except ImportError:
 
 
 class TsharkJsonParser(BaseTsharkOutputParser):
-    """
-    Trought _parse_single_packet method the class invoke packet_from_json_packet funcion to return a 'Pyshark Packet'.
-    """
     
     def __init__(self, tshark_version=None):
         super().__init__()

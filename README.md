@@ -124,7 +124,13 @@ includes very little information
 ### Reading from a live interface and output to REDIS:
 
 ```python
->>> capture = pyshark.LiveCapture(interface='eth0', use_redis=True, redis_key='logstash')
+>>> capture = pyshark.LiveCapture(
+    interface='eth0',
+    display_filter="tcp",
+    use_redis=True,
+    redis_host='redis.it.home.local',
+    redis_key="develop"
+)
 >>> capture.sniff(timeout=50)
 >>> capture
 <LiveCapture (5 packets)>
@@ -132,7 +138,7 @@ includes very little information
 <UDP/HTTP Packet>
 
 for packet in capture.sniff_continuously(packet_count=5):
-    print 'Just arrived:', packet
+    print(packet)
 ```
 
 

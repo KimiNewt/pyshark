@@ -18,9 +18,6 @@ except ImportError:
     USE_UJSON = False
 
 class TsharkRedisParser(TsharkJsonParser):
-    """
-    Based on TsharkJsonParser for dev purposes.
-    """
     
     def __init__(self, tshark_version=None):
         super().__init__()

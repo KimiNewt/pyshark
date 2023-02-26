@@ -120,6 +120,22 @@ includes very little information
 * **param tshark_path**: Path of the tshark binary
 * **param output_file**: Additionally save captured packets to this file.
 
+
+### Reading from a live interface and output to REDIS:
+
+```python
+>>> capture = pyshark.LiveCapture(interface='eth0', use_redis=True, redis_key='logstash')
+>>> capture.sniff(timeout=50)
+>>> capture
+<LiveCapture (5 packets)>
+>>> capture[3]
+<UDP/HTTP Packet>
+
+for packet in capture.sniff_continuously(packet_count=5):
+    print 'Just arrived:', packet
+```
+
+
 ### Reading from a live interface using a ring buffer
 ```python
 >>> capture = pyshark.LiveRingCapture(interface='eth0')

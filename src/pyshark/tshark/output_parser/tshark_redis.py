@@ -8,7 +8,7 @@ from packaging import version
 from pyshark.packet.layers.json_layer import JsonLayer
 from pyshark.packet.packet import Packet
 #from pyshark.tshark.output_parser.base_parser import BaseTsharkOutputParser
-from pyshark.tshark.output_parser.tshark_json import TsharkJsonParser, duplicate_object_hook
+from pyshark.tshark.output_parser.tshark_json import TsharkJsonParser
 from pyshark.tshark import tshark
 
 try:

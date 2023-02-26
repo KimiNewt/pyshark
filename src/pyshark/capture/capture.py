@@ -51,7 +51,7 @@ class Capture:
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type="wpa-pwd", output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
-                 override_prefs=None, capture_filter=None, use_json=False, use_redis=False, include_raw=False,
+                 override_prefs=None, capture_filter=None, use_json=False, use_redis=False, redis_key=None, include_raw=False,
                  use_ek=False, custom_parameters=None, debug=False):
 
         self.loaded = False
@@ -60,6 +60,7 @@ class Capture:
         self.debug = debug
         self.use_json = use_json
         self._use_ek = use_ek
+        self.use_redis = use_redis
         self._use_redis = use_redis
         self.include_raw = include_raw
         self._packets = []
@@ -79,7 +80,10 @@ class Capture:
         self._last_error_line = None
         self._stderr_handling_tasks = []
         self.__tshark_version = None
-
+        
+        if use_redis:
+            self.redis_key=redis_key
+        
         if include_raw and not (use_json or use_ek):
             raise RawMustUseJsonException(
                 "use_json/use_ek must be True if include_raw")
@@ -333,7 +337,7 @@ class Capture:
                 raise TSharkVersionException(
                     "JSON only supported on Wireshark >= 2.2.0")
 
-        if self.use_json:
+        if self.use_json or self.use_redis:
             output_type = "json"
             if tshark_supports_duplicate_keys(self._get_tshark_version()):
                 output_parameters.append("--no-duplicate-keys")
@@ -385,8 +389,8 @@ class Capture:
                                            "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
 
     def _setup_tshark_output_parser(self):
-        if self._use_redis:
-            return tshark_redis.TsharkRedisParser(self._get_tshark_version())
+        if self.use_redis:
+            return tshark_redis.TsharkRedisParser(self._get_tshark_version(), self.redis_key)
         
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())

@@ -385,10 +385,7 @@ class Capture:
 
     def _setup_tshark_output_parser(self):
         """
-        This function defines the output mode of tshark (tshark -T <mode>).
-        
-            if self.use_redis:
-                return tshark_json.
+        REDIS
         """
         
         if self.use_json:

@@ -28,4 +28,8 @@ class TsharkRedisParser(TsharkJsonParser):
 
     def _parse_single_packet(self, packet):
         json_has_duplicate_keys = tshark.tshark_supports_duplicate_keys(self._tshark_version)
-        return json_packet_to_redis(packet, deduplicate_fields=json_has_duplicate_keys)
+        return json_packet_to_redis(packet)
+
+def json_packet_to_redis(json_pkt):
+    r=redis.Redis(host="redis.local", port=6379, db=0)
+    return True

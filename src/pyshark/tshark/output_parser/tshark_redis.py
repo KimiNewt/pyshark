@@ -27,7 +27,6 @@ class TsharkRedisParser(TsharkJsonParser):
         self._tshark_version = tshark_version
 
     def _parse_single_packet(self, packet):
-        json_has_duplicate_keys = tshark.tshark_supports_duplicate_keys(self._tshark_version)
         return json_packet_to_redis(packet)
 
 def json_packet_to_redis(json_pkt):

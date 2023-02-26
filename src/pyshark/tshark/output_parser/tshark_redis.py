@@ -26,11 +26,6 @@ class TsharkRedisParser(TsharkJsonParser):
         return json_packet_to_redis(packet)
 
 def json_packet_to_redis(json_pkt):
-    """
-    Use from 'dotenv import load_dotenv' to load REDIS env vars
-    """
-
     r=redis.Redis(host="redis.it.home.local", port=6379, db=0)
-    r.set("test",json_pkt)
-    
+    r.lpush("logstash", json_pkt)
     return True

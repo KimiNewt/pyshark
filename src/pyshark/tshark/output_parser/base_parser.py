@@ -12,13 +12,6 @@ class BaseTsharkOutputParser:
         packet, existing_data = self._extract_packet_from_data(existing_data,
                                                                got_first_packet=got_first_packet)
         if packet:
-            """
-            If getting a packet, default behavior calls self._parse_single_packet(packet) then return Pyshark Packet 
-            based on invoked class (json, ek-json, xml).
-            
-            If getting a packet and using REDIS, self._parse_single_packet(packet) should not return anything (or True),
-            but it should send data to REDIS.
-            """
             packet = self._parse_single_packet(packet)
             return packet, existing_data
 

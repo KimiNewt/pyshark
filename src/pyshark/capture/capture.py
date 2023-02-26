@@ -219,7 +219,7 @@ class Capture:
         # NOTE: This has code duplication with the async version, think about how to solve this
         tshark_process = existing_process or self.eventloop.run_until_complete(
             self._get_tshark_process())
-        
+        parser = self._setup_tshark_output_parser()
         packets_captured = 0
 
         data = b""

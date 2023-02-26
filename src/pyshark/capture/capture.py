@@ -12,7 +12,6 @@ from pyshark.packet.packet import Packet
 from pyshark.tshark.output_parser import tshark_ek
 from pyshark.tshark.output_parser import tshark_json
 from pyshark.tshark.output_parser import tshark_xml
-
 from pyshark.tshark.output_parser import tshark_redis
 
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
@@ -51,7 +50,8 @@ class Capture:
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type="wpa-pwd", output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
-                 override_prefs=None, capture_filter=None, use_json=False, use_redis=False, redis_key=None, include_raw=False,
+                 override_prefs=None, capture_filter=None, use_json=False,
+                 use_redis=False, redis_host=None, redis_key=None, include_raw=False,
                  use_ek=False, custom_parameters=None, debug=False):
 
         self.loaded = False
@@ -81,6 +81,7 @@ class Capture:
         self.__tshark_version = None
         
         if use_redis:
+            self.redis_host=redis_host
             self.redis_key=redis_key
         
         if include_raw and not (use_json or use_ek):
@@ -389,8 +390,8 @@ class Capture:
 
     def _setup_tshark_output_parser(self):
         if self.use_redis:
-            return tshark_redis.TsharkRedisParser(self._get_tshark_version(), self.redis_key)
-        
+            return tshark_redis.TsharkRedisParser(self._get_tshark_version(), self.redis_host, self.redis_key)
+
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())
         

@@ -221,9 +221,6 @@ class Capture:
         try:
             while True:
                 try:
-                    """
-                    REDIS
-                    """
                     packet, data = self.eventloop.run_until_complete(
                         parser.get_packets_from_stream(tshark_process.stdout, data,
                                                        got_first_packet=packets_captured > 0))

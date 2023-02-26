@@ -61,7 +61,6 @@ class Capture:
         self.use_json = use_json
         self._use_ek = use_ek
         self.use_redis = use_redis
-        self._use_redis = use_redis
         self.include_raw = include_raw
         self._packets = []
         self._current_packet = 0

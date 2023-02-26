@@ -51,7 +51,7 @@ class Capture:
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type="wpa-pwd", output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
-                 override_prefs=None, capture_filter=None, use_json=False, include_raw=False,
+                 override_prefs=None, capture_filter=None, use_json=False, use_redis=False, include_raw=False,
                  use_ek=False, custom_parameters=None, debug=False):
 
         self.loaded = False
@@ -60,6 +60,7 @@ class Capture:
         self.debug = debug
         self.use_json = use_json
         self._use_ek = use_ek
+        self._use_redis = use_redis
         self.include_raw = include_raw
         self._packets = []
         self._current_packet = 0
@@ -384,9 +385,8 @@ class Capture:
                                            "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
 
     def _setup_tshark_output_parser(self):
-        """
-        REDIS
-        """
+        if self._use_redis:
+            return tshark_redis.TsharkRedisParser(self._get_tshark_version())
         
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())

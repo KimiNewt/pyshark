@@ -16,7 +16,7 @@ except ImportError:
 
 
 class TsharkJsonParser(BaseTsharkOutputParser):
-    
+
     def __init__(self, tshark_version=None):
         super().__init__()
         self._tshark_version = tshark_version

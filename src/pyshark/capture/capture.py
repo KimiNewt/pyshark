@@ -12,6 +12,9 @@ from pyshark.packet.packet import Packet
 from pyshark.tshark.output_parser import tshark_ek
 from pyshark.tshark.output_parser import tshark_json
 from pyshark.tshark.output_parser import tshark_xml
+
+from pyshark.tshark.output_parser import tshark_redis
+
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
 

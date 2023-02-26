@@ -386,7 +386,7 @@ class Capture:
 
     def _setup_tshark_output_parser(self):
         if self._use_redis:
-            return tshark_redis.TsharkRedisParser()
+            return tshark_redis.TsharkRedisParser(self._get_tshark_version())
         
         if self.use_json:
             return tshark_json.TsharkJsonParser(self._get_tshark_version())

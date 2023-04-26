@@ -47,7 +47,7 @@ class Packet(Pickleable):
         if isinstance(item, int):
             return self.layers[item]
         for layer in self.layers:
-            if layer.layer_name == item.lower():
+            if layer.layer_name.lower() == item.lower():
                 return layer
         raise KeyError('Layer does not exist in packet')
 
@@ -120,7 +120,7 @@ class Packet(Pickleable):
         Allows layers to be retrieved via get attr. For instance: pkt.ip
         """
         for layer in self.layers:
-            if layer.layer_name == item:
+            if layer.layer_name.lower() == item.lower():
                 return layer
         raise AttributeError(f"No attribute named {item}")
 

@@ -173,7 +173,7 @@ class Capture:
             else:
                 # On Python before 3.8, Proactor is not the default eventloop type, so we have to create a new one.
                 # If there was an existing eventloop this can create issues, since we effectively disable it here.
-                if asyncio.Task.all_tasks():
+                if asyncio.all_tasks():
                     warnings.warn("The running eventloop has tasks but pyshark must set a new eventloop to continue. "
                                   "Existing tasks may not run.")
                 self.eventloop = asyncio.ProactorEventLoop()

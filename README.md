@@ -4,11 +4,6 @@ Python wrapper for tshark, allowing python packet parsing using wireshark dissec
 
 Extended documentation: http://kiminewt.github.io/pyshark
 
-**Python2 deprecation** - This package no longer supports Python2. If you wish to still use it in Python2, you can:
-* Use version 0.3.8
-* Install pyshark-legacy via pypi
-* Clone the pyshark-legacy [repo](https://github.com/KimiNewt/pyshark-legacy), where bugfixes will be applied.
-
 **Looking for contributors** - for various reasons I have a hard time finding time to maintain and enhance the package at the moment. Any pull-requests will be reviewed and if any one is interested and is suitable, I will be happy to include them in the project. Feel free to mail me at dorgreen1 at gmail.
 
 There are quite a few python packet parsing modules, this one is different because it doesn't actually parse any packets, it simply uses tshark's (wireshark command-line utility) ability to export XMLs to use its parsing.
@@ -17,6 +12,11 @@ This package allows parsing from a capture file or a live capture, using all wir
 Tested on windows/linux.
 
 ## Installation
+
+### Version support
+Python 3.7+ is supported. An unsupported Python 2 version exists as [pyshark-legacy](https://github.com/KimiNewt/pyshark-legacy).
+
+Supports all modern versions of tshark / wireshark but certain features may be unavailable on older versions.
 
 ### All Platforms
 Simply run the following to install the latest from pypi
@@ -100,7 +100,7 @@ be either 'WEP', 'WPA-PWD', or 'WPA-PWK'. Defaults to WPA-PWK.
 <UDP/HTTP Packet>
 
 for packet in capture.sniff_continuously(packet_count=5):
-    print 'Just arrived:', packet
+    print('Just arrived:', packet)
 ```
 
 #### Other options
@@ -128,7 +128,7 @@ includes very little information
 <UDP/HTTP Packet>
 
 for packet in capture.sniff_continuously(packet_count=5):
-    print 'Just arrived:', packet
+    print('Just arrived:', packet)
 ```
 
 #### Other options
@@ -208,7 +208,7 @@ Source or Destination Address: 10.0.0.10 (10.0.0.10)
 >>> p.ip.addr.int_value
 167772170
 >>> p.ip.addr.binary_value
-'\n\x00\x00\n'
+b'\n\x00\x00\n'
 ```
 
 

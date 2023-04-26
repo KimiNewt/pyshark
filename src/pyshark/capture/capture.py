@@ -216,7 +216,7 @@ class Capture:
 
         data = b""
         try:
-            while not self._eof_reached:
+            while True:
                 try:
                     packet, data = self.eventloop.run_until_complete(
                         parser.get_packets_from_stream(tshark_process.stdout, data,
@@ -279,7 +279,7 @@ class Capture:
         parser = self._setup_tshark_output_parser()
         data = b""
 
-        while not self._eof_reached:
+        while True:
             try:
                 packet, data = await parser.get_packets_from_stream(fd, data,
                                                                     got_first_packet=packets_captured > 0)
@@ -306,9 +306,6 @@ class Capture:
         while True:
             stderr_line = await stderr.readline()
             if not stderr_line:
-                self._log.debug("EOF on subprocesss - something died")
-                self._eof_reached = True
-                await self.close_async()
                 break
             stderr_line = stderr_line.decode().strip()
             self._last_error_line = stderr_line

@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.txt')) as f:
 
 setup(
     name="pyshark",
-    version="0.5.3",
+    version="0.6",
     packages=find_packages(),
     package_data={'': ['*.ini', '*.pcapng']},
     install_requires=['lxml', 'termcolor', 'packaging', 'appdirs'],
@@ -20,8 +20,6 @@ setup(
 
     classifiers=[
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',

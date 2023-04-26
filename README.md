@@ -1,7 +1,5 @@
 # pyshark
 
-[![Join the chat at https://gitter.im/pyshark_gitter/Lobby](https://badges.gitter.im/pyshark_gitter/Lobby.svg)](https://gitter.im/pyshark_gitter/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](https://travis-ci.org/KimiNewt/pyshark.svg)](https://travis-ci.org/KimiNewt/pyshark)
-
 Python wrapper for tshark, allowing python packet parsing using wireshark dissectors.
 
 Extended documentation: http://kiminewt.github.io/pyshark

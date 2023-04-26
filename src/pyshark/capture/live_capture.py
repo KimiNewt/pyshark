@@ -65,9 +65,11 @@ class LiveCapture(Capture):
 
     def get_parameters(self, packet_count=None):
         """Returns the special tshark parameters to be used according to the configuration of this class."""
-        params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
-        # Read from STDIN
-        params += ["-i", "-"]
+        params = super(LiveCapture, self).get_parameters(
+            packet_count=packet_count)
+        # Read directly from interfaces
+        for interface in self.interfaces:
+            params += ["-i", interface]
         return params
 
     def _verify_capture_parameters(self):

@@ -120,7 +120,7 @@ class Packet(Pickleable):
         Allows layers to be retrieved via get attr. For instance: pkt.ip
         """
         for layer in self.layers:
-            if layer.layer_name == item:
+            if layer.layer_name.lower() == item:
                 return layer
         raise AttributeError(f"No attribute named {item}")
 

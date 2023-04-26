@@ -45,8 +45,8 @@ class FileCapture(Capture):
         self.input_filepath = pathlib.Path(input_file)
         if not self.input_filepath.exists():
             raise FileNotFoundError(f"[Errno 2] No such file or directory: {self.input_filepath}")
-        if not self.input_filepath.is_file():
-            raise FileNotFoundError(f"{self.input_filepath} is a directory")
+        if not self.input_filepath.is_file() and not self.input_filepath.is_fifo():
+            raise FileNotFoundError(f"{self.input_filepath} is not a file or fifo")
 
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()

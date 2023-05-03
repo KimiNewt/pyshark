@@ -16,8 +16,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          apt update
-          apt install tshark
+          sudo apt update
+          sudo apt install tshark
           python -m pip install --upgrade pip
           pip install pytest
           pip install -e ./src/

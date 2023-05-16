@@ -359,16 +359,18 @@ class Capture:
                 f"{process_name} seems to have crashed. Try updating it. (command ran: '{' '.join(parameters)}')")
         self._running_processes.add(process)
 
+
     async def _cleanup_subprocess(self, process):
-        """Kill the given process and properly closes any pipes connected to it."""
+        """Kill the given process and properly close any pipes connected to it."""
         self._log.debug(f"Cleanup Subprocess (pid {process.pid})")
         if process.returncode is None:
             try:
-                process.kill()
-                return await asyncio.wait_for(process.wait(), 1)
-            except asyncTimeoutError:
-                self._log.debug(
-                    "Waiting for process to close failed, may have zombie process.")
+                # Terminate the process
+                process.terminate()
+                # Wait for the process to exit
+                await asyncio.get_running_loop().run_in_executor(None, process.wait)
+            except subprocess.TimeoutExpired:
+                self._log.debug("Waiting for process to close failed, may have zombie process.")
             except ProcessLookupError:
                 pass
             except OSError:
@@ -376,9 +378,11 @@ class Capture:
                     raise
         elif process.returncode > 0:
             if process.returncode != 1 or self._eof_reached:
-                raise TSharkCrashException(f"TShark (pid {process.pid}) seems to have crashed (retcode: {process.returncode}).\n"
-                                           f"Last error line: {self._last_error_line}\n"
-                                           "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
+                raise TSharkCrashException(
+                    f"TShark (pid {process.pid}) seems to have crashed (retcode: {process.returncode}).\n"
+                    f"Last error line: {self._last_error_line}\n"
+                    "Try rerunning in debug mode [ capture_obj.set_debug() ] or try updating tshark.")
+
 
     def _setup_tshark_output_parser(self):
         if self.use_json:

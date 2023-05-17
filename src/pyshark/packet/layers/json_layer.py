@@ -83,7 +83,7 @@ class JsonLayer(BaseLayer):
         for field_line in self._get_all_field_lines():
             if ':' in field_line:
                 field_name, field_line = field_line.split(':', 1)
-                file.write(colored(field_name + ':', "green", ["bold"]))
+                file.write(colored(field_name + ':', "green", attrs=["bold"]))
             file.write(colored(field_line, attrs=["bold"]))
 
     def _get_all_field_lines(self):

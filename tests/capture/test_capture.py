@@ -70,3 +70,9 @@ def test_capture_gets_encryption_and_override_perfs():
         assert set(actual_parameter_options) == set(expected_results)
         assert len(actual_parameter_options) == len(expected_results)
 
+def test_get_length_from_file_capture():
+    cap = FileCapture("../data/capture_test.pcapng")
+    length_without_iterating = len(cap)
+    counter = 0
+    length_with_iterating = len([_ for _ in cap])
+    assert length_with_iterating == length_without_iterating

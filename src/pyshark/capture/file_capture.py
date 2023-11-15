@@ -2,7 +2,7 @@ import pathlib
 
 from pyshark.capture.capture import Capture
 from pyshark.packet.packet import Packet
-
+from contextlib import contextmanager
 
 class FileCapture(Capture):
     """A class representing a capture read from a file."""
@@ -51,6 +51,13 @@ class FileCapture(Capture):
         self.keep_packets = keep_packets
         self._packet_generator = self._packets_from_tshark_sync()
 
+    @contextmanager
+    def temp_value(self, attr, value):
+        original = getattr(self, attr)
+        setattr(self, attr, value)
+        yield
+        setattr(self, attr, original)
+
     def next(self) -> Packet:
         """Returns the next packet in the cap.
 
@@ -62,6 +69,14 @@ class FileCapture(Capture):
             packet = self._packet_generator.send(None)
             self._packets += [packet]
         return super(FileCapture, self).next_packet()
+
+    def __len__(self) -> int:
+        counter = 0
+        # To get the length there is no need to save packets in the packet list
+        with self.temp_value('keep_packets', False):
+            while self.next():
+                counter += 1
+        return counter
 
     def __getitem__(self, packet_index):
         if not self.keep_packets:

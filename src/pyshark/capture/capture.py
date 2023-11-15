@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import os
 import threading
 import subprocess
@@ -291,7 +292,10 @@ class Capture:
             if packet:
                 packets_captured += 1
                 try:
-                    packet_callback(packet)
+                    if inspect.iscoroutinefunction(packet_callback):
+                        await packet_callback(packet)
+                    else:
+                        packet_callback(packet)
                 except StopCapture:
                     self._log.debug("User-initiated capture stop in callback")
                     break

@@ -22,7 +22,7 @@ class TsharkXmlParser(BaseTsharkOutputParser):
         self._psml_structure = None
 
     async def get_packets_from_stream(self, stream, existing_data, got_first_packet=True):
-        if self._parse_summaries:
+        if self._parse_summaries and self._psml_structure is None:
             existing_data = await self._get_psml_struct(stream)
         return await super().get_packets_from_stream(stream, existing_data, got_first_packet=got_first_packet)
 

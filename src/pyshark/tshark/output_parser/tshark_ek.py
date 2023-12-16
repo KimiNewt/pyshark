@@ -42,17 +42,27 @@ def packet_from_ek_packet(json_pkt):
         pkt_dict = json.loads(json_pkt.decode('utf-8'))
 
     # We use the frame dict here and not the object access because it's faster.
-    frame_dict = pkt_dict['layers'].pop('frame')
-    layers = []
-    for layer in frame_dict['frame_frame_protocols'].split(':'):
-        layer_dict = pkt_dict['layers'].pop(layer, None)
-        if layer_dict is not None:
-            layers.append(EkLayer(layer, layer_dict))
+    layers = pkt_dict['layers']
+    frame_dict = layers.pop('frame')
+    
+    # Sort the frame protocol layers first
+    ek_layers = []        
+    for name in frame_dict['frame_frame_protocols'].split(':'):
+        layer = layers.get(name)
+        if isinstance(layer, list):
+            ek_layers.append(EkLayer(name, layer.pop(0)))
+        elif layers.pop(name, None) is not None:
+            ek_layers.append(EkLayer(name, layer))
+        
     # Add all leftovers
-    for name, layer in pkt_dict['layers'].items():
-        layers.append(EkLayer(name, layer))
+    for name, layer in layers.items():
+        if isinstance(layer, list):
+            for sub_layer in layer:
+                ek_layers.append(EkLayer(name, sub_layer) )
+        else:
+            ek_layers.append(EkLayer(name, layer))
 
-    return Packet(layers=layers, frame_info=EkLayer('frame', frame_dict),
+    return Packet(layers=ek_layers, frame_info=EkLayer('frame', frame_dict),
                   number=int(frame_dict.get('frame_frame_number', 0)),
                   length=int(frame_dict['frame_frame_len']),
                   sniff_time=frame_dict['frame_frame_time_epoch'],

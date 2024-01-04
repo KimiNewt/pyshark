@@ -34,8 +34,7 @@ class TsharkEkJsonParser(BaseTsharkOutputParser):
 
         return data[start_index:linesep_location], data[linesep_location + 1:]
 
-
-def packet_from_ek_packet(json_pkt):
+def packet_from_ek_packet_new(json_pkt):
     if USE_UJSON:
         pkt_dict = ujson.loads(json_pkt)
     else:
@@ -44,17 +43,28 @@ def packet_from_ek_packet(json_pkt):
     # We use the frame dict here and not the object access because it's faster.
     layers = pkt_dict['layers']
     frame_dict = layers.pop('frame')
+    if 'frame_raw' in layers:
+        frame_dict['frame_frame_raw'] = layers.pop('frame_raw')
     
     # Sort the frame protocol layers first
     ek_layers = []        
     for name in frame_dict['frame_frame_protocols'].split(':'):
-        layer = layers.get(name)
-        if isinstance(layer, list):
-            if layer:
-                ek_layers.append(EkLayer(name, layer.pop(0)))
-        elif layers.pop(name, None) is not None:
-            ek_layers.append(EkLayer(name, layer))
-        
+        raw_name = f"{name}_raw"
+        if name in layers:
+            layer = layers.get(name)
+            layer_raw = layers.get(raw_name)
+            if not layer:
+                continue
+            elif isinstance(layer, list):
+                layer = layer.pop(0)
+                layer_raw = layer_raw.pop(0) if layer_raw else None
+            else:
+                layers.pop(name, None)
+                layers.pop(raw_name, None)
+            layer[f"{name}_{raw_name}"] = layer_raw
+            ek_layer = EkLayer(name, layer)
+            ek_layers.append(ek_layer)
+            
     # Add all leftovers
     for name, layer in layers.items():
         if isinstance(layer, list):

@@ -7,6 +7,7 @@ import concurrent.futures
 import sys
 import logging
 import warnings
+import difflib
 
 from pyshark import ek_field_mapping
 from pyshark.packet.packet import Packet
@@ -14,7 +15,8 @@ from pyshark.tshark.output_parser import tshark_ek
 from pyshark.tshark.output_parser import tshark_json
 from pyshark.tshark.output_parser import tshark_xml
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
-    tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
+    tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys, \
+    TSharkProtocolNotSupportedException, tshark_supports_protocol, get_supported_protocols
 
 
 if sys.version_info < (3, 8):
@@ -323,6 +325,17 @@ class Capture:
             self.__tshark_version = get_tshark_version(self.tshark_path)
         return self.__tshark_version
 
+    def _suggest_protocol_name(self, input_protocol, tshark_path=None, suggestions=1):
+        """Suggests the correct protocol names based on the user's input.
+
+        :param input_protocol: Protocol name to match.
+        :param tshark_path: Custom path to the TShark executable.
+        :param suggestions: Number of suggestions to return.
+        :return: list: A list of suggested protocol names.
+        """
+        protocols = get_supported_protocols(tshark_path)
+        return difflib.get_close_matches(input_protocol.lower(), protocols, n=suggestions)
+
     async def _get_tshark_process(self, packet_count=None, stdin=None):
         """Returns a new tshark process with previously-set parameters."""
         self._verify_capture_parameters()
@@ -343,6 +356,17 @@ class Capture:
             output_type = "psml" if self._only_summaries else "pdml"
         parameters = [self._get_tshark_path(), "-l", "-n", "-T", output_type] + \
             self.get_parameters(packet_count=packet_count) + output_parameters
+
+        if not tshark_supports_protocol(self._display_filter):
+            suggestions = "or".join(self._suggest_protocol_name(self._display_filter))
+            if (suggestions == ""):
+                raise TSharkProtocolNotSupportedException(
+                    f"Protocol {self._display_filter} is not supported by TShark. " + \
+                    "Check if protocol is mistyped or it is not loaded to the correct plugins folder")
+            else:
+                raise TSharkProtocolNotSupportedException(
+                    f"Protocol {self._display_filter} is not supported by TShark. " + \
+                    f"Did you mean {suggestions}, or the protocol is not loaded to the correct plugins folder")
 
         self._log.debug(
             "Creating TShark subprocess with parameters: " + " ".join(parameters))

@@ -13,6 +13,8 @@ from pyshark.config import get_config
 class TSharkNotFoundException(Exception):
     pass
 
+class TSharkProtocolNotSupportedException(Exception):
+    pass
 
 class TSharkVersionException(Exception):
     pass
@@ -95,6 +97,29 @@ def tshark_supports_duplicate_keys(tshark_version):
 def tshark_supports_json(tshark_version):
     return tshark_version >= version.parse("2.2.0")
 
+def tshark_supports_protocol(protocol_name, tshark_path=None):
+    """Checks if the specified protocol is supported by TShark.
+
+    Args:
+        protocol_name (str): The name of the protocol to check.
+        tshark_path (str, optional): Custom path to the TShark executable.
+
+    Returns:
+        bool: True if the protocol is supported, False otherwise
+              If no protocol is given a True is returned
+    """
+    if not protocol_name:
+        return True
+
+    parameters = [get_process_path(tshark_path), "-G", "protocols"]
+    result = subprocess.run(parameters, capture_output=True, text=True, check=True)
+    # Filter the output and search the protocol
+    for line in result.stdout.splitlines():
+        columns = line.split('\t')
+        # Match the protocol name against the third column for an exact match
+        if len(columns) >= 3 and columns[2] == protocol_name:
+            return True
+    return False
 
 def get_tshark_display_filter_flag(tshark_version):
     """Returns '-Y' for tshark versions >= 1.10.0 and '-R' for older versions."""

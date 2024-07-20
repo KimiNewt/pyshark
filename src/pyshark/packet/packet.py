@@ -66,11 +66,11 @@ class Packet(Pickleable):
         return dir(type(self)) + list(self.__dict__.keys()) + [l.layer_name for l in self.layers]
 
     def get_raw_packet(self) -> bytes:
-        assert "FRAME_RAW" in self, "Packet contains no raw data. In order to contains it, " \
+        assert self.frame_info.has_field('raw'), "Packet contains no raw data. In order to contains it, " \
                                     "make sure that use_json and include_raw are set to True " \
                                     "in the Capture object"
         raw_packet = b''
-        byte_values = [''.join(x) for x in zip(self.frame_raw.value[0::2], self.frame_raw.value[1::2])]
+        byte_values = [''.join(x) for x in zip(self.frame_info.raw[0::2], self.frame_info.raw[1::2])]
         for value in byte_values:
             raw_packet += binascii.unhexlify(value)
         return raw_packet

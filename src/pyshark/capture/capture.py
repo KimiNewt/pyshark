@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import inspect
 import os
 import threading
@@ -402,7 +403,10 @@ class Capture:
         self._running_processes.clear()
 
         # Wait for all stderr handling to finish
-        await asyncio.gather(*self._stderr_handling_tasks)
+        for task in self._stderr_handling_tasks:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
 
     def __del__(self):
         if self._running_processes:

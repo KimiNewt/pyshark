@@ -16,7 +16,7 @@ from pyshark.tshark.output_parser import tshark_json
 from pyshark.tshark.output_parser import tshark_xml
 from pyshark.tshark.tshark import get_process_path, get_tshark_display_filter_flag, \
     tshark_supports_json, TSharkVersionException, get_tshark_version, tshark_supports_duplicate_keys
-
+from pyshark.capture.child_watching import NewUnixDefaultEventPolicy
 
 if sys.version_info < (3, 8):
     asyncTimeoutError = concurrent.futures.TimeoutError
@@ -199,8 +199,10 @@ class Capture:
                 # SafeChildWatcher O(n) -> large numbers of processes are slow
                 # ThreadedChildWatcher O(1) -> independent of process number
                 # asyncio.get_child_watcher().attach_loop(self.eventloop)
-                asyncio.set_child_watcher(asyncio.SafeChildWatcher())
-                asyncio.get_child_watcher().attach_loop(self.eventloop)
+                lp = NewUnixDefaultEventPolicy()
+                lp.get_child_watcher().attach_loop(self.eventloop)
+                
+                asyncio.set_event_loop_policy(lp)
 
     def _packets_from_tshark_sync(self, packet_count=None, existing_process=None):
         """Returns a generator of packets.

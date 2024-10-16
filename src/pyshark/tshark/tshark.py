@@ -2,6 +2,7 @@
 import json
 
 from packaging import version
+from configparser import NoSectionError
 import os
 import subprocess
 import sys
@@ -35,7 +36,10 @@ def get_process_path(tshark_path=None, process_name="tshark"):
     # Check if `config.ini` exists in the current directory or the pyshark directory
     config = get_config()
     if config:
-        possible_paths.append(config.get(process_name, f"{process_name}_path"))
+        try:
+            possible_paths.append(config.get(process_name, f"{process_name}_path"))
+        except NoSectionError:
+            pass
 
     # Add the user provided path to the search list
     if tshark_path is not None:

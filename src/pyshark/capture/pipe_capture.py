@@ -50,3 +50,18 @@ class PipeCapture(Capture):
         # Close pipe
         os.close(self._pipe)
         super(PipeCapture, self).close()
+
+    def sniff_continuously(self, packet_count=None):
+        """
+        Captures from the set interface, returning a generator which returns packets continuously.
+
+        Can be used as follows:
+        for packet in capture.sniff_continuously();
+            print 'Woo, another packet:', packet
+
+        Note: you can also call capture.apply_on_packets(packet_callback) which should have a slight performance boost.
+
+        :param packet_count: an amount of packets to capture, then stop.
+        """
+        # Retained for backwards compatibility and to add documentation.
+        return self._packets_from_tshark_sync(packet_count=packet_count)

@@ -28,7 +28,7 @@ class TSharkCrashException(Exception):
     pass
 
 
-class UnknownEncyptionStandardException(Exception):
+class UnknownEncryptionStandardException(Exception):
     pass
 
 
@@ -92,7 +92,7 @@ class Capture:
             self.encryption = (decryption_key, encryption_type.lower())
         else:
             standards = ", ".join(self.SUPPORTED_ENCRYPTION_STANDARDS)
-            raise UnknownEncyptionStandardException(f"Only the following standards are supported: {standards}.")
+            raise UnknownEncryptionStandardException(f"Only the following standards are supported: {standards}.")
 
     def __getitem__(self, item):
         """Gets the packet in the given index.

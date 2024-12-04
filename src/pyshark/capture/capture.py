@@ -91,9 +91,7 @@ class Capture:
         self._running_processes = set()
         self._decode_as = decode_as
         self._disable_protocol = disable_protocol
-        self._log = logging.Logger(
-            self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL
-        )
+        self._log = logging.Logger(self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
         self._eof_reached = False
@@ -110,10 +108,7 @@ class Capture:
         self.eventloop = eventloop
         if self.eventloop is None:
             self._setup_eventloop()
-        if (
-            encryption_type
-            and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS
-        ):
+        if encryption_type and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS:
             self.encryption = (decryption_key, encryption_type.lower())
         else:
             standards = ", ".join(self.SUPPORTED_ENCRYPTION_STANDARDS)
@@ -166,16 +161,11 @@ class Capture:
         def keep_packet(pkt):
             self._packets.append(pkt)
 
-            if (
-                packet_count != 0
-                and len(self._packets) - initial_packet_amount >= packet_count
-            ):
+            if packet_count != 0 and len(self._packets) - initial_packet_amount >= packet_count:
                 raise StopCapture()
 
         try:
-            self.apply_on_packets(
-                keep_packet, timeout=timeout, packet_count=packet_count
-            )
+            self.apply_on_packets(keep_packet, timeout=timeout, packet_count=packet_count)
             self.loaded = True
         except asyncTimeoutError:
             pass
@@ -184,11 +174,7 @@ class Capture:
         """Sets the capture to debug mode (or turns it off if specified)."""
         if set_to:
             handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(
-                logging.Formatter(
-                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-                )
-            )
+            handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
             self._log.addHandler(handler)
             self._log.level = log_level
         self.debug = set_to
@@ -226,9 +212,7 @@ class Capture:
                     asyncio.set_event_loop(self.eventloop)
                 else:
                     raise
-            if os.name == "posix" and isinstance(
-                threading.current_thread(), threading._MainThread
-            ):
+            if os.name == "posix" and isinstance(threading.current_thread(), threading._MainThread):
                 # The default child watchers (ThreadedChildWatcher) attach_loop method is empty!
                 # While using pyshark with ThreadedChildWatcher, asyncio could raise a ChildProcessError
                 # "Unknown child process pid %d, will report returncode 255"
@@ -249,9 +233,7 @@ class Capture:
         :param packet_count: If given, stops after this amount of packets is captured.
         """
         # NOTE: This has code duplication with the async version, think about how to solve this
-        tshark_process = existing_process or self.eventloop.run_until_complete(
-            self._get_tshark_process()
-        )
+        tshark_process = existing_process or self.eventloop.run_until_complete(self._get_tshark_process())
         parser = self._setup_tshark_output_parser()
         packets_captured = 0
 
@@ -279,9 +261,7 @@ class Capture:
                     break
         finally:
             if tshark_process in self._running_processes:
-                self.eventloop.run_until_complete(
-                    self._cleanup_subprocess(tshark_process)
-                )
+                self.eventloop.run_until_complete(self._cleanup_subprocess(tshark_process))
 
     def apply_on_packets(self, callback, timeout=None, packet_count=None):
         """Runs through all packets and calls the given callback (a function) with each one as it is read.
@@ -301,9 +281,7 @@ class Capture:
             coro = asyncio.wait_for(coro, timeout)
         return self.eventloop.run_until_complete(coro)
 
-    async def packets_from_tshark(
-        self, packet_callback, packet_count=None, close_tshark=True
-    ):
+    async def packets_from_tshark(self, packet_callback, packet_count=None, close_tshark=True):
         """
         A coroutine which creates a tshark process, runs the given callback on each packet that is received from it and
         closes the process when it is done.
@@ -354,9 +332,7 @@ class Capture:
                 break
 
     def _create_stderr_handling_task(self, stderr):
-        self._stderr_handling_tasks.append(
-            asyncio.ensure_future(self._handle_process_stderr_forever(stderr))
-        )
+        self._stderr_handling_tasks.append(asyncio.ensure_future(self._handle_process_stderr_forever(stderr)))
 
     async def _handle_process_stderr_forever(self, stderr):
         while True:
@@ -382,9 +358,7 @@ class Capture:
         output_parameters = []
         if self.use_json or self._use_ek:
             if not tshark_supports_json(self._get_tshark_version()):
-                raise TSharkVersionException(
-                    "JSON only supported on Wireshark >= 2.2.0"
-                )
+                raise TSharkVersionException("JSON only supported on Wireshark >= 2.2.0")
 
         if self.use_json:
             output_type = "json"
@@ -400,9 +374,7 @@ class Capture:
             + output_parameters
         )
 
-        self._log.debug(
-            "Creating TShark subprocess with parameters: " + " ".join(parameters)
-        )
+        self._log.debug("Creating TShark subprocess with parameters: " + " ".join(parameters))
         self._log.debug("Executable: %s", parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(
             *parameters, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=stdin
@@ -447,9 +419,7 @@ class Capture:
                 process.kill()
                 return await asyncio.wait_for(process.wait(), 1)
             except asyncTimeoutError:
-                self._log.debug(
-                    "Waiting for process to close failed, may have zombie process."
-                )
+                self._log.debug("Waiting for process to close failed, may have zombie process.")
             except ProcessLookupError:
                 pass
             except OSError:
@@ -553,11 +523,7 @@ class Capture:
                 "-o",
                 "wlan.enable_decryption:TRUE",
                 "-o",
-                'uat:80211_keys:"'
-                + self.encryption[1]
-                + '","'
-                + self.encryption[0]
-                + '"',
+                'uat:80211_keys:"' + self.encryption[1] + '","' + self.encryption[0] + '"',
             ]
         if self._override_prefs:
             for preference_name, preference_value in self._override_prefs.items():

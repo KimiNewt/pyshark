@@ -94,20 +94,20 @@ class LayerFieldsContainer(str, Pickleable):
     def __dir__(self):
         return dir(type(self)) + list(self.__dict__.keys()) + dir(self.main_field)
 
-    def add_field(self, field):
+    def add_field(self, field) -> None:
         self.fields.append(field)
 
     @property
-    def all_fields(self):
+    def all_fields(self) -> list:
         """Returns all fields in a list, the main field followed by the alternate fields."""
         return self.fields
 
     @property
-    def main_field(self):
+    def main_field(self) -> LayerField:
         return self.fields[0]
 
     @property
-    def alternate_fields(self):
+    def alternate_fields(self) -> list:
         """Return the alternate values of this field containers (non-main ones)."""
         return self.fields[1:]
 

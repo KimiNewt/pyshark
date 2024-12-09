@@ -10,13 +10,13 @@ Below, you'll find guidelines for contributing, reporting issues, and submitting
 
 - Check the issues page to ensure the bug hasn’t already been reported.
 - Include a clear and descriptive title for the issue.
-– Provide steps to reproduce the issue, expected results, and the actual behavior.
-– Include relevant logs, error message, and environmental details (e.g., Python version, OS).
+- Provide steps to reproduce the issue, expected results, and the actual behavior.
+- Include relevant logs, error message, and environmental details (e.g., Python version, OS).
 
 ### Suggesting Enhancements
 
-– Open a new issue for your enhancement idea and label it as a "Feature Request."
-– Describe your proposal clearly, including:
+- Open a new issue for your enhancement idea and label it as a "Feature Request."
+- Describe your proposal clearly, including:
   - The problem it solves.
   - How it improves the project.
   - Any alternative solutions you've considered.

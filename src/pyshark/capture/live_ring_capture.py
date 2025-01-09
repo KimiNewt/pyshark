@@ -41,7 +41,7 @@ class LiveRingCapture(LiveCapture):
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
                                               override_prefs=override_prefs, capture_filter=capture_filter, 
                                               use_json=use_json, use_ek=use_ek, include_raw=include_raw, eventloop=eventloop,
-                                              custom_parameters=custom_parameters, debug=debug, store_packet=store_packets, disable_dissection=disable_dissection)
+                                              custom_parameters=custom_parameters, debug=debug, store_packets=store_packets, disable_dissection=disable_dissection)
 
         self.ring_file_size = ring_file_size
         self.num_ring_files = num_ring_files

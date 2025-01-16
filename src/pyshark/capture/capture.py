@@ -51,7 +51,8 @@ class Capture:
                  decryption_key=None, encryption_type="wpa-pwd", output_file=None,
                  decode_as=None,  disable_protocol=None, tshark_path=None,
                  override_prefs=None, capture_filter=None, use_json=False, include_raw=False,
-                 use_ek=False, custom_parameters=None, debug=False):
+                 use_ek=False, custom_parameters=None, debug=False, store_packets=True,
+                 disable_dissection=False, reset_session=None):
 
         self.loaded = False
         self.tshark_path = tshark_path
@@ -61,6 +62,8 @@ class Capture:
         self._use_ek = use_ek
         self.include_raw = include_raw
         self._packets = []
+        self._store_packets = store_packets
+        self._disable_dissection = disable_dissection
         self._current_packet = 0
         self._display_filter = display_filter
         self._capture_filter = capture_filter
@@ -77,6 +80,7 @@ class Capture:
         self._last_error_line = None
         self._stderr_handling_tasks = []
         self.__tshark_version = None
+        self._reset_session = reset_session
 
         if include_raw and not (use_json or use_ek):
             raise RawMustUseJsonException(
@@ -137,7 +141,10 @@ class Capture:
         initial_packet_amount = len(self._packets)
 
         def keep_packet(pkt):
-            self._packets.append(pkt)
+            # In a live capture where you instruct tshark to write the packets to a file on disk, this can go out of memory
+            # within a couple of minutes. If you don't want to store the packets internally, this is where to set the condition.
+            if self._store_packets:
+                self._packets.append(pkt)
 
             if packet_count != 0 and len(self._packets) - initial_packet_amount >= packet_count:
                 raise StopCapture()
@@ -333,6 +340,17 @@ class Capture:
             if not tshark_supports_json(self._get_tshark_version()):
                 raise TSharkVersionException(
                     "JSON only supported on Wireshark >= 2.2.0")
+
+        # T-Shark uses a lot of memory when sniffing continuously in the background.
+        # We add an option to disable all protocol dissections. This avoid using so
+        # much memory if we only write to file and don't use the output.
+        if self._disable_dissection:
+            output_parameters.append("--disable-all-protocols")
+
+        # Resetting the internal session state periodically can help save memory
+        # when monitoring for a long time.
+        if self._reset_session != None and isinstance(self._reset_session, int):
+            output_parameters.append("-M %i" % self._reset_session)
 
         if self.use_json:
             output_type = "json"

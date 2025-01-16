@@ -9,7 +9,8 @@ class LiveRingCapture(LiveCapture):
                  encryption_type='wpa-pwk', decode_as=None, disable_protocol=None,
                  tshark_path=None, override_prefs=None, capture_filter=None, 
                  use_json=False, use_ek=False, include_raw=False, eventloop=None, 
-                 custom_parameters=None, debug=False, store_packets=True, disable_dissection=False):
+                 custom_parameters=None, debug=False, store_packets=True, disable_dissection=False,
+                 reset_session=None):
         """
         Creates a new live capturer on a given interface. Does not start the actual capture itself.
         :param ring_file_size: Size of the ring file in kB, default is 1024
@@ -35,13 +36,15 @@ class LiveRingCapture(LiveCapture):
         or else a list of parameters in the format ["--foo", "bar", "--baz", "foo"]. or else a list of parameters in the format ["--foo", "bar", "--baz", "foo"].
         :param store_packets: Tells the parent class whether we want the packets to be stored in memory or not.
         :param disable_dissection: Tells T-Shark to disable all protocol dissectors to save memory.
+        :param reset_session: Tells T-Shark to reset the internal session after this number of packets to save memory.
         """
         super(LiveRingCapture, self).__init__(interface, bpf_filter=bpf_filter, display_filter=display_filter, only_summaries=only_summaries,
                                               decryption_key=decryption_key, encryption_type=encryption_type,
                                               tshark_path=tshark_path, decode_as=decode_as, disable_protocol=disable_protocol,
-                                              override_prefs=override_prefs, capture_filter=capture_filter, 
+                                              override_prefs=override_prefs, capture_filter=capture_filter,
                                               use_json=use_json, use_ek=use_ek, include_raw=include_raw, eventloop=eventloop,
-                                              custom_parameters=custom_parameters, debug=debug, store_packets=store_packets, disable_dissection=disable_dissection)
+                                              custom_parameters=custom_parameters, debug=debug, store_packets=store_packets,
+                                              disable_dissection=disable_dissection, reset_session=reset_session)
 
         self.ring_file_size = ring_file_size
         self.num_ring_files = num_ring_files

@@ -1,5 +1,5 @@
 # Development requirements. Only required for testing
-appdirs
+platformdirs
 py
 pytest
 lxml

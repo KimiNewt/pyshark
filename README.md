@@ -19,18 +19,23 @@ Python 3.7+ is supported. An unsupported Python 2 version exists as [pyshark-leg
 Supports all modern versions of tshark / wireshark but certain features may be unavailable on older versions.
 
 ### All Platforms
-Simply run the following to install the latest from pypi
+
+Simply run the following to install the latest release from [PyPI](https://pypi.org/project/pyshark/):
 ```bash
 pip install pyshark
 ```
 
-Or install from the git repository:
+To install the latest from GitHub:
+```
+pip install https://github.com/KimiNewt/pyshark/archive/refs/heads/master.zip#subdirectory=src
+```
+
+Or install from the git repository for local development:
 ```bash
 git clone https://github.com/KimiNewt/pyshark.git
 cd pyshark/src
-python setup.py install
+pip install -e .
 ```
-
 
 ### Mac OS X
 You may have to install libxml which can be unexpected.  If you receive an error from clang or an error message about libxml, run the following:

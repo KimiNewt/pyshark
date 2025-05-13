@@ -1,4 +1,5 @@
 """Module used for the actual running of TShark"""
+
 import json
 
 from packaging import version
@@ -43,8 +44,10 @@ def get_process_path(tshark_path=None, process_name="tshark"):
 
     # Add the user provided path to the search list
     if tshark_path is not None:
-        user_tshark_path = os.path.join(os.path.dirname(tshark_path),
-                                        f"{process_name}.exe" if sys.platform.startswith("win") else process_name)
+        user_tshark_path = os.path.join(
+            os.path.dirname(tshark_path),
+            f"{process_name}.exe" if sys.platform.startswith("win") else process_name,
+        )
         possible_paths.insert(0, user_tshark_path)
 
     # Windows search order: configuration file"s path, common paths.
@@ -57,14 +60,13 @@ def get_process_path(tshark_path=None, process_name="tshark"):
                 )
     # Linux, etc. search order: configuration file's path, the system's path
     else:
-        os_path = os.getenv(
-            "PATH",
-            "/usr/bin:/usr/sbin:/usr/lib/tshark:/usr/local/bin"
-        )
+        os_path = os.getenv("PATH", "/usr/bin:/usr/sbin:/usr/lib/tshark:/usr/local/bin")
         for path in os_path.split(":"):
             possible_paths.append(os.path.join(path, process_name))
     if sys.platform.startswith("darwin"):
-        possible_paths.append(f"/Applications/Wireshark.app/Contents/MacOS/{process_name}")
+        possible_paths.append(
+            f"/Applications/Wireshark.app/Contents/MacOS/{process_name}"
+        )
 
     for path in possible_paths:
         if os.path.exists(path):
@@ -80,14 +82,18 @@ def get_process_path(tshark_path=None, process_name="tshark"):
 def get_tshark_version(tshark_path=None):
     parameters = [get_process_path(tshark_path), "-v"]
     with open(os.devnull, "w") as null:
-        version_output = subprocess.check_output(parameters, stderr=null).decode("ascii")
+        version_output = subprocess.check_output(parameters, stderr=null).decode(
+            "ascii"
+        )
 
-    version_line = version_output.splitlines()[0]
-    pattern = r'.*\s(\d+\.\d+\.\d+).*'  # match " #.#.#" version pattern
-    m = re.match(pattern, version_line)
+    # Search all lines for the line that includes 'TShark' and Version String
+    pattern = ".*TShark.*(\d+\.\d+\.\d+).*"  # Match version like 4.4.6
+    m = re.search(pattern, version_output)
     if not m:
-        raise TSharkVersionException("Unable to parse TShark version from: {}".format(version_line))
-    version_string = m.groups()[0]  # Use first match found
+        raise TSharkVersionException(
+            "Unable to parse TShark version from: {}".format(version_output)
+        )
+    version_string = m.groups(1)  # Use first version match
 
     return version.parse(version_string)
 
@@ -115,16 +121,24 @@ def get_tshark_interfaces(tshark_path=None):
     """
     parameters = [get_process_path(tshark_path), "-D"]
     with open(os.devnull, "w") as null:
-        tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode("utf-8")
+        tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode(
+            "utf-8"
+        )
 
-    return [line.split(" ")[1] for line in tshark_interfaces.splitlines() if '\\\\.\\' not in line]
+    return [
+        line.split(" ")[1]
+        for line in tshark_interfaces.splitlines()
+        if "\\\\.\\" not in line
+    ]
 
 
 def get_all_tshark_interfaces_names(tshark_path=None):
     """Returns a list of all possible interface names. Some interfaces may have aliases"""
     parameters = [get_process_path(tshark_path), "-D"]
     with open(os.devnull, "w") as null:
-        tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode("utf-8")
+        tshark_interfaces = subprocess.check_output(parameters, stderr=null).decode(
+            "utf-8"
+        )
 
     all_interface_names = []
     for line in tshark_interfaces.splitlines():
@@ -139,9 +153,7 @@ def get_ek_field_mapping(tshark_path=None):
     with open(os.devnull, "w") as null:
         mapping = subprocess.check_output(parameters, stderr=null).decode("ascii")
 
-    mapping = json.loads(
-        mapping,
-        object_pairs_hook=_duplicate_object_hook)["mappings"]
+    mapping = json.loads(mapping, object_pairs_hook=_duplicate_object_hook)["mappings"]
     # If using wireshark 4, the key "mapping" contains what we want,
     if "dynamic" in mapping and "properties" in mapping:
         pass
@@ -152,7 +164,9 @@ def get_ek_field_mapping(tshark_path=None):
     elif "pcap_file" in mapping:
         mapping = mapping["pcap_file"]
     else:
-        raise TSharkVersionException(f"Your tshark version does not support elastic-mapping. Please upgrade.")
+        raise TSharkVersionException(
+            f"Your tshark version does not support elastic-mapping. Please upgrade."
+        )
 
     return mapping["properties"]["layers"]["properties"]
 

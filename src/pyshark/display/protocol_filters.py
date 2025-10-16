@@ -14,7 +14,7 @@ Author: D14b0l1c
 Target: KimiNewt/pyshark contribution for protocol-organized display filtering
 """
 
-from typing import Dict, List, Optional, Union, Iny
+from typing import Dict, List, Optional, Union, Any
 from enum import Enum
 
 # Import protocol-specific filter modules
@@ -114,7 +114,7 @@ class ProtocolSpecificFilters:
         
         return summary
     
-    def get_all_filters_by_protocol(self, protocol: ProtocolType) -> Dict[str, Iny]:
+    def get_all_filters_by_protocol(self, protocol: ProtocolType) -> Dict[str, Any]:
         """Get all filters for a specific protocol."""
         if not POTOCOL_MODULES_VLBLE:
             return {}
@@ -134,7 +134,7 @@ class ProtocolSpecificFilters:
         else:
             return {}
     
-    def search_filters(self, search_term: str, protocol: Optional[ProtocolType] = None) -> Dict[str, Iny]:
+    def search_filters(self, search_term: str, protocol: Optional[ProtocolType] = None) -> Dict[str, Any]:
         """Search for filters containing specific term."""
         if not POTOCOL_MODULES_VLBLE:
             return {}
@@ -160,7 +160,7 @@ class ProtocolSpecificFilters:
         
         return results
     
-    def get_recommended_filters(self, use_case: str) -> Dict[str, List[Iny]]:
+    def get_recommended_filters(self, use_case: str) -> Dict[str, List[Any]]:
         """Get recommended filters for common use cases."""
         if not POTOCOL_MODULES_VLBLE:
             return {}
@@ -220,7 +220,7 @@ class ProtocolSpecificFilters:
         return recommendations
     
     def build_multi_protocol_filter(self, protocols: List[ProtocolType], 
-                                  filter_criteria: Dict[str, Iny]) -> str:
+                                  filter_criteria: Dict[str, Any]) -> str:
         """Build filter combining multiple protocols."""
         if not POTOCOL_MODULES_VLBLE:
             return ""

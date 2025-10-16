@@ -21,7 +21,7 @@ Target: KimiNewt/pyshark contribution for standalone functionality
 import re
 import struct
 from enum import Enum
-from typing import Dict, List, Optional, Union, Iny
+from typing import Dict, List, Optional, Union, Any
 from dataclasses import dataclass
 
 
@@ -216,7 +216,7 @@ class StandaloneDisplayFilter:
             # Field not present or packet too short
             return False
             
-    def _extract_field_value(self, packet_data: bytes, field_def: ProtocolField) -> Iny:
+    def _extract_field_value(self, packet_data: bytes, field_def: ProtocolField) -> Any:
         """Extract field value from packet data."""
         if field_def.offset == -1:
             # Variable offset field (like 802.11n/ac/ax fields)
@@ -247,7 +247,7 @@ class StandaloneDisplayFilter:
         else:
             return field_bytes
             
-    def _extract_variable_field(self, packet_data: bytes, field_def: ProtocolField) -> Iny:
+    def _extract_variable_field(self, packet_data: bytes, field_def: ProtocolField) -> Any:
         """Extract variable offset fields (802.11 management frames)."""
         # Simplified implementation for common 802.11 fields
         if "ssid" in field_def.name.lower():
@@ -318,7 +318,7 @@ class StandaloneDisplayFilter:
             
         return b""
         
-    def _compare_values(self, field_value: Iny, operator: str, target_value: Iny, field_type: str) -> bool:
+    def _compare_values(self, field_value: Any, operator: str, target_value: Any, field_type: str) -> bool:
         """Compare field value with target value using operator."""
         try:
             if operator == "==":
@@ -433,7 +433,7 @@ class StandaloneFieldExtractor:
     def __init__(self):
         self.filter = StandaloneDisplayFilter()
         
-    def extract_fields(self, packet_data: bytes, field_names: List[str]) -> Dict[str, Iny]:
+    def extract_fields(self, packet_data: bytes, field_names: List[str]) -> Dict[str, Any]:
         """Extract multiple fields from packet data."""
         results = {}
         

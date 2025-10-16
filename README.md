@@ -216,7 +216,7 @@ Pyshark supports automatic decryption of traces using the WEP, WPA-PWD, and WPA-
 
 ```python
 >>> cap1 = pyshark.FileCapture('/tmp/capture1.cap', decryption_key='password')
->>> cap2 = pyshark.LiveCapture(interface='wif0', decryption_key='password', encryption_type='wpa-psk')
+>>> cap2 = pyshark.LiveCapture(interface='wlan0', decryption_key='password', encryption_type='wpa-psk')
 ```
 
 A tuple of supported encryption standards, SUPPORTED_ENCRYPTION_STANDARDS,

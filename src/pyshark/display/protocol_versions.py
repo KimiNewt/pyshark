@@ -17,7 +17,7 @@ Target: KimiNewt/pyshark contribution for comprehensive protocol support
 
 import struct
 from enum import Enum, IntEnum
-from typing import Dict, List, Optional, Tuple, Set, Iny
+from typing import Dict, List, Optional, Tuple, Set, Any
 from dataclasses import dataclass, field
 from .standalone_filters import (
     StandaloneDisplayFilter, WirelessStandard, EthernetProtocol,
@@ -107,7 +107,7 @@ class ProtocolVersionFilter(StandaloneDisplayFilter):
     
     def __init__(self):
         super().__init__()
-        self.version_conditions: List[Tuple[str, Iny]] = []
+        self.version_conditions: List[Tuple[str, Any]] = []
         self.channel_map = self._init_channel_map()
         
     def _init_channel_map(self) -> Dict[int, irelessChannelInfo]:
@@ -183,7 +183,7 @@ class ProtocolVersionFilter(StandaloneDisplayFilter):
                 
         return True
         
-    def _evaluate_version_condition(self, packet_data: bytes, condition_type: str, condition_value: Iny) -> bool:
+    def _evaluate_version_condition(self, packet_data: bytes, condition_type: str, condition_value: Any) -> bool:
         """Evaluate version-specific conditions."""
         if condition_type == "wireless_standard":
             detected_standard = self._detect_wireless_standard(packet_data)
@@ -396,7 +396,7 @@ class ProtocolVersionAnalyzer:
     def __init__(self):
         self.filter = ProtocolVersionFilter()
         
-    def get_wireless_capabilities(self, standard: WirelessStandard) -> Dict[str, Iny]:
+    def get_wireless_capabilities(self, standard: WirelessStandard) -> Dict[str, Any]:
         """Get capabilities and features for a wireless standard."""
         capabilities = {
             "max_data_rate": 0,  # Mbps
@@ -461,7 +461,7 @@ class ProtocolVersionAnalyzer:
             
         return capabilities
         
-    def get_ethernet_capabilities(self, speed: EthernetSpeed) -> Dict[str, Iny]:
+    def get_ethernet_capabilities(self, speed: EthernetSpeed) -> Dict[str, Any]:
         """Get capabilities for Ethernet speed standard."""
         capabilities = {
             "speed_mbps": 0,

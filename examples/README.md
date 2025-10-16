@@ -150,19 +150,19 @@ PyShark Enhanced Display Filters Examples
 ==========================================
 
 1. ETHERNET FILTERS (30 total)
-   ✓ broadcast_frames: eth.dst == ff:ff:ff:ff:ff:ff
-   ✓ vlan_tagged: vlan
-   ✓ jumbo_frames: frame.len > 1518
+   - broadcast_frames: eth.dst == ff:ff:ff:ff:ff:ff
+   - vlan_tagged: vlan
+   - jumbo_frames: frame.len > 1518
 
 2. WIRELESS FILTERS (61 total)  
-   ✓ beacon_frames: wlan.fc.type_subtype == 0x08
-   ✓ probe_requests: wlan.fc.type_subtype == 0x04
-   ✓ wpa_handshake: eapol
+   - beacon_frames: wlan.fc.type_subtype == 0x08
+   - probe_requests: wlan.fc.type_subtype == 0x04
+   - wpa_handshake: eapol
 
 3. BLUETOOTH FILTERS (55 total)
-   ✓ inquiry_scan: hci_h4.type == 0x01 && hci_cmd.opcode == 0x0401
-   ✓ a2dp_audio: bta2dp
-   ✓ hid_data: bthid
+   - inquiry_scan: hci_h4.type == 0x01 && hci_cmd.opcode == 0x0401
+   - a2dp_audio: bta2dp
+   - hid_data: bthid
 ```
 
 ### Capture Analysis Output

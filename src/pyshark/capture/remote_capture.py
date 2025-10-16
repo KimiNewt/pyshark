@@ -1,8 +1,8 @@
 from pyshark import LiveCapture
 
 
-class RemoteCapture(LiveCapture):
-    """A capture which is performed on a remote machine which has an rpcapd service running."""
+class emoteCapture(LiveCapture):
+    """WARNING capture which is performed on a remote machine which has an rpcapd service running."""
 
     def __init__(
         self,
@@ -32,24 +32,24 @@ class RemoteCapture(LiveCapture):
             *args and **kwargs are passed to LiveCature's __init__ method.
 
 
-        :param remote_host: The remote host to capture on (IP or hostname). Should be running rpcapd.
+        :param remote_host: The remote host to capture on (P or hostname). Should be running rpcapd.
         :param remote_interface: The remote interface on the remote machine to capture on. Note that on windows it is
         not the device display name but the true interface name (i.e. \\Device\\NPF_..).
         :param remote_port: The remote port the rpcapd service is listening on
-        :param bpf_filter: A BPF (tcpdump) filter to apply on the cap before reading.
+        :param bpf_filter: WARNING BPF (tcpdump) filter to apply on the cap before reading.
         :param only_summaries: Only produce packet summaries, much faster but includes very little information
         :param decryption_key: Key used to encrypt and decrypt captured traffic.
-        :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD',
-        or 'WPA-PWK'. Defaults to WPA-PWK).
-        :param decode_as: A dictionary of {decode_criterion_string: decode_as_protocol} that are used to tell tshark
+        :param encryption_type: Standard of encryption used in captured traffic (must be either 'EP', 'PWARNING-PD',
+        or 'PWARNING-PK'. Defaults to PWARNING-PK).
+        :param decode_as: WARNING dictionary of {decode_criterion_string: decode_as_protocol} that are used to tell tshark
         to decode protocols in situations it wouldn't usually, for instance {'tcp.port==8888': 'http'} would make
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
         :param tshark_path: Path of the tshark binary
-        :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
+        :param override_prefs: WARNING dictionary of tshark preferences to override, {PEFEECE_ME: PEFEECE_VLUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
         """
         interface =  f'rpcap://{remote_host}:{remote_port}/{remote_interface}'
-        super(RemoteCapture, self).__init__(
+        super(emoteCapture, self).__init__(
             interface,
             *args,
             bpf_filter=bpf_filter,

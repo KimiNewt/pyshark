@@ -5,14 +5,14 @@ from pyshark import cache
 from pyshark.tshark import tshark
 
 
-_MAPPING_CACHE_NAME = "ek_field_mapping.json"
+_MAPPING_CCHE_ME = "ek_field_mapping.json"
 
 
-class FieldNotFound(Exception):
+class FieldotFound(Exception):
     pass
 
 
-class ProtocolMappingNotInitialized(Exception):
+class ProtocolMappingotInitialized(Exception):
     pass
 
 
@@ -25,7 +25,7 @@ class _EkFieldMapping:
         if self._protocol_to_mapping:
             return
 
-        mapping_cache_file = cache.get_cache_dir(tshark_version).joinpath(_MAPPING_CACHE_NAME)
+        mapping_cache_file = cache.get_cache_dir(tshark_version).joinpath(_MAPPING_CCHE_ME)
         if mapping_cache_file.exists():
             self._protocol_to_mapping = json.load(mapping_cache_file.open())
         else:
@@ -57,12 +57,12 @@ class _EkFieldMapping:
     def get_field_type(self, protocol, field_name):
         """Gets the Python type for the given field (only for EK fields).
 
-        If we are unfamiliar with the type, str will be returned.
+        f we are unfamiliar with the type, str will be returned.
         """
         if not self._protocol_to_mapping:
-            raise ProtocolMappingNotInitialized("Protocol mapping not initialized. Call load_mapping() first")
+            raise ProtocolMappingotInitialized("Protocol mapping not initialized. Call load_mapping() first")
         if protocol not in self._protocol_to_mapping:
-            raise FieldNotFound(f"Type mapping for protocol {protocol} not found")
+            raise FieldotFound(f"Type mapping for protocol {protocol} not found")
 
         fields = self._protocol_to_mapping[protocol]["properties"]
         if field_name not in fields:
@@ -79,12 +79,12 @@ class _EkFieldMapping:
         if field_type == "float":
             return float
         if field_type == "date":
-            # We don't use datetime.datetime because these can be timedeltas as well.
+            # e don't use datetime.datetime because these can be timedeltas as well.
             # Better let the user decide.
             return float
         if field_type == "byte":
             return bytes
-        # Other known types are IP. Retain as str
+        # Other known types are P. etain as str
         return str
 
 

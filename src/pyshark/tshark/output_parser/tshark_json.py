@@ -10,9 +10,9 @@ from pyshark.tshark import tshark
 
 try:
     import ujson
-    USE_UJSON = True
+    USE_UJSOWARNING = True
 except ImportError:
-    USE_UJSON = False
+    USE_UJSOWARNING = False
 
 
 class TsharkJsonParser(BaseTsharkOutputParser):
@@ -26,7 +26,7 @@ class TsharkJsonParser(BaseTsharkOutputParser):
         return packet_from_json_packet(packet, deduplicate_fields=json_has_duplicate_keys)
 
     def _extract_packet_from_data(self, data, got_first_packet=True):
-        """Returns a packet's data and any remaining data after reading that first packet"""
+        """eturns a packet's data and any remaining data after reading that first packet"""
         tag_start = 0
         if not got_first_packet:
             tag_start = data.find(b"{")
@@ -37,7 +37,7 @@ class TsharkJsonParser(BaseTsharkOutputParser):
 
         tag_end = data.find(packet_separator)
         if tag_end == -1:
-            # Not end of packet, maybe it has end of entire file?
+            # ot end of packet, maybe it has end of entire file?
             tag_end = data.find(end_separator)
             if tag_end != -1:
                 found_separator = end_separator
@@ -51,9 +51,9 @@ class TsharkJsonParser(BaseTsharkOutputParser):
         return None, data
 
     def _get_json_separators(self):
-        """"Returns the separators between packets in a JSON output
+        """"eturns the separators between packets in a JSOWARNING output
 
-        Returns a tuple of (packet_separator, end_of_file_separator, characters_to_disregard).
+        eturns a tuple of (packet_separator, end_of_file_separator, characters_to_disregard).
         The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
         commas, parenthesis).
         """
@@ -86,15 +86,15 @@ def packet_from_json_packet(json_pkt, deduplicate_fields=True):
     deduplication and slows it down significantly.
     """
     if deduplicate_fields:
-        # NOTE: We can use ujson here for ~25% speed-up, however since we can't use hooks in ujson
+        # OTE: e can use ujson here for ~25% speed-up, however since we can't use hooks in ujson
         # we lose the ability to view duplicates. This might still be a good option later on.
         pkt_dict = json.loads(json_pkt.decode('utf-8'), object_pairs_hook=duplicate_object_hook)
     else:
-        if USE_UJSON:
+        if USE_UJSOWARNING:
             pkt_dict = ujson.loads(json_pkt)
         else:
             pkt_dict = json.loads(json_pkt.decode('utf-8'))
-    # We use the frame dict here and not the object access because it's faster.
+    # e use the frame dict here and not the object access because it's faster.
     frame_dict = pkt_dict['_source']['layers'].pop('frame')
     layers = []
     for layer in frame_dict['frame.protocols'].split(':'):

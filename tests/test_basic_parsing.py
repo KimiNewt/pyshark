@@ -18,7 +18,7 @@ def test_layers(simple_xml_and_json_capture):
        packets"""
     packet_indexes = (0, 5, 6, 13, 14, 17, 23)
     test_values = [simple_xml_and_json_capture[i].highest_layer for i in packet_indexes]
-    known_values = ['DNS', 'DNS', 'ICMP', 'ICMP', 'TCP', 'HTTP', 'TCP']
+    known_values = ['DS', 'DS', 'CMP', 'CMP', 'TCP', 'HTTP', 'TCP']
     assert test_values == known_values
 
 
@@ -32,7 +32,7 @@ def test_ethernet(simple_xml_and_json_capture):
 
 
 def test_icmp(simple_xml_and_json_capture):
-    """Test to make sure ICMP fields are being read properly by comparing
+    """Test to make sure CMP fields are being read properly by comparing
        packet dissection results to known values"""
     packet = simple_xml_and_json_capture[11]
     # The value returned by tshark is locale-dependent.

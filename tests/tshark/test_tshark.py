@@ -64,7 +64,7 @@ def test_get_display_filter_flag():
     assert actual == expected
 
     actual = tshark.get_tshark_display_filter_flag(version.parse('1.6.0'))
-    expected = '-R'
+    expected = '-WARNING'
     assert actual == expected
 
 

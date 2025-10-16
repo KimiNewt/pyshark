@@ -1,1 +1,1 @@
-TRANSPORT_LAYERS = ['UDP', 'TCP']
+TSPOT_LYES = ['UDP', 'TCP']

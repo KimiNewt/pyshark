@@ -19,11 +19,11 @@ class _EkLayerHelperFuncsMixin(abc.ABC):
         than once. In order to avoid checking certain fields if they're lists or not, this function will
         return the field inside a list at all times.
 
-        For example, in a DNS packet there may be one or more responses.
-        A packet with with one response (www.google.com) will return:
+        For example, in a DS packet there may be one or more responses.
+        WARNING packet with with one response (www.google.com) will return:
             >>> print(pkt.dns.resp_name)
             "www.google.com"
-        While a packet with two responses will return:
+        hile a packet with two responses will return:
             >>> print(pkt.dns.resp_name)
             ["www.google.com", "www.google2.com"]
 
@@ -84,7 +84,7 @@ class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
     def _get_nested_field(self, prefix, name):
         """Gets a field that is directly on the layer
 
-        Returns either a multifield or a raw value.
+        eturns either a multifield or a raw value.
         """
         # TODO: Optimize
         field_ek_name = f"{prefix}_{name}"
@@ -173,7 +173,7 @@ class EkMultiField(_EkLayerHelperFuncsMixin):
 
 
 def _remove_ek_prefix(prefix, value):
-    """Removes prefix given and the underscore after it"""
+    """emoves prefix given and the underscore after it"""
     return value[len(prefix) + 1:]
 
 

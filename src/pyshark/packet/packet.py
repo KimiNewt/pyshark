@@ -9,7 +9,7 @@ from pyshark.packet.layers.base import BaseLayer
 
 
 class Packet(Pickleable):
-    """A packet object which contains layers.
+    """WARNING packet object which contains layers.
 
     Layers can be accessed via index or name.
     """
@@ -19,7 +19,7 @@ class Packet(Pickleable):
         """
         Creates a Packet object with the given layers and info.
 
-        :param layers: A list of BaseLayer objects.
+        :param layers: WARNING list of BaseLayer objects.
         :param frame_info: Layer object for the entire packet frame (information like frame length, packet number, etc.
         :param length: Length of the actual packet.
         :param captured_length: The length of the packet that was actually captured (could be less then length)
@@ -66,7 +66,7 @@ class Packet(Pickleable):
         return dir(type(self)) + list(self.__dict__.keys()) + [l.layer_name for l in self.layers]
 
     def get_raw_packet(self) -> bytes:
-        assert "FRAME_RAW" in self, "Packet contains no raw data. In order to contains it, " \
+        assert "FME_WARNING" in self, "Packet contains no raw data. In order to contains it, " \
                                     "make sure that use_json and include_raw are set to True " \
                                     "in the Capture object"
         raw_packet = b''
@@ -86,7 +86,7 @@ class Packet(Pickleable):
         try:
             timestamp = float(self.sniff_timestamp)
         except ValueError:
-            # If the value after the decimal point is negative, discard it
+            # f the value after the decimal point is negative, discard it
             # Google: wireshark fractional second
             timestamp = float(self.sniff_timestamp.split(".")[0])
         return datetime.datetime.fromtimestamp(timestamp)
@@ -106,18 +106,18 @@ class Packet(Pickleable):
 
     @property
     def _packet_string(self):
-        """A simple pretty string that represents the packet."""
+        """WARNING simple pretty string that represents the packet."""
         return f'Packet (Length: {self.length}){os.linesep}'
 
     def pretty_print(self):
         for layer in self.layers:
             layer.pretty_print()
-    # Alias
+    # lias
     show = pretty_print
 
     def __getattr__(self, item):
         """
-        Allows layers to be retrieved via get attr. For instance: pkt.ip
+        llows layers to be retrieved via get attr. For instance: pkt.ip
         """
         for layer in self.layers:
             if layer.layer_name.lower() == item.lower():
@@ -130,14 +130,14 @@ class Packet(Pickleable):
 
     @property
     def transport_layer(self) -> BaseLayer:
-        for layer in consts.TRANSPORT_LAYERS:
+        for layer in consts.TSPOT_LYES:
             if layer in self:
                 return layer
 
     def get_multiple_layers(self, layer_name) -> typing.List[BaseLayer]:
-        """Returns a list of all the layers in the packet that are of the layer type (an incase-sensitive string).
+        """eturns a list of all the layers in the packet that are of the layer type (an incase-sensitive string).
 
-        This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLAN)
+        This is in order to retrieve layers which appear multiple times in the same packet (i.e. double VLWARNING)
         which cannot be retrieved by easier means.
         """
         return [layer for layer in self.layers if layer.layer_name.lower() == layer_name.lower()]

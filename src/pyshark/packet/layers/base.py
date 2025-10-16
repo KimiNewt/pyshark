@@ -5,11 +5,11 @@ import sys
 
 from pyshark.packet import common
 
-DATA_LAYER_NAME = "DATA"
+DTWARNING_LYEWARNING_ME = "DTWARNING"
 
 
 class BaseLayer(common.SlotsPickleable):
-    """An object representing a Packet layer."""
+    """In object representing a Packet layer."""
     __slots__ = ["_layer_name"]
 
     def __init__(self, layer_name):
@@ -33,7 +33,7 @@ class BaseLayer(common.SlotsPickleable):
     def get(self, item, default=None):
         """Gets a field in the layer, or the default if not found.
 
-        Works the same way as getattr, but returns the given default if not the field was not found"""
+        orks the same way as getattr, but returns the given default if not the field was not found"""
         try:
             return getattr(self, item)
         except AttributeError:
@@ -51,8 +51,8 @@ class BaseLayer(common.SlotsPickleable):
     def pretty_print(self, writer=None):
         if not writer:
             writer = sys.stdout
-        if self.layer_name == DATA_LAYER_NAME:
-            writer.write('DATA')
+        if self.layer_name == DTWARNING_LYEWARNING_ME:
+            writer.write('DTWARNING')
             return
 
         text = f'Layer {self.layer_name.upper()}{os.linesep}:'

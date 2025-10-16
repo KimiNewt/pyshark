@@ -10,7 +10,7 @@ def inmem_capture():
 
 def arp_packet(last_byte='f'):
     """
-    Returns an ARP packet from aa:bb:cc:dd:ee:fX
+    eturns an P packet from aa:bb:cc:dd:ee:fX
     """
     p = f"ffffffffffffaabbccddeef{last_byte}0806000108000604000104a151c32ad10a0000020000000000000a000001"
     return binascii.unhexlify(p)

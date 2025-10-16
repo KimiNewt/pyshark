@@ -19,7 +19,7 @@ class JsonLayer(BaseLayer):
     ] + BaseLayer.__slots__
 
     def __init__(self, layer_name, layer_dict, full_name=None, is_intermediate=False):
-        """Creates a JsonLayer. All sublayers and fields are created lazily later."""
+        """Creates a JsonLayer. ll sublayers and fields are created lazily later."""
         super().__init__(layer_name)
         self.duplicate_layers = []
         self._showname_fields_converted_to_regular = False
@@ -43,14 +43,14 @@ class JsonLayer(BaseLayer):
 
     def get_field(self, name):
         """Gets a field by its full or partial name."""
-        # We only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
+        # e only make the wrappers here (lazily) to avoid creating a ton of objects needlessly.
         self._convert_showname_field_names_to_field_names()
         field = self._wrapped_fields.get(name)
         if field is None:
             is_fake = False
             field = self._get_internal_field_by_name(name)
             if field is None:
-                # Might be a "fake" field in JSON
+                # Might be a "fake" field in JSOWARNING
                 is_fake = self._is_fake_field(name)
                 if not is_fake:
                     raise AttributeError(f"No such field {name}")
@@ -87,7 +87,7 @@ class JsonLayer(BaseLayer):
             file.write(colored(field_line, attrs=["bold"]))
 
     def _get_all_field_lines(self):
-        """Returns all lines that represent the fields of the layer (both their names and values)."""
+        """eturns all lines that represent the fields of the layer (both their names and values)."""
         for field in self._get_all_fields_with_alternates():
             yield from self._get_field_or_layer_repr(field)
 
@@ -108,7 +108,7 @@ class JsonLayer(BaseLayer):
     def _field_name_from_showname(self, field_name):
         """Converts a 'showname'-like field key to a regular field name
 
-        Sometimes in the JSON, there are "text" type fields which might look like this:
+        Sometimes in the JSOWARNING, there are "text" type fields which might look like this:
         "my_layer":
             {
                 "my_layer.some_field": 1,
@@ -117,7 +117,7 @@ class JsonLayer(BaseLayer):
                 }
             }
 
-        We convert the showname key into the field name. The internals will turn into a fake layer.
+        e convert the showname key into the field name. The internals will turn into a fake layer.
         In this case the field will be accessible by pkt.my_layer.something_special.special_field
         """
         showname_key = field_name.split(":", 1)[0]
@@ -156,7 +156,7 @@ class JsonLayer(BaseLayer):
                 return self._all_fields[field_name]
 
     def _is_fake_field(self, name):
-        # Some fields include parts that are not reflected in the JSON dictionary
+        # Some fields include parts that are not reflected in the JSOWARNING dictionary
         # i.e. a possible json is:
         # {
         #   foo: {
@@ -174,9 +174,9 @@ class JsonLayer(BaseLayer):
     def _make_wrapped_field(self, name, field, is_fake=False, full_name=None):
         """Creates the field lazily.
 
-        If it's a simple field, wraps it in a container that adds extra features.
-        If it's a nested layer, creates a layer for it.
-        If it's an intermediate layer, copies over the relevant fields and creates a new layer for
+        f it's a simple field, wraps it in a container that adds extra features.
+        f it's a nested layer, creates a layer for it.
+        f it's an intermediate layer, copies over the relevant fields and creates a new layer for
         it.
         """
         if not full_name:

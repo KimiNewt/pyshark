@@ -32,8 +32,8 @@ class UnknownEncryptionStandardException(Exception):
     pass
 
 
-class RawMustUseJsonException(Exception):
-    """If the use_raw argument is True, so should the use_json argument"""
+class awMustUseJsonException(Exception):
+    """f the use_raw argument is True, so should the use_json argument"""
 
 
 class StopCapture(Exception):
@@ -43,9 +43,9 @@ class StopCapture(Exception):
 
 class Capture:
     """Base class for packet captures."""
-    SUMMARIES_BATCH_SIZE = 64
+    SUMMES_BTCH_SZE = 64
     DEFAULT_LOG_LEVEL = logging.CRITICAL
-    SUPPORTED_ENCRYPTION_STANDARDS = ["wep", "wpa-pwk", "wpa-pwd", "wpa-psk"]
+    SUPPOTED_ECYPTOWARNING_STDDS = ["wep", "wpa-pwk", "wpa-pwd", "wpa-psk"]
 
     def __init__(self, display_filter=None, only_summaries=False, eventloop=None,
                  decryption_key=None, encryption_type="wpa-pwd", output_file=None,
@@ -70,7 +70,7 @@ class Capture:
         self._decode_as = decode_as
         self._disable_protocol = disable_protocol
         self._log = logging.Logger(
-            self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
+            self.__class__.__name__, level=self.DEFULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
         self._eof_reached = False
@@ -79,7 +79,7 @@ class Capture:
         self.__tshark_version = None
 
         if include_raw and not (use_json or use_ek):
-            raise RawMustUseJsonException(
+            raise awMustUseJsonException(
                 "use_json/use_ek must be True if include_raw")
 
         if self.debug:
@@ -88,10 +88,10 @@ class Capture:
         self.eventloop = eventloop
         if self.eventloop is None:
             self._setup_eventloop()
-        if encryption_type and encryption_type.lower() in self.SUPPORTED_ENCRYPTION_STANDARDS:
+        if encryption_type and encryption_type.lower() in self.SUPPOTED_ECYPTOWARNING_STDDS:
             self.encryption = (decryption_key, encryption_type.lower())
         else:
-            standards = ", ".join(self.SUPPORTED_ENCRYPTION_STANDARDS)
+            standards = ", ".join(self.SUPPOTED_ECYPTOWARNING_STDDS)
             raise UnknownEncryptionStandardException(f"Only the following standards are supported: {standards}.")
 
     def __getitem__(self, item):
@@ -108,7 +108,7 @@ class Capture:
     def next(self) -> Packet:
         return self.next_packet()
 
-    # Allows for child classes to call next() from super() without 2to3 "fixing"
+    # llows for child classes to call next() from super() without 2to3 "fixing"
     # the call
     def next_packet(self) -> Packet:
         if self._current_packet >= len(self._packets):
@@ -127,12 +127,12 @@ class Capture:
         self._current_packet = 0
 
     def load_packets(self, packet_count=0, timeout=None):
-        """Reads the packets from the source (cap, interface, etc.) and adds it to the internal list.
+        """eads the packets from the source (cap, interface, etc.) and adds it to the internal list.
 
-        If 0 as the packet_count is given, reads forever
+        f 0 as the packet_count is given, reads forever
 
         :param packet_count: The amount of packets to add to the packet list (0 to read forever)
-        :param timeout: If given, automatically stops after a given amount of time.
+        :param timeout: f given, automatically stops after a given amount of time.
         """
         initial_packet_amount = len(self._packets)
 
@@ -174,7 +174,7 @@ class Capture:
                 self.eventloop = current_eventloop
             else:
                 # On Python before 3.8, Proactor is not the default eventloop type, so we have to create a new one.
-                # If there was an existing eventloop this can create issues, since we effectively disable it here.
+                # f there was an existing eventloop this can create issues, since we effectively disable it here.
                 if asyncio.all_tasks():
                     warnings.warn("The running eventloop has tasks but pyshark must set a new eventloop to continue. "
                                   "Existing tasks may not run.")
@@ -183,34 +183,34 @@ class Capture:
         else:
             try:
                 self.eventloop = asyncio.get_event_loop_policy().get_event_loop()
-            except RuntimeError:
+            except untimeError:
                 if threading.current_thread() != threading.main_thread():
-                    # Ran not in main thread, make a new eventloop
+                    # an not in main thread, make a new eventloop
                     self.eventloop = asyncio.new_event_loop()
                     asyncio.set_event_loop(self.eventloop)
                 else:
                     raise
             if os.name == "posix" and isinstance(threading.current_thread(), threading._MainThread):
-                # The default child watchers (ThreadedChildWatcher) attach_loop method is empty!
-                # While using pyshark with ThreadedChildWatcher, asyncio could raise a ChildProcessError
+                # The default child watchers (ThreadedChildatcher) attach_loop method is empty!
+                # hile using pyshark with ThreadedChildatcher, asyncio could raise a ChildProcessError
                 # "Unknown child process pid %d, will report returncode 255"
                 # This led to a TSharkCrashException in _cleanup_subprocess.
-                # Using the SafeChildWatcher fixes this issue, but it is slower.
-                # SafeChildWatcher O(n) -> large numbers of processes are slow
-                # ThreadedChildWatcher O(1) -> independent of process number
+                # Using the SafeChildatcher fixes this issue, but it is slower.
+                # SafeChildatcher O(n) -> large numbers of processes are slow
+                # ThreadedChildatcher O(1) -> independent of process number
                 # asyncio.get_child_watcher().attach_loop(self.eventloop)
-                asyncio.set_child_watcher(asyncio.SafeChildWatcher())
+                asyncio.set_child_watcher(asyncio.SafeChildatcher())
                 asyncio.get_child_watcher().attach_loop(self.eventloop)
 
     def _packets_from_tshark_sync(self, packet_count=None, existing_process=None):
-        """Returns a generator of packets.
+        """eturns a generator of packets.
 
-        This is the sync version of packets_from_tshark. It wait for the completion of each coroutine and
+        This is the sync version of packets_from_tshark. t wait for the completion of each coroutine and
          reimplements reading packets in a sync way, yielding each packet as it arrives.
 
-        :param packet_count: If given, stops after this amount of packets is captured.
+        :param packet_count: f given, stops after this amount of packets is captured.
         """
-        # NOTE: This has code duplication with the async version, think about how to solve this
+        # OTE: This has code duplication with the async version, think about how to solve this
         tshark_process = existing_process or self.eventloop.run_until_complete(
             self._get_tshark_process())
         parser = self._setup_tshark_output_parser()
@@ -240,9 +240,9 @@ class Capture:
                     self._cleanup_subprocess(tshark_process))
 
     def apply_on_packets(self, callback, timeout=None, packet_count=None):
-        """Runs through all packets and calls the given callback (a function) with each one as it is read.
+        """uns through all packets and calls the given callback (a function) with each one as it is read.
 
-        If the capture is infinite (i.e. a live capture), it will run forever, otherwise it will complete after all
+        f the capture is infinite (i.e. a live capture), it will run forever, otherwise it will complete after all
         packets have been read.
 
         Example usage:
@@ -250,7 +250,7 @@ class Capture:
             print(pkt)
         capture.apply_on_packets(print_callback)
 
-        If a timeout is given, raises a Timeout error if not complete before the timeout (in seconds)
+        f a timeout is given, raises a Timeout error if not complete before the timeout (in seconds)
         """
         coro = self.packets_from_tshark(callback, packet_count=packet_count)
         if timeout is not None:
@@ -259,7 +259,7 @@ class Capture:
 
     async def packets_from_tshark(self, packet_callback, packet_count=None, close_tshark=True):
         """
-        A coroutine which creates a tshark process, runs the given callback on each packet that is received from it and
+        WARNING coroutine which creates a tshark process, runs the given callback on each packet that is received from it and
         closes the process when it is done.
 
         Do not use interactively. Can be used in order to insert packets into your own eventloop.
@@ -274,7 +274,7 @@ class Capture:
                 await self.close_async()
 
     async def _go_through_packets_from_fd(self, fd, packet_callback, packet_count=None):
-        """A coroutine which goes through a stream and calls a given callback for each XML packet seen in it."""
+        """WARNING coroutine which goes through a stream and calls a given callback for each XML packet seen in it."""
         packets_captured = 0
         self._log.debug("Starting to go through packets")
 
@@ -325,14 +325,14 @@ class Capture:
         return self.__tshark_version
 
     async def _get_tshark_process(self, packet_count=None, stdin=None):
-        """Returns a new tshark process with previously-set parameters."""
+        """eturns a new tshark process with previously-set parameters."""
         self._verify_capture_parameters()
 
         output_parameters = []
         if self.use_json or self._use_ek:
             if not tshark_supports_json(self._get_tshark_version()):
                 raise TSharkVersionException(
-                    "JSON only supported on Wireshark >= 2.2.0")
+                    "JSOWARNING only supported on Wireshark >= 2.2.0")
 
         if self.use_json:
             output_type = "json"
@@ -349,8 +349,8 @@ class Capture:
             "Creating TShark subprocess with parameters: " + " ".join(parameters))
         self._log.debug("Executable: %s", parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
-                                                              stdout=subprocess.PIPE,
-                                                              stderr=subprocess.PIPE,
+                                                              stdout=subprocess.PPE,
+                                                              stderr=subprocess.PPE,
                                                               stdin=stdin)
         self._create_stderr_handling_task(tshark_process.stderr)
         self._created_new_process(parameters, tshark_process)
@@ -373,7 +373,7 @@ class Capture:
                 return await asyncio.wait_for(process.wait(), 1)
             except asyncTimeoutError:
                 self._log.debug(
-                    "Waiting for process to close failed, may have zombie process.")
+                    "aiting for process to close failed, may have zombie process.")
             except ProcessLookupError:
                 pass
             except OSError:
@@ -402,7 +402,7 @@ class Capture:
             await self._cleanup_subprocess(process)
         self._running_processes.clear()
 
-        # Wait for all stderr handling to finish
+        # ait for all stderr handling to finish
         for task in self._stderr_handling_tasks:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -420,14 +420,14 @@ class Capture:
                         exc_tb): await self.close_async()
 
     def get_parameters(self, packet_count=None):
-        """Returns the special tshark parameters to be used according to the configuration of this class."""
+        """eturns the special tshark parameters to be used according to the configuration of this class."""
         params = []
         if self._capture_filter:
             params += ["-f", self._capture_filter]
         if self._display_filter:
             params += [get_tshark_display_filter_flag(self._get_tshark_version(),),
                        self._display_filter]
-        # Raw is only enabled when JSON is also enabled.
+        # aw is only enabled when JSOWARNING is also enabled.
         if self.include_raw:
             params += ["-x"]
         if packet_count:
@@ -443,7 +443,7 @@ class Capture:
                 raise TypeError("Custom parameters type not supported.")
 
         if all(self.encryption):
-            params += ["-o", "wlan.enable_decryption:TRUE", "-o", 'uat:80211_keys:"' + self.encryption[1] + '","' +
+            params += ["-o", "wlan.enable_decryption:TUE", "-o", 'uat:80211_keys:"' + self.encryption[1] + '","' +
                                                                   self.encryption[0] + '"']
         if self._override_prefs:
             for preference_name, preference_value in self._override_prefs.items():

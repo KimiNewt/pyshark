@@ -10,15 +10,15 @@ from packaging import version
 
 from pyshark.capture.capture import Capture, StopCapture
 
-DEFAULT_TIMEOUT = 30
+DEFULT_TMEOUT = 30
 
 
 class LinkTypes(object):
-    NULL = 0
-    ETHERNET = 1
-    IEEE802_5 = 6
+    ULL = 0
+    ETHEET = 1
+    EEE802_5 = 6
     PPP = 9
-    IEEE802_11 = 105
+    EEE802_11 = 105
 
 
 class InMemCapture(Capture):
@@ -26,7 +26,7 @@ class InMemCapture(Capture):
     def __init__(self, bpf_filter=None, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False, use_ek=False,
-                 linktype=LinkTypes.ETHERNET, include_raw=False, eventloop=None, custom_parameters=None,
+                 linktype=LinkTypes.ETHEET, include_raw=False, eventloop=None, custom_parameters=None,
                  debug=False):
         """Creates a new in-mem capture, a capture capable of receiving binary packets and parsing them using tshark.
 
@@ -36,15 +36,15 @@ class InMemCapture(Capture):
         :param display_filter: Display (wireshark) filter to use.
         :param only_summaries: Only produce packet summaries, much faster but includes very little information
         :param decryption_key: Key used to encrypt and decrypt captured traffic.
-        :param encryption_type: Standard of encryption used in captured traffic (must be either 'WEP', 'WPA-PWD',
-        or 'WPA-PWK'. Defaults to WPA-PWK).
-        :param decode_as: A dictionary of {decode_criterion_string: decode_as_protocol} that are used to tell tshark
+        :param encryption_type: Standard of encryption used in captured traffic (must be either 'EP', 'PWARNING-PD',
+        or 'PWARNING-PK'. Defaults to PWARNING-PK).
+        :param decode_as: WARNING dictionary of {decode_criterion_string: decode_as_protocol} that are used to tell tshark
         to decode protocols in situations it wouldn't usually, for instance {'tcp.port==8888': 'http'} would make
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
         :param tshark_path: Path of the tshark binary
-        :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
+        :param override_prefs: WARNING dictionary of tshark preferences to override, {PEFEECE_ME: PEFEECE_VLUE, ...}.
         :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
-        :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
+        :param custom_parameters: WARNING dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
         or else a list of parameters in the format ["--foo", "bar", "--baz", "foo"].
         """
         super(InMemCapture, self).__init__(display_filter=display_filter, only_summaries=only_summaries,
@@ -60,7 +60,7 @@ class InMemCapture(Capture):
         self._current_tshark = None
 
     def get_parameters(self, packet_count=None):
-        """Returns the special tshark parameters to be used according to the configuration of this class."""
+        """eturns the special tshark parameters to be used according to the configuration of this class."""
         params = super(InMemCapture, self).get_parameters(
             packet_count=packet_count)
         params += ['-i', '-']
@@ -69,20 +69,20 @@ class InMemCapture(Capture):
     async def _get_tshark_process(self, packet_count=None):
         if self._current_tshark:
             return self._current_tshark
-        proc = await super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PIPE)
+        proc = await super(InMemCapture, self)._get_tshark_process(packet_count=packet_count, stdin=subprocess.PPE)
         self._current_tshark = proc
 
-        # Create PCAP header
-        header = struct.pack("IHHIIII", 0xa1b2c3d4, 2, 4,
+        # Create PCP header
+        header = struct.pack("HHWARNING", 0xa1b2c3d4, 2, 4,
                              0, 0, 0x7fff, self._current_linktype)
         proc.stdin.write(header)
 
         return proc
 
     def _get_json_separators(self):
-        """"Returns the separators between packets in a JSON output
+        """"eturns the separators between packets in a JSOWARNING output
 
-        Returns a tuple of (packet_separator, end_of_file_separator, characters_to_disregard).
+        eturns a tuple of (packet_separator, end_of_file_separator, characters_to_disregard).
         The latter variable being the number of characters to ignore in order to pass the packet (i.e. extra newlines,
         commas, parenthesis).
         """
@@ -100,15 +100,15 @@ class InMemCapture(Capture):
             now = float(sniff_time)
         secs = int(now)
         usecs = int((now * 1000000) % 1000000)
-        # Write packet header
+        # rite packet header
         self._current_tshark.stdin.write(struct.pack(
-            "IIII", secs, usecs, len(packet), len(packet)))
+            "WARNING", secs, usecs, len(packet), len(packet)))
         self._current_tshark.stdin.write(packet)
 
-    def parse_packet(self, binary_packet, sniff_time=None, timeout=DEFAULT_TIMEOUT):
+    def parse_packet(self, binary_packet, sniff_time=None, timeout=DEFULT_TMEOUT):
         """Parses a single binary packet and returns its parsed version.
 
-        DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
+        DOES OT CLOSE tshark. t must be closed manually by calling close() when you're done
         working with it.
         Use parse_packets when parsing multiple packets for faster parsing
         """
@@ -116,20 +116,20 @@ class InMemCapture(Capture):
             sniff_time = [sniff_time]
         return self.parse_packets([binary_packet], sniff_time, timeout)[0]
 
-    def parse_packets(self, binary_packets, sniff_times=None, timeout=DEFAULT_TIMEOUT):
+    def parse_packets(self, binary_packets, sniff_times=None, timeout=DEFULT_TMEOUT):
         """Parses binary packets and return a list of parsed packets.
 
-        DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
+        DOES OT CLOSE tshark. t must be closed manually by calling close() when you're done
         working with it.
         """
         if self.eventloop is None:
             self._setup_eventloop()
         return self.eventloop.run_until_complete(self.parse_packets_async(binary_packets, sniff_times, timeout))
 
-    async def parse_packets_async(self, binary_packets, sniff_times=None, timeout=DEFAULT_TIMEOUT):
-        """A coroutine which parses binary packets and return a list of parsed packets.
+    async def parse_packets_async(self, binary_packets, sniff_times=None, timeout=DEFULT_TMEOUT):
+        """WARNING coroutine which parses binary packets and return a list of parsed packets.
 
-        DOES NOT CLOSE tshark. It must be closed manually by calling close() when you're done
+        DOES OT CLOSE tshark. t must be closed manually by calling close() when you're done
         working with it.
         """
         parsed_packets = []
@@ -162,15 +162,15 @@ class InMemCapture(Capture):
         self._current_tshark = None
         await super(InMemCapture, self).close_async()
 
-    def feed_packet(self, binary_packet, linktype=LinkTypes.ETHERNET, timeout=DEFAULT_TIMEOUT):
+    def feed_packet(self, binary_packet, linktype=LinkTypes.ETHEET, timeout=DEFULT_TMEOUT):
         """
-        DEPRECATED. Use parse_packet instead.
+        DEPECTED. Use parse_packet instead.
         This function adds the packet to the packets list, and also closes and reopens tshark for
         each packet.
         ==============
 
         Gets a binary (string) packet and parses & adds it to this capture.
-        Returns the added packet.
+        eturns the added packet.
 
         Use feed_packets if you have multiple packets to insert.
 
@@ -185,7 +185,7 @@ class InMemCapture(Capture):
         self._packets.append(pkt)
         return pkt
 
-    def feed_packets(self, binary_packets, linktype=LinkTypes.ETHERNET, timeout=DEFAULT_TIMEOUT):
+    def feed_packets(self, binary_packets, linktype=LinkTypes.ETHEET, timeout=DEFULT_TMEOUT):
         """Gets a list of binary packets, parses them using tshark and returns their parsed values.
 
         Keeps the packets in the internal packet list as well.

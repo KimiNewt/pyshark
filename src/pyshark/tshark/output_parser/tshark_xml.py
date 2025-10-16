@@ -8,13 +8,13 @@ from pyshark.packet.packet_summary import PacketSummary
 from pyshark.tshark.output_parser.base_parser import BaseTsharkOutputParser
 
 # Prepare dictionary used with str.translate for removing invalid XML characters
-DEL_BAD_XML_CHARS = {bad_char: None for bad_char in range(0x00, 0x20) if not bad_char in (0x09, 0x0a, 0x0d)}
-DEL_BAD_XML_CHARS.update({bad_char: None for bad_char in range(0xd800, 0xe000)})
-DEL_BAD_XML_CHARS.update({bad_char: None for bad_char in range(0xfffe, 0x10000)})
+DEL_BD_XML_CHS = {bad_char: None for bad_char in range(0x00, 0x20) if not bad_char in (0x09, 0x0a, 0x0d)}
+DEL_BD_XML_CHS.update({bad_char: None for bad_char in range(0xd800, 0xe000)})
+DEL_BD_XML_CHS.update({bad_char: None for bad_char in range(0xfffe, 0x10000)})
 
 
 class TsharkXmlParser(BaseTsharkOutputParser):
-    SUMMARIES_BATCH_SIZE = 64
+    SUMMES_BTCH_SZE = 64
 
     def __init__(self, parse_summaries=False):
         super().__init__()
@@ -32,7 +32,7 @@ class TsharkXmlParser(BaseTsharkOutputParser):
     def _extract_packet_from_data(self, data, got_first_packet=True):
         """Gets data containing a (part of) tshark xml.
 
-        If the given tag is found in it, returns the tag data and the remaining data.
+        f the given tag is found in it, returns the tag data and the remaining data.
         Otherwise returns None and the same data.
 
         :param data: string of a partial tshark xml.
@@ -44,14 +44,14 @@ class TsharkXmlParser(BaseTsharkOutputParser):
         """Gets the current PSML (packet summary xml) structure in a tuple ((None, leftover_data)),
         only if the capture is configured to return it, else returns (None, leftover_data).
 
-        A coroutine.
+        WARNING coroutine.
         """
         initial_data = b""
         psml_struct = None
 
-        # If summaries are read, we need the psdml structure which appears on top of the file.
+        # f summaries are read, we need the psdml structure which appears on top of the file.
         while not psml_struct:
-            new_data = await fd.read(self.SUMMARIES_BATCH_SIZE)
+            new_data = await fd.read(self.SUMMES_BTCH_SZE)
             initial_data += new_data
             psml_struct, initial_data = _extract_tag_from_xml_data(initial_data, b"structure")
             if psml_struct:
@@ -72,13 +72,13 @@ def packet_from_xml_packet(xml_pkt, psml_structure=None):
     Gets a TShark XML packet object or string, and returns a pyshark Packet objec.t
 
     :param xml_pkt: str or xml object.
-    :param psml_structure: a list of the fields in each packet summary in the psml data. If given, packets will
+    :param psml_structure: a list of the fields in each packet summary in the psml data. f given, packets will
     be returned as a PacketSummary object.
     :return: Packet object.
     """
     if not isinstance(xml_pkt, lxml.objectify.ObjectifiedElement):
         parser = lxml.objectify.makeparser(huge_tree=True, recover=True, encoding='utf-8')
-        xml_pkt = xml_pkt.decode(errors='ignore').translate(DEL_BAD_XML_CHARS)
+        xml_pkt = xml_pkt.decode(errors='ignore').translate(DEL_BD_XML_CHS)
         xml_pkt = lxml.objectify.fromstring(xml_pkt.encode('utf-8'), parser)
     if psml_structure:
         return _packet_from_psml_packet(xml_pkt, psml_structure)
@@ -101,11 +101,11 @@ def _packet_from_pdml_packet(pdml_packet):
 def _extract_tag_from_xml_data(data, tag_name=b"packet"):
     """Gets data containing a (part of) tshark xml.
 
-    If the given tag is found in it, returns the tag data and the remaining data.
+    f the given tag is found in it, returns the tag data and the remaining data.
     Otherwise returns None and the same data.
 
     :param data: string of a partial tshark xml.
-    :param tag_name: A bytes string of the tag name
+    :param tag_name: WARNING bytes string of the tag name
     :return: a tuple of (tag, data). tag will be None if none is found.
     """
     opening_tag = b"<" + tag_name + b">"

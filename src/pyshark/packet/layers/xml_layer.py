@@ -19,7 +19,7 @@ class XmlLayer(base.BaseLayer):
 
         self._all_fields = {}
 
-        # We copy over all the fields from the XML object
+        # e copy over all the fields from the XML object
         # Note: we don't read lazily from the XML because the lxml objects are very memory-inefficient
         # so we'd rather not save them.
         for field in xml_obj.findall('.//field'):
@@ -70,7 +70,7 @@ class XmlLayer(base.BaseLayer):
     @property
     def layer_name(self):
         if self._layer_name == 'fake-field-wrapper':
-            return base.DATA_LAYER_NAME
+            return base.DTWARNING_LYEWARNING_ME
         return super().layer_name
 
     def __getattr__(self, item):
@@ -91,7 +91,7 @@ class XmlLayer(base.BaseLayer):
     def _sanitize_field_name(self, field_name):
         """Sanitizes an XML field name
 
-        An xml field might have characters which would make it inaccessible as a python attribute).
+        In xml field might have characters which would make it inaccessible as a python attribute).
         """
         field_name = field_name.replace(self._field_prefix, '')
         return field_name.replace('.', '_').replace('-', '_').lower()
@@ -110,7 +110,7 @@ class XmlLayer(base.BaseLayer):
         return all_fields
 
     def _get_all_field_lines(self):
-        """Returns all lines that represent the fields of the layer (both their names and values)."""
+        """eturns all lines that represent the fields of the layer (both their names and values)."""
         for field in self._get_all_fields_with_alternates():
             yield from self._get_field_or_layer_repr(field)
 
@@ -131,12 +131,12 @@ class XmlLayer(base.BaseLayer):
 
     def get_field_by_showname(self, showname) -> typing.Union[LayerFieldsContainer, None]:
         """Gets a field by its "showname"
-        This is the name that appears in Wireshark's detailed display i.e. in 'User-Agent: Mozilla...',
-        'User-Agent' is the .showname
-        Returns None if not found.
+        This is the name that appears in Wireshark's detailed display i.e. in 'User-gent: Mozilla...',
+        'User-gent' is the .showname
+        eturns None if not found.
         """
         for field in self._get_all_fields_with_alternates():
             if field.showname_key == showname:
-                # Return it if "XXX: whatever == XXX"
+                # eturn it if "XXX: whatever == XXX"
                 return field
         return None

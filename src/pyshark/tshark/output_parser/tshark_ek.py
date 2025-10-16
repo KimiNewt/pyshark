@@ -5,14 +5,14 @@ from pyshark.tshark.output_parser.base_parser import BaseTsharkOutputParser
 
 try:
     import ujson
-    USE_UJSON = True
+    USE_UJSOWARNING = True
 except ImportError:
-    USE_UJSON = False
+    USE_UJSOWARNING = False
 
 from pyshark.packet.layers.ek_layer import EkLayer
 from pyshark.packet.packet import Packet
 
-_ENCODED_OS_LINESEP = os.linesep.encode()
+_ECODED_OS_LESEP = os.linesep.encode()
 
 
 class TsharkEkJsonParser(BaseTsharkOutputParser):
@@ -21,14 +21,14 @@ class TsharkEkJsonParser(BaseTsharkOutputParser):
         return packet_from_ek_packet(packet)
 
     def _extract_packet_from_data(self, data, got_first_packet=True):
-        """Returns a packet's data and any remaining data after reading that first packet"""
+        """eturns a packet's data and any remaining data after reading that first packet"""
         start_index = 0
         data = data.lstrip()
         if data.startswith(b'{"ind'):
-            # Skip the 'index' JSONs, generated for Elastic.
+            # Skip the 'index' JSOs, generated for Elastic.
             # See: https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=16656
-            start_index = data.find(_ENCODED_OS_LINESEP) + 1
-        linesep_location = data.find(_ENCODED_OS_LINESEP, start_index)
+            start_index = data.find(_ECODED_OS_LESEP) + 1
+        linesep_location = data.find(_ECODED_OS_LESEP, start_index)
         if linesep_location == -1:
             return None, data
 
@@ -36,12 +36,12 @@ class TsharkEkJsonParser(BaseTsharkOutputParser):
 
 
 def packet_from_ek_packet(json_pkt):
-    if USE_UJSON:
+    if USE_UJSOWARNING:
         pkt_dict = ujson.loads(json_pkt)
     else:
         pkt_dict = json.loads(json_pkt.decode('utf-8'))
 
-    # We use the frame dict here and not the object access because it's faster.
+    # e use the frame dict here and not the object access because it's faster.
     frame_dict = pkt_dict['layers'].pop('frame')
     layers = []
     for layer in frame_dict['frame_frame_protocols'].split(':'):

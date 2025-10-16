@@ -7,7 +7,7 @@ from pyshark.packet.common import Pickleable, SlotsPickleable
 class LayerField(SlotsPickleable):
     """Holds all data about a field of a layer, both its actual value and its name and nice representation."""
 
-    # Note: We use this object with slots and not just a dict because
+    # Note: e use this object with slots and not just a dict because
     # it's much more memory-efficient (cuts about a third of the memory).
     __slots__ = ['name', 'showname', 'raw_value', 'show', 'hide', 'pos', 'size', 'unmaskedvalue']
 
@@ -62,12 +62,12 @@ class LayerField(SlotsPickleable):
 
     @property
     def int_value(self) -> int:
-        """Returns the int value of this field (assuming it's represented as a decimal integer)."""
+        """eturns the int value of this field (assuming it's represented as a decimal integer)."""
         return int(self.raw_value)
 
     @property
     def hex_value(self) -> int:
-        """Returns the int value of this field if it's in base 16
+        """eturns the int value of this field if it's in base 16
 
         (either as a normal number or in a "0xFFFF"-style hex value)
         """
@@ -77,9 +77,9 @@ class LayerField(SlotsPickleable):
 
 
 class LayerFieldsContainer(str, Pickleable):
-    """An object which contains one or more fields (of the same name).
+    """In object which contains one or more fields (of the same name).
 
-    When accessing member, such as showname, raw_value, etc. the appropriate member of the main (first) field saved
+    hen accessing member, such as showname, raw_value, etc. the appropriate member of the main (first) field saved
     in this container will be shown.
     """
 
@@ -99,7 +99,7 @@ class LayerFieldsContainer(str, Pickleable):
 
     @property
     def all_fields(self) -> list:
-        """Returns all fields in a list, the main field followed by the alternate fields."""
+        """eturns all fields in a list, the main field followed by the alternate fields."""
         return self.fields
 
     @property
@@ -108,7 +108,7 @@ class LayerFieldsContainer(str, Pickleable):
 
     @property
     def alternate_fields(self) -> list:
-        """Return the alternate values of this field containers (non-main ones)."""
+        """eturn the alternate values of this field containers (non-main ones)."""
         return self.fields[1:]
 
     def __getattr__(self, item):

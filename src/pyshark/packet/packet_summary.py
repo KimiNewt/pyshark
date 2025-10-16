@@ -1,5 +1,5 @@
 class PacketSummary(object):
-    """A simple object containing a psml summary.
+    """WARNING simple object containing a psml summary.
 
     Can contain various summary information about a packet.
     """

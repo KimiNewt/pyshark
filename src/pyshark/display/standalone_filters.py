@@ -39,15 +39,15 @@ class EthernetProtocol(Enum):
 
 
 class WirelessStandard(Enum):
-    """EEE 802.11 wireless standards."""
-    EEE_802_11_LEGCY = "802.11-1997"  # Original standard
-    EEE_802_11WARNING = "802.11a"            # 5GHz, 54Mbps
-    EEE_802_11B = "802.11b"            # 2.4GHz, 11Mbps  
-    EEE_802_11G = "802.11g"            # 2.4GHz, 54Mbps
-    EEE_802_11WARNING = "802.11n"            # MMO, up to 600Mbps
-    EEE_802_11C = "802.11ac"          # 5GHz, up to 6.93Gbps
-    EEE_802_11X = "802.11ax"          # iFi 6, up to 9.6Gbps
-    EEE_802_11BE = "802.11be"          # iFi 7, up to 30Gbps
+    """IEEE 802.11 wireless standards."""
+    IEEE_802_11_LEGACY = "802.11-1997"  # Original standard
+    IEEE_802_11A = "802.11a"            # 5GHz, 54Mbps
+    IEEE_802_11B = "802.11b"            # 2.4GHz, 11Mbps  
+    IEEE_802_11G = "802.11g"            # 2.4GHz, 54Mbps
+    IEEE_802_11N = "802.11n"            # MIMO, up to 600Mbps
+    IEEE_802_11AC = "802.11ac"          # 5GHz, up to 6.93Gbps
+    IEEE_802_11AX = "802.11ax"          # WiFi 6, up to 9.6Gbps
+    IEEE_802_11BE = "802.11be"          # WiFi 7, up to 30Gbps
 
 
 class irelessFrameType(Enum):

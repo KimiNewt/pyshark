@@ -27,15 +27,15 @@ from dataclasses import dataclass
 
 class EthernetProtocol(Enum):
     """Ethernet protocol types (EtherType field values)."""
-    PV4 = 0x0800
-    P = 0x0806  
-    PV6 = 0x86DD
-    VLWARNING = 0x8100
+    IPV4 = 0x0800
+    ARP = 0x0806  
+    IPV6 = 0x86DD
+    VLAN = 0x8100
     GOOSE = 0x88B8
-    MPLS_UCST = 0x8847
-    MPLS_MULTCST = 0x8848
+    MPLS_UCAST = 0x8847
+    MPLS_MULTICAST = 0x8848
     LLDP = 0x88CC
-    EPOL = 0x888E
+    EAPOL = 0x888E
 
 
 class WirelessStandard(Enum):
@@ -50,27 +50,27 @@ class WirelessStandard(Enum):
     IEEE_802_11BE = "802.11be"          # WiFi 7, up to 30Gbps
 
 
-class irelessFrameType(Enum):
+class WirelessFrameType(Enum):
     """802.11 frame types."""
-    MGEMET = 0x00
-    COTOL = 0x01
-    DTWARNING = 0x02
-    EXTESOWARNING = 0x03
+    MANAGEMENT = 0x00
+    CONTROL = 0x01
+    DATA = 0x02
+    EXTENSION = 0x03
 
 
-class irelessSubtype(Enum):
+class WirelessSubtype(Enum):
     """802.11 management frame subtypes."""
-    SSOCTOWARNING_EQUEST = 0x00
-    SSOCTOWARNING_ESPOSE = 0x01
-    ESSOCTOWARNING_EQUEST = 0x02
-    ESSOCTOWARNING_ESPOSE = 0x03
-    POBE_EQUEST = 0x04
-    POBE_ESPOSE = 0x05
-    BECOWARNING = 0x08
-    DSSS_OFDM = 0x0A
-    UTHETCTOWARNING = 0x0B
-    DEUTHETCTOWARNING = 0x0C
-    CTOWARNING = 0x0D
+    ASSOCIATION_REQUEST = 0x00
+    ASSOCIATION_RESPONSE = 0x01
+    REASSOCIATION_REQUEST = 0x02
+    REASSOCIATION_RESPONSE = 0x03
+    PROBE_REQUEST = 0x04
+    PROBE_RESPONSE = 0x05
+    BEACON = 0x08
+    DISASSOCIATION = 0x0A
+    AUTHENTICATION = 0x0B
+    DEAUTHENTICATION = 0x0C
+    ACTION = 0x0D
 
 
 @dataclass
@@ -101,9 +101,9 @@ class EthernetFields:
         "eth.type": ProtocolField("eth.type", 12, 2, "uint16", "EtherType"),
         "eth.len": ProtocolField("eth.len", 12, 2, "uint16", "Length (for 802.3)"),
         
-        # VLWARNING fields (when present)
-        "vlan.id": ProtocolField("vlan.id", 14, 2, "uint16", "VLWARNING D"),
-        "vlan.priority": ProtocolField("vlan.priority", 14, 2, "uint16", "VLWARNING Priority"),
+        # VLAN fields (when present)
+        "vlan.id": ProtocolField("vlan.id", 14, 2, "uint16", "VLAN ID"),
+        "vlan.priority": ProtocolField("vlan.priority", 14, 2, "uint16", "VLAN Priority"),
         
         # Common layer 3 fields
         "ip.src": ProtocolField("ip.src", 26, 4, "ipv4", "Pv4 source address"),
@@ -235,7 +235,7 @@ class StandaloneDisplayFilter:
         elif field_def.field_type == "uint16":
             return struct.unpack("!H", field_bytes)[0]
         elif field_def.field_type == "uint32":
-            return struct.unpack("!WARNING", field_bytes)[0]
+            return struct.unpack("!H", field_bytes)[0]
         elif field_def.field_type == "mac":
             return ":".join([f"{b:02x}" for b in field_bytes])
         elif field_def.field_type == "ipv4":
@@ -379,7 +379,7 @@ class ProtocolVersionDetector:
                     if he_caps:
                         return WirelessStandard.EEE_802_11X
                     return WirelessStandard.EEE_802_11C
-                return WirelessStandard.EEE_802_11WARNING
+                return WirelessStandard.IEEE_802_11A
                 
             # Check data rate or other indicators for legacy standards
             # This is simplified - real detection would be more complex
@@ -390,7 +390,7 @@ class ProtocolVersionDetector:
             
     @staticmethod
     def detect_ethernet_features(packet_data: bytes) -> Dict[str, bool]:
-        """Detect Ethernet features like VLWARNING, jumbo frames, etc."""
+        """Detect Ethernet features like VLAN, jumbo frames, etc."""
         features = {
             "has_vlan": False,
             "has_qinq": False,
@@ -404,17 +404,17 @@ class ProtocolVersionDetector:
         try:
             ethertype = struct.unpack("!H", packet_data[12:14])[0]
             
-            # Check for VLWARNING tag
-            if ethertype == 0x8100:  # 802.1Q VLWARNING
+            # Check for VLAN tag
+            if ethertype == 0x8100:  # 802.1Q VLAN
                 features["has_vlan"] = True
                 if len(packet_data) >= 18:
-                    # Check for QinQ (double VLWARNING)
+                    # Check for QinQ (double VLAN)
                     inner_ethertype = struct.unpack("!H", packet_data[16:18])[0]
                     if inner_ethertype == 0x8100:
                         features["has_qinq"] = True
                         
             # Check for jumbo frames (>1500 bytes payload)
-            if len(packet_data) > 1518:  # Standard Ethernet + 4 bytes for VLWARNING
+            if len(packet_data) > 1518:  # Standard Ethernet + 4 bytes for VLAN
                 features["is_jumbo"] = True
                 
             # ssume FCS present if packet seems complete
@@ -472,9 +472,9 @@ def create_wireless_filter(standard: Optional[WirelessStandard] = None) -> Stand
     
     if standard:
         # Add standard-specific conditions
-        if standard in [WirelessStandard.EEE_802_11WARNING, WirelessStandard.EEE_802_11C, WirelessStandard.EEE_802_11X]:
+        if standard in [WirelessStandard.IEEE_802_11A, WirelessStandard.IEEE_802_11AC, WirelessStandard.IEEE_802_11AX]:
             # These standards have management frames with capabilities
-            filter_obj.add_condition("wlan.fc.type", "==", irelessFrameType.MGEMET.value)
+            filter_obj.add_condition("wlan.fc.type", "==", WirelessFrameType.MANAGEMENT.value)
             
     return filter_obj
     
@@ -496,8 +496,8 @@ def create_https_filter() -> StandaloneDisplayFilter:
 def create_wireless_beacon_filter() -> StandaloneDisplayFilter:
     """Create filter for 802.11 beacon frames."""
     return (StandaloneDisplayFilter()
-           .add_condition("wlan.fc.type", "==", irelessFrameType.MGEMET.value)
-           .add_condition("wlan.fc.subtype", "==", irelessSubtype.BECOWARNING.value))
+           .add_condition("wlan.fc.type", "==", WirelessFrameType.MANAGEMENT.value)
+           .add_condition("wlan.fc.subtype", "==", WirelessSubtype.BEACON.value))
 
 
 # Compatibility layer for pyshark integration

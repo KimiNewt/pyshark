@@ -21,30 +21,30 @@ from typing import Dict, List, Optional, Tuple, Set, Any
 from dataclasses import dataclass, field
 from .standalone_filters import (
     StandaloneDisplayFilter, WirelessStandard, EthernetProtocol,
-    irelessFrameType, ProtocolField
+    WirelessFrameType, ProtocolField
 )
 
 
 class EthernetSpeed(Enum):
     """Ethernet speed standards."""
-    ETHEET_10M = "10BSE-T"       # 10 Mbps
-    FST_ETHEET = "100BSE-TX"    # 100 Mbps  
-    GGBT_ETHEET = "1000BSE-T" # 1 Gbps
-    TEWARNING_GGBT = "10GBSE-T"       # 10 Gbps
-    TETY_FVE_GGBT = "25GBSE-T" # 25 Gbps
-    FOTY_GGBT = "40GBSE-T"     # 40 Gbps
-    HUDED_GGBT = "100GBSE-T"  # 100 Gbps
+    ETHERNET_10M = "10BASE-T"       # 10 Mbps
+    FAST_ETHERNET = "100BASE-TX"    # 100 Mbps  
+    GIGABIT_ETHERNET = "1000BASE-T" # 1 Gbps
+    TEN_GIGABIT = "10GBASE-T"       # 10 Gbps
+    TWENTY_FIVE_GIGABIT = "25GBASE-T" # 25 Gbps
+    FORTY_GIGABIT = "40GBASE-T"     # 40 Gbps
+    HUNDRED_GIGABIT = "100GBASE-T"  # 100 Gbps
 
 
 class WirelessBand(Enum):
     """802.11 frequency bands."""
-    BD_2_4_GHZ = "2.4GHz"
-    BD_5_GHZ = "5GHz"
-    BD_6_GHZ = "6GHz"         # iFi 6E
-    BD_60_GHZ = "60GHz"       # 802.11ad/ay
+    BAND_2_4_GHZ = "2.4GHz"
+    BAND_5_GHZ = "5GHz"
+    BAND_6_GHZ = "6GHz"         # WiFi 6E
+    BAND_60_GHZ = "60GHz"       # 802.11ad/ay
 
 
-class irelessCapability(IntEnum):
+class WirelessCapability(IntEnum):
     """802.11 capability bits."""
     ESS = 0x0001
     BSS = 0x0002
@@ -92,7 +92,7 @@ class irelessFrameInfo:
     standard: Optional[WirelessStandard] = None
     band: Optional[WirelessBand] = None
     channel: Optional[int] = None
-    capabilities: Set[irelessCapability] = field(default_factory=set)
+    capabilities: Set[WirelessCapability] = field(default_factory=set)
     data_rate: Optional[float] = None  # Mbps
     signal_strength: Optional[int] = None  # dBm
     has_ht: bool = False  # 802.11n features
@@ -143,15 +143,15 @@ class ProtocolVersionFilter(StandaloneDisplayFilter):
         self.version_conditions.append(("wireless_standard", standard))
         
         # Add appropriate field conditions based on standard
-        if standard == WirelessStandard.EEE_802_11WARNING:
+        if standard == WirelessStandard.IEEE_802_11A:
             # Look for HT capabilities
-            self.add_condition("wlan.fc.type", "==", irelessFrameType.MGEMET.value)
-        elif standard == WirelessStandard.EEE_802_11C:
+            self.add_condition("wlan.fc.type", "==", WirelessFrameType.MANAGEMENT.value)
+        elif standard == WirelessStandard.IEEE_802_11AC:
             # Look for VHT capabilities  
-            self.add_condition("wlan.fc.type", "==", irelessFrameType.MGEMET.value)
-        elif standard == WirelessStandard.EEE_802_11X:
+            self.add_condition("wlan.fc.type", "==", WirelessFrameType.MANAGEMENT.value)
+        elif standard == WirelessStandard.IEEE_802_11AX:
             # Look for HE capabilities
-            self.add_condition("wlan.fc.type", "==", irelessFrameType.MGEMET.value)
+            self.add_condition("wlan.fc.type", "==", WirelessFrameType.MANAGEMENT.value)
             
         return self
         
@@ -350,7 +350,7 @@ class ProtocolVersionFilter(StandaloneDisplayFilter):
                 caps_bytes = struct.unpack("<H", packet_data[34:36])[0]
                 
                 # Parse capability bits
-                for cap in irelessCapability:
+                for cap in WirelessCapability:
                     if caps_bytes & cap.value:
                         info.capabilities.add(cap)
                         

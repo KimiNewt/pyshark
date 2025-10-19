@@ -5,11 +5,12 @@ Enhanced Python wrapper for tshark with comprehensive display filters and WPA/WP
 Extended documentation: http://kiminewt.github.io/pyshark
 
 **Enhancement Features:**
-- **146 Protocol-Specific Display Filters** (30 Ethernet + 61 Wireless + 55 Bluetooth)
-- **WPA/WPA2 Decryption** with automatic credential detection  
-- **Enhanced PyShark Integration** with encrypted capture support
+- **146+ Protocol-Specific Display Filters** (Ethernet, Wireless, Bluetooth)
+- **WPA/WPA2 Decryption** with UAT:80211_keys integration (TShark 4.2.4+)
+- **Standalone Analysis** capabilities for basic operations without TShark
+- **Enhanced Error Handling** with comprehensive validation and recovery
 - **Cross-Platform Compatibility** (Windows, Linux, macOS)
-- **Production Ready** with comprehensive error handling
+- **Production Ready** with full test suite coverage
 
 This enhanced version builds upon the original PyShark's tshark XML parsing capabilities while adding production-ready display filters and encrypted wireless analysis.
 
@@ -44,7 +45,8 @@ For the enhanced version with 146+ display filters and WPA decryption:
 git clone https://github.com/D14b0l1c/pyshark.git
 cd pyshark
 pip install -r requirements.txt
-python working_demo.py  # Test installation
+python test_wpa_functionality.py  # Test WPA functionality
+python working_demo.py  # Test all features
 ```
 
 ### Mac OS X
@@ -57,9 +59,10 @@ You will probably have to accept a EULA for XCode so be ready to click an "Accep
 
 ## Enhanced Features
 
-### Display Filters (146 Total)
+### Display Filters (146+ Total)
 ```python
-from src.pyshark.display.wireless_filters import WirelessFilters
+from pyshark.display.enhanced_display_filters import EnhancedDisplayFilter
+from pyshark.display.wireless_filters import WirelessFilters
 
 # Get all wireless filters
 wireless = WirelessFilters()
@@ -68,25 +71,67 @@ filters = wireless.get_all_filters()
 # Use specific filter  
 beacon_filter = filters['beacon_frames']
 print(beacon_filter.filter_expression)  # wlan.fc.type_subtype == 0x08
+
+# Enhanced filtering with validation
+filter_builder = EnhancedDisplayFilter()
+complex_filter = filter_builder.create_protocol_filter("wireless", "management_frames")
 ```
 
 ### WPA/WPA2 Decryption
 ```python
-from src.pyshark.display.encrypted_capture import analyze_encrypted_pcap
+from pyshark.display.encrypted_analysis import PySharkWPADecryptor, WPACredentials
 
-# Analyze encrypted PCAP with auto-decryption
-results = analyze_encrypted_pcap("encrypted.pcap")
-print(f"Decrypted {results['packets_total']} packets")
+# Initialize WPA decryptor
+decryptor = PySharkWPADecryptor()
+
+# Create credentials
+credentials = WPACredentials("NetworkSSID", "password123", "My Network")
+
+# Decrypt PCAP file
+result = decryptor.decrypt_pcap("encrypted.pcap", credentials)
+if result.success:
+    print(f"Decrypted file: {result.decrypted_file}")
+    print(f"Packets processed: {result.packets_decrypted}")
+
+# Auto-detect credentials for known files
+auto_creds = decryptor.detect_credentials("wpa-Induction.pcap")
+if auto_creds:
+    print(f"Auto-detected: SSID={auto_creds.ssid}")
+```
+
+### Standalone Analysis
+```python
+from pyshark.display.standalone_filters import StandaloneDisplayFilter, WirelessStandard
+
+# Works without TShark for basic operations
+filter_analyzer = StandaloneDisplayFilter()
+
+# Detect protocol versions from packet data
+wireless_std = filter_analyzer.detect_wireless_standard(packet_data)
+print(f"Detected: {wireless_std.value}")  # IEEE 802.11ac
+
+# Create version-specific filters
+wifi6_filter = create_wifi6_filter()
+print(wifi6_filter.filter_expression)  # Complex 802.11ax filter
 ```
 
 ### Test Data Sources
 - **Generated Test Data**: `tests/data/` contains protocol-specific PCAP files
+- **WPA Test File**: `tests/data/wpa-Induction.pcap` (SSID: Coherer, Password: Induction)
 - **Wireshark Sample Captures**: https://wiki.wireshark.org/SampleCaptures  
-  Comprehensive collection including WPA encrypted traffic, VoIP, IoT protocols, and more
+  Comprehensive collection including WPA encrypted traffic, VoIP, IoT protocols
 
-### Enhanced Demo
-Run `python working_demo.py` to see all 146 display filters in action.
-Run `python comparison_demo.py` to see WPA decryption comparison demo.
+### Testing & Validation
+```bash
+# Test core functionality
+python test_wpa_functionality.py
+
+# Test comprehensive WPA integration  
+python test_complete_wpa_integration.py
+
+# Test all enhanced features
+python working_demo.py
+```
 
 ## Basic Usage
 
@@ -373,6 +418,39 @@ The `examples/` directory contains comprehensive usage demonstrations:
   - Custom field extraction
   - Performance monitoring
   - Security analysis
+
+## Enhanced PyShark Features Summary
+
+### What's New in This Enhanced Version
+
+1. **146+ Protocol-Specific Display Filters**
+   - 30+ Ethernet filters (HTTP, HTTPS, FTP, SSH, etc.)
+   - 61+ Wireless filters (802.11 management, data, beacon frames)  
+   - 55+ Bluetooth filters (HCI, L2CAP, RFCOMM, A2DP)
+
+2. **WPA/WPA2 Decryption Integration**
+   - Proper UAT:80211_keys configuration for TShark 4.2.4+
+   - Automatic credential detection for known PCAP files
+   - Full PyShark integration with encrypted capture support
+
+3. **Standalone Analysis Capabilities**
+   - Protocol version detection (802.11a/n/ac/ax, Ethernet speeds)
+   - Basic packet analysis without TShark dependency
+   - Enhanced error handling and graceful degradation
+
+4. **Enhanced Developer Experience**
+   - Comprehensive test suite with real encrypted PCAPs
+   - Detailed documentation and usage examples
+   - Cross-platform compatibility validation
+
+### Backward Compatibility
+All enhancements are **100% backward compatible** with existing PyShark code. Original functionality remains unchanged.
+
+### TShark Integration
+Uses proper TShark UAT (User Access Table) format for WPA decryption:
+```bash
+tshark -o "wlan.enable_decryption:TRUE" -o 'uat:80211_keys:"wpa-pwd","password:ssid"'
+```
 
 ## Testing
 

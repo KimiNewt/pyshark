@@ -146,10 +146,11 @@ class PySharkWPADecryptor:
             # Build tshark command for decryption
             tshark_cmd = [
                 self.tshark_path,
-                "-r", input_pcap,           # Input file
-                "-w", output_pcap,          # Output file  
-                "-o", wpa_config,           # WPA decryption config
-                "-Y", "wlan"                # Only wireless frames
+                "-r", input_pcap,                    # Input file
+                "-w", output_pcap,                   # Output file  
+                "-o", "wlan.enable_decryption:TRUE", # Enable WPA decryption
+                "-o", wpa_config,                    # WPA decryption keys
+                "-Y", "wlan"                         # Only wireless frames
             ]
             
             print(f"Decrypting {input_pcap} with credentials:")

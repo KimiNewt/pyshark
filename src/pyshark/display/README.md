@@ -1,6 +1,6 @@
 # PyShark Display Filters Module
 
-This module contains enhanced display filters and analysis capabilities for PyShark, providing 146+ protocol-specific filters and standalone filtering functionality.
+This module contains enhanced display filters and analysis capabilities for PyShark, providing 146+ protocol-specific filters, WPA/WPA2 decryption, and standalone filtering functionality.
 
 ## Modules
 
@@ -12,10 +12,10 @@ This module contains enhanced display filters and analysis capabilities for PySh
 - `enhanced_display_filters.py` - Main filter interface
 
 ### Analysis Modules
-- `encrypted_analysis.py` - Encrypted traffic analysis
-- `encrypted_capture.py` - WPA/WPA2 decryption capabilities
-- `standalone_filters.py` - Pure Python filtering without Wireshark
-- `protocol_versions.py` - Protocol version detection
+- `encrypted_analysis.py` - WPA/WPA2 decryption with UAT:80211_keys integration
+- `encrypted_capture.py` - Enhanced encrypted capture analysis
+- `standalone_filters.py` - Pure Python filtering without TShark dependency
+- `protocol_versions.py` - Protocol version detection and analysis
 
 ## Filter Categories
 
@@ -106,6 +106,43 @@ wifi_caps = ProtocolVersions.wireless_capabilities()
 
 print(f"VLAN support: {eth_caps['vlan_support']}")
 print(f"WiFi standards: {wifi_caps['supported_standards']}")
+```
+
+### WPA/WPA2 Decryption
+```python
+from pyshark.display.encrypted_analysis import PySharkWPADecryptor, WPACredentials
+
+# Initialize decryptor
+decryptor = PySharkWPADecryptor()
+
+# Create credentials
+creds = WPACredentials("NetworkSSID", "password123")
+
+# Decrypt PCAP file
+result = decryptor.decrypt_pcap("encrypted.pcap", creds)
+if result.success:
+    print(f"Decrypted: {result.decrypted_file}")
+    
+# Auto-detect known credentials
+auto_creds = decryptor.detect_credentials("wpa-Induction.pcap")
+if auto_creds:
+    print(f"SSID: {auto_creds.ssid}, Password: {auto_creds.password}")
+```
+
+### Standalone Analysis (No TShark Required)
+```python
+from pyshark.display.standalone_filters import StandaloneDisplayFilter, WirelessStandard
+
+# Analyze without TShark
+analyzer = StandaloneDisplayFilter()
+
+# Detect wireless standards
+standard = analyzer.detect_wireless_standard(packet_data)
+print(f"Detected: {standard.value}")  # IEEE 802.11ac
+
+# Create filters for specific versions
+wifi6_filter = create_wifi6_filter()
+gigabit_filter = create_gigabit_ethernet_filter()
 ```
 
 ## Filter Expression Reference

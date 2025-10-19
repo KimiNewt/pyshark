@@ -35,9 +35,9 @@ def test_wpa_functionality():
     
     try:
         from src.pyshark.display.encrypted_analysis import PySharkWPADecryptor, WPACredentials
-        print("[✓] WPA decryption modules imported successfully")
+        print("[OK] WPA decryption modules imported successfully")
     except ImportError as e:
-        print(f"[✗] Import failed: {e}")
+        print(f"[FAIL] Import failed: {e}")
         return False
     
     # Test 2: Object Creation
@@ -46,19 +46,19 @@ def test_wpa_functionality():
     
     try:
         decryptor = PySharkWPADecryptor()
-        print("[✓] PySharkWPADecryptor created successfully")
+        print("[OK] PySharkWPADecryptor created successfully")
         
         credentials = WPACredentials(
             ssid="TestNetwork",
             password="TestPassword123",
             description="Test credentials for functionality check"
         )
-        print("[✓] WPACredentials created successfully")
+        print("[OK] WPACredentials created successfully")
         print(f"    SSID: {credentials.ssid}")
         print(f"    Password: {credentials.password}")
         
     except Exception as e:
-        print(f"[✗] Object creation failed: {e}")
+        print(f"[FAIL] Object creation failed: {e}")
         return False
     
     # Test 3: UAT Configuration
@@ -67,20 +67,20 @@ def test_wpa_functionality():
     
     try:
         uat_config = decryptor.create_decryption_config(credentials)
-        print("[✓] UAT configuration generated successfully")
+        print("[OK] UAT configuration generated successfully")
         print(f"    Config: {uat_config}")
         
         # Verify format
         expected_format = 'uat:80211_keys:"wpa-pwd","TestPassword123:TestNetwork"'
         if uat_config == expected_format:
-            print("[✓] UAT format is correct")
+            print("[OK] UAT format is correct")
         else:
             print(f"[!] UAT format differs from expected")
             print(f"    Expected: {expected_format}")
             print(f"    Got:      {uat_config}")
             
     except Exception as e:
-        print(f"[✗] UAT configuration failed: {e}")
+        print(f"[FAIL] UAT configuration failed: {e}")
         return False
     
     # Test 4: TShark Availability
@@ -94,7 +94,7 @@ def test_wpa_functionality():
         
         if result.returncode == 0:
             version_line = result.stdout.split('\n')[0]
-            print(f"[✓] TShark available: {version_line}")
+            print(f"[OK] TShark available: {version_line}")
             
             # Test UAT syntax support
             uat_test_cmd = ['tshark', '-o', uat_config, '-h']
@@ -102,22 +102,22 @@ def test_wpa_functionality():
                                       capture_output=True, text=True, timeout=5)
             
             if "invalid" not in uat_result.stderr.lower():
-                print("[✓] TShark accepts UAT configuration format")
+                print("[OK] TShark accepts UAT configuration format")
             else:
                 print("[!] TShark may have issues with UAT format")
                 print(f"    Error: {uat_result.stderr[:100]}...")
                 
         else:
-            print(f"[✗] TShark not available or failed: {result.stderr}")
+            print(f"[FAIL] TShark not available or failed: {result.stderr}")
             return False
             
     except subprocess.TimeoutExpired:
         print("[!] TShark test timed out (but TShark is available)")
     except FileNotFoundError:
-        print("[✗] TShark not found in PATH")
+        print("[FAIL] TShark not found in PATH")
         return False
     except Exception as e:
-        print(f"[✗] TShark test failed: {e}")
+        print(f"[FAIL] TShark test failed: {e}")
         return False
     
     # Test 5: Known Credentials Detection
@@ -128,7 +128,7 @@ def test_wpa_functionality():
         # Test detection for known file
         known_creds = decryptor.detect_credentials("wpa-Induction.pcap")
         if known_creds:
-            print("[✓] Known credentials detection works")
+            print("[OK] Known credentials detection works")
             print(f"    SSID: {known_creds.ssid}")
             print(f"    Description: {known_creds.description}")
         else:
@@ -137,12 +137,12 @@ def test_wpa_functionality():
         # Test detection for unknown file
         unknown_creds = decryptor.detect_credentials("unknown-file.pcap")
         if unknown_creds is None:
-            print("[✓] Unknown file handling works correctly")
+            print("[OK] Unknown file handling works correctly")
         else:
             print("[!] Unexpected credentials found for unknown file")
             
     except Exception as e:
-        print(f"[✗] Credentials detection failed: {e}")
+        print(f"[FAIL] Credentials detection failed: {e}")
         return False
     
     # Test 6: Error Handling
@@ -154,19 +154,19 @@ def test_wpa_functionality():
         result = decryptor.decrypt_pcap("non-existent.pcap", credentials)
         
         if not result.success:
-            print("[✓] Error handling works for missing files")
+            print("[OK] Error handling works for missing files")
             print(f"    Error message: {result.error_message[:50]}...")
         else:
             print("[!] Unexpected success with non-existent file")
             
     except Exception as e:
-        print(f"[✗] Error handling test failed: {e}")
+        print(f"[FAIL] Error handling test failed: {e}")
         return False
     
     # Summary
     print("\n" + "=" * 45)
-    print("[✓] ALL TESTS PASSED")
-    print("[✓] PyShark WPA Decryption is FULLY FUNCTIONAL")
+    print("[OK] ALL TESTS PASSED")
+    print("[OK] PyShark WPA Decryption is FULLY FUNCTIONAL")
     print("\nHow it works:")
     print("1. Import PySharkWPADecryptor and WPACredentials")
     print("2. Create credentials object with SSID/password")

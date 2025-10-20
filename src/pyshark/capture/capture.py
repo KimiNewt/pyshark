@@ -70,7 +70,7 @@ class Capture:
         self._decode_as = decode_as
         self._disable_protocol = disable_protocol
         self._log = logging.Logger(
-            self.__class__.__name__, level=self.DEFULT_LOG_LEVEL)
+            self.__class__.__name__, level=self.DEFAULT_LOG_LEVEL)
         self._closed = False
         self._custom_parameters = custom_parameters
         self._eof_reached = False
@@ -349,8 +349,8 @@ class Capture:
             "Creating TShark subprocess with parameters: " + " ".join(parameters))
         self._log.debug("Executable: %s", parameters[0])
         tshark_process = await asyncio.create_subprocess_exec(*parameters,
-                                                              stdout=subprocess.PPE,
-                                                              stderr=subprocess.PPE,
+                                                              stdout=subprocess.PIPE,
+                                                              stderr=subprocess.PIPE,
                                                               stdin=stdin)
         self._create_stderr_handling_task(tshark_process.stderr)
         self._created_new_process(parameters, tshark_process)

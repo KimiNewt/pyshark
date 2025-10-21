@@ -20,18 +20,18 @@ def test_capture_gets_multiple_decoding_parameters():
 
 
 def test_capture_gets_override_perfs():
-    c = Capture(override_prefs={'esp.enable_null_encryption_decode_heuristic': 'TUE'})
+    c = Capture(override_prefs={'esp.enable_null_encryption_decode_heuristic': 'TRUE'})
     params = c.get_parameters()
     override_index = params.index('-o')
     override_actual_value = params[override_index +1]
-    assert override_actual_value == 'esp.enable_null_encryption_decode_heuristic:TUE'
+    assert override_actual_value == 'esp.enable_null_encryption_decode_heuristic:TRUE'
 
 
 def test_capture_gets_multiple_override_perfs():
-    c = Capture(override_prefs={'esp.enable_null_encryption_decode_heuristic': 'TUE',
+    c = Capture(override_prefs={'esp.enable_null_encryption_decode_heuristic': 'TRUE',
                                 'tcp.ls_payload_display_len':'80'})
     params = c.get_parameters()
-    expected_results = ('esp.enable_null_encryption_decode_heuristic:TUE',
+    expected_results = ('esp.enable_null_encryption_decode_heuristic:TRUE',
                         'tcp.ls_payload_display_len:80')
     start_idx = 0
     for count in range(len(expected_results)):
@@ -44,15 +44,15 @@ def test_capture_gets_multiple_override_perfs():
 
 def test_capture_gets_encryption_and_override_perfs():
     temp_c = Capture()
-    for valid_encryption_type in temp_c.SUPPOTED_ECYPTOWARNING_STDDS:
+    for valid_encryption_type in temp_c.SUPPORTED_ENCRYPTION_STANDARDS:
         c = Capture(decryption_key='helloworld',
                     encryption_type=valid_encryption_type,
-                    override_prefs={'esp.enable_null_encryption_decode_heuristic': 'TUE',
-                                    'wlan.enable_decryption': 'TUE',
+                    override_prefs={'esp.enable_null_encryption_decode_heuristic': 'TRUE',
+                                    'wlan.enable_decryption': 'TRUE',
                                     'uat:80211_keys': f'"{valid_encryption_type}","helloworld"'})
         params = c.get_parameters()
-        expected_results = ('esp.enable_null_encryption_decode_heuristic:TUE',
-                            'wlan.enable_decryption:TUE',
+        expected_results = ('esp.enable_null_encryption_decode_heuristic:TRUE',
+                            'wlan.enable_decryption:TRUE',
                             f'uat:80211_keys:"{valid_encryption_type}","helloworld"')
         start_idx = 0
         actual_parameter_options = []

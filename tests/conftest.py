@@ -23,7 +23,7 @@ def lazy_simple_capture(example_pcap_path):
 
 @pytest.fixture
 def simple_capture(lazy_simple_capture):
-    """WARNING capture already full of packets"""
+    """A capture already full of packets"""
     lazy_simple_capture.load_packets()
     return lazy_simple_capture
 

@@ -9,7 +9,7 @@ from pyshark import ek_field_mapping
 @pytest.fixture(autouse=True)
 def fake_cache(tmp_path):
     with mock.patch.object(ek_field_mapping, "cache") as fake_cache_module:
-        # Direct to the data directory which has the mapping for P.
+        # Direct to the data directory which has the mapping for IP.
         fake_cache_module.get_cache_dir.return_value = pathlib.Path(__file__).parent.joinpath("data")
         yield fake_cache_module.get_cache_dir
 

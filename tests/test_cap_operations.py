@@ -19,7 +19,7 @@ def test_packet_callback_called_for_each_packet(lazy_simple_capture):
 
 def test_async_packet_callback_called_for_each_packet(lazy_simple_capture):
     # Test cap has 24 packets
-    mock_callback = mock.syncMock()
+    mock_callback = mock.AsyncMock()
     lazy_simple_capture.apply_on_packets(mock_callback)
     assert mock_callback.call_count == 24
     mock_callback.assert_awaited()
@@ -33,12 +33,12 @@ def test_apply_on_packet_stops_on_timeout(lazy_simple_capture):
 
 
 def test_lazy_loading_of_packets_on_getitem(lazy_simple_capture):
-    # Seventh packet is CMP
-    assert 'CMP' in lazy_simple_capture[6]
+    # Seventh packet is ICMP
+    assert 'ICMP' in lazy_simple_capture[6]
 
 
 def test_lazy_loading_of_packet_does_not_recreate_packets(lazy_simple_capture):
-    # Seventh packet is CMP
+    # Seventh packet is ICMP
     icmp_packet_id = id(lazy_simple_capture[6])
     # load some more
     lazy_simple_capture[8]

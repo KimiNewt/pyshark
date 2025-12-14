@@ -42,7 +42,11 @@ class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
 
     def __init__(self, layer_name, layer_dict):
         super().__init__(layer_name)
-        self._fields_dict = layer_dict
+        if isinstance(layer_dict, dict):
+            self._fields_dict = layer_dict
+        else:
+            self._fields_dict = {}
+            self.value = layer_dict
 
     def get_field(self, name) -> typing.Union["EkMultiField", None, str, int, bool, bytes, list]:
         name = name.replace(".", "_")
@@ -59,14 +63,10 @@ class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
 
     def has_field(self, name) -> bool:
         """Checks if the field exists, either a nested field or a regular field"""
-        return name in self.field_names or name in self.all_field_names
+        return name in self._fields_dict or name in self.field_names
 
     @property
     def field_names(self):
-        return list({field_name.split("_", 1)[0] for field_name in self.all_field_names})
-
-    @property
-    def all_field_names(self):
         """Gets all field names, including subfields"""
         names = set()
         for field_name in self._fields_dict:
@@ -75,6 +75,10 @@ class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
                     names.add(_remove_ek_prefix(prefix, field_name))
                     break
         return list(names)
+
+    @property
+    def all_field_names(self):
+        return self.field_names
 
     def _get_field_value(self, full_field_name):
         """Gets the field value, optionally casting it using the cached field mapping"""
@@ -86,17 +90,12 @@ class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
 
         Returns either a multifield or a raw value.
         """
-        # TODO: Optimize
-        field_ek_name = f"{prefix}_{name}"
+        field_ek_name = f"{prefix}{name}"
         if field_ek_name in self._fields_dict:
             if self._field_has_subfields(field_ek_name):
                 return EkMultiField(self, self._fields_dict, name,
                                     value=self._get_field_value(field_ek_name))
             return self._get_field_value(field_ek_name)
-
-        for possible_nested_name in self._fields_dict:
-            if possible_nested_name.startswith(f"{field_ek_name}_"):
-                return EkMultiField(self, self._fields_dict, name, value=None)
 
         return None
 
@@ -131,7 +130,7 @@ class EkLayer(BaseLayer, _EkLayerHelperFuncsMixin):
 
         The order matters, longest must be first
         """
-        return [f"{self._layer_name}_{self._layer_name}", self._layer_name]
+        return [f"{self._layer_name}_{self._layer_name}_", f"{self._layer_name}_", ""]
 
 
 class EkMultiField(_EkLayerHelperFuncsMixin):
@@ -149,7 +148,7 @@ class EkMultiField(_EkLayerHelperFuncsMixin):
     @property
     def subfields(self):
         names = set()
-        for field_name in self._containing_layer.all_field_names:
+        for field_name in self._containing_layer.field_names:
             if field_name != self._full_name and field_name.startswith(f"{self._full_name}_"):
                 names.add(field_name[len(self._full_name):].split("_")[1])
         return list(names)
@@ -174,12 +173,12 @@ class EkMultiField(_EkLayerHelperFuncsMixin):
 
 def _remove_ek_prefix(prefix, value):
     """Removes prefix given and the underscore after it"""
-    return value[len(prefix) + 1:]
+    return value[len(prefix) :]
 
 
 def _get_subfields(all_fields, field_ek_name):
     subfield_names = []
     for field in all_fields:
         if field != field_ek_name and field.startswith(field_ek_name):
-            subfield_names.append(_remove_ek_prefix(field_ek_name, field))
+            subfield_names.append(_remove_ek_prefix(f"{field_ek_name}_", field))
     return subfield_names

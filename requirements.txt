@@ -4,3 +4,4 @@ py
 pytest
 lxml
 packaging
+termcolor

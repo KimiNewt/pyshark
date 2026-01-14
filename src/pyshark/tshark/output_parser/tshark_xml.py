@@ -90,8 +90,9 @@ def _packet_from_psml_packet(psml_packet, structure):
 
 
 def _packet_from_pdml_packet(pdml_packet):
-    layers = [XmlLayer(proto) for proto in pdml_packet.proto]
-    geninfo, frame, layers = layers[0], layers[1], layers[2:]
+    geninfo = XmlLayer(pdml_packet.xpath('.//proto[@name="geninfo"]')[0])
+    frame = XmlLayer(pdml_packet.xpath('.//proto[@name="frame"]')[0])
+    layers = [XmlLayer(proto) for proto in pdml_packet.proto if proto.attrib['name'] not in ('geninfo', 'frame', 'pkt_comment')]
     return Packet(layers=layers, frame_info=frame, number=geninfo.get_field_value('num'),
                   length=geninfo.get_field_value('len'), sniff_time=geninfo.get_field_value('timestamp', raw=True),
                   captured_length=geninfo.get_field_value('caplen'),

@@ -1,3 +1,4 @@
+import contextlib
 import os
 import asyncio
 import subprocess
@@ -62,12 +63,14 @@ class LiveCapture(Capture):
             self.interfaces = [interface]
         else:
             self.interfaces = interface
+        self.read = None
+        self.write = None
 
     def get_parameters(self, packet_count=None):
         """Returns the special tshark parameters to be used according to the configuration of this class."""
         params = super(LiveCapture, self).get_parameters(packet_count=packet_count)
         # Read from STDIN
-        params += ["-i", "-"]
+        params += ["-r", "-"]
         return params
 
     def _verify_capture_parameters(self):
@@ -101,17 +104,17 @@ class LiveCapture(Capture):
         return params
 
     async def _get_tshark_process(self, packet_count=None, stdin=None):
-        read, write = os.pipe()
+        self.read, self.write = os.pipe()
 
         dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
 
         self._log.debug("Creating Dumpcap subprocess with parameters: %s", " ".join(dumpcap_params))
-        dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
+        dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=self.write,
                                                                stderr=subprocess.PIPE)
         self._create_stderr_handling_task(dumpcap_process.stderr)
         self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
 
-        tshark = await super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=read)
+        tshark = await super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=self.read)
         return tshark
 
     # Backwards compatibility
@@ -130,3 +133,18 @@ class LiveCapture(Capture):
         """
         # Retained for backwards compatibility and to add documentation.
         return self._packets_from_tshark_sync(packet_count=packet_count)
+
+    async def close_async(self):
+        for process in self._running_processes.copy():
+            await self._cleanup_subprocess(process)
+        self._running_processes.clear()
+        # Close file handles to prevent fds leak
+        if self.read:
+            os.close(self.read)
+        if self.write:
+            os.close(self.write)
+        # Wait for all stderr handling to finish
+        for task in self._stderr_handling_tasks:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task

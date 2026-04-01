@@ -47,7 +47,11 @@ def packet_from_ek_packet(json_pkt):
     for layer in frame_dict['frame_frame_protocols'].split(':'):
         layer_dict = pkt_dict['layers'].pop(layer, None)
         if layer_dict is not None:
-            layers.append(EkLayer(layer, layer_dict))
+            if isinstance(layer_dict, list):
+               for layer_dict_from_list in layer_dict:
+                  layers.append(EkLayer(layer, layer_dict_from_list))
+            else:
+               layers.append(EkLayer(layer, layer_dict))
     # Add all leftovers
     for name, layer in pkt_dict['layers'].items():
         layers.append(EkLayer(name, layer))

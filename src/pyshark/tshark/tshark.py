@@ -2,6 +2,7 @@
 import json
 
 from packaging import version
+from configparser import NoSectionError
 import os
 import subprocess
 import sys
@@ -35,12 +36,15 @@ def get_process_path(tshark_path=None, process_name="tshark"):
     # Check if `config.ini` exists in the current directory or the pyshark directory
     config = get_config()
     if config:
-        possible_paths.append(config.get(process_name, "%s_path" % process_name))
+        try:
+            possible_paths.append(config.get(process_name, f"{process_name}_path"))
+        except NoSectionError:
+            pass
 
     # Add the user provided path to the search list
     if tshark_path is not None:
         user_tshark_path = os.path.join(os.path.dirname(tshark_path),
-                                        "%s.exe" % process_name if sys.platform.startswith("win") else process_name)
+                                        f"{process_name}.exe" if sys.platform.startswith("win") else process_name)
         possible_paths.insert(0, user_tshark_path)
 
     # Windows search order: configuration file"s path, common paths.
@@ -49,7 +53,7 @@ def get_process_path(tshark_path=None, process_name="tshark"):
             program_files = os.getenv(env)
             if program_files is not None:
                 possible_paths.append(
-                    os.path.join(program_files, "Wireshark", "%s.exe" % process_name)
+                    os.path.join(program_files, "Wireshark", f"{process_name}.exe")
                 )
     # Linux, etc. search order: configuration file's path, the system's path
     else:
@@ -69,7 +73,7 @@ def get_process_path(tshark_path=None, process_name="tshark"):
             return path
     raise TSharkNotFoundException(
         "TShark not found. Try adding its location to the configuration file. "
-        "Searched these paths: {}".format(possible_paths)
+        f"Searched these paths: {possible_paths}"
     )
 
 
@@ -78,13 +82,16 @@ def get_tshark_version(tshark_path=None):
     with open(os.devnull, "w") as null:
         version_output = subprocess.check_output(parameters, stderr=null).decode("ascii")
 
-    version_line = version_output.splitlines()[0]
+    version_lines = version_output.splitlines()
+    version_string = None
     pattern = r'.*\s(\d+\.\d+\.\d+).*'  # match " #.#.#" version pattern
-    m = re.match(pattern, version_line)
-    if not m:
-        raise TSharkVersionException("Unable to parse TShark version from: {}".format(version_line))
-    version_string = m.groups()[0]  # Use first match found
-
+    for version_line in version_lines:
+        m = re.match(pattern, version_line)
+        if m:
+            version_string = m.groups()[0]  # Use first match found
+            break
+    if not version_string:
+        raise TSharkVersionException("Unable to parse TShark version from: {}".format(version_lines))
     return version.parse(version_string)
 
 
@@ -139,7 +146,7 @@ def get_ek_field_mapping(tshark_path=None):
         mapping,
         object_pairs_hook=_duplicate_object_hook)["mappings"]
     # If using wireshark 4, the key "mapping" contains what we want,
-    if "dynamic" in mapping and "properties" in mapping:
+    if "properties" in mapping:
         pass
     # if using wireshark 3.5 to < 4 the data in "mapping.doc",
     elif "doc" in mapping:

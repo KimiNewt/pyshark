@@ -7,7 +7,7 @@ class PipeCapture(Capture):
     def __init__(self, pipe, display_filter=None, only_summaries=False,
                  decryption_key=None, encryption_type='wpa-pwk', decode_as=None,
                  disable_protocol=None, tshark_path=None, override_prefs=None, use_json=False,
-                 include_raw=False, eventloop=None, custom_parameters=None, debug=False):
+                 use_ek=False, include_raw=False, eventloop=None, custom_parameters=None, debug=False):
         """Receives a file-like and reads the packets from there (pcap format).
 
         :param bpf_filter: BPF filter to use on packets.
@@ -31,7 +31,7 @@ class PipeCapture(Capture):
                                           encryption_type=encryption_type,
                                           decode_as=decode_as, disable_protocol=disable_protocol,
                                           tshark_path=tshark_path, override_prefs=override_prefs,
-                                          use_json=use_json, include_raw=include_raw, eventloop=eventloop,
+                                          use_json=use_json, use_ek=use_ek, include_raw=include_raw, eventloop=eventloop,
                                           custom_parameters=custom_parameters, debug=debug)
         self._pipe = pipe
 
@@ -50,3 +50,18 @@ class PipeCapture(Capture):
         # Close pipe
         os.close(self._pipe)
         super(PipeCapture, self).close()
+
+    def sniff_continuously(self, packet_count=None):
+        """
+        Captures from the set interface, returning a generator which returns packets continuously.
+
+        Can be used as follows:
+        for packet in capture.sniff_continuously();
+            print 'Woo, another packet:', packet
+
+        Note: you can also call capture.apply_on_packets(packet_callback) which should have a slight performance boost.
+
+        :param packet_count: an amount of packets to capture, then stop.
+        """
+        # Retained for backwards compatibility and to add documentation.
+        return self._packets_from_tshark_sync(packet_count=packet_count)

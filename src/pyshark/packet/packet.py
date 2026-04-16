@@ -47,7 +47,7 @@ class Packet(Pickleable):
         if isinstance(item, int):
             return self.layers[item]
         for layer in self.layers:
-            if layer.layer_name == item.lower():
+            if layer.layer_name.lower() == item.lower():
                 return layer
         raise KeyError('Layer does not exist in packet')
 
@@ -83,6 +83,8 @@ class Packet(Pickleable):
 
     @property
     def sniff_time(self) -> datetime.datetime:
+        if self.sniff_timestamp[-1] == 'Z':
+            return datetime.datetime.fromisoformat(self.sniff_timestamp)
         try:
             timestamp = float(self.sniff_timestamp)
         except ValueError:
@@ -96,7 +98,7 @@ class Packet(Pickleable):
         if self.transport_layer != self.highest_layer and self.transport_layer is not None:
             transport_protocol = self.transport_layer + '/'
 
-        return '<%s%s Packet>' % (transport_protocol, self.highest_layer)
+        return f'<{transport_protocol}{self.highest_layer} Packet>'
 
     def __str__(self):
         s = self._packet_string
@@ -107,7 +109,7 @@ class Packet(Pickleable):
     @property
     def _packet_string(self):
         """A simple pretty string that represents the packet."""
-        return 'Packet (Length: %s)%s' % (self.length, os.linesep)
+        return f'Packet (Length: {self.length}){os.linesep}'
 
     def pretty_print(self):
         for layer in self.layers:
@@ -120,9 +122,13 @@ class Packet(Pickleable):
         Allows layers to be retrieved via get attr. For instance: pkt.ip
         """
         for layer in self.layers:
+<<<<<<< HEAD
             if layer.layer_name.lower() == item:
+=======
+            if layer.layer_name.lower() == item.lower():
+>>>>>>> upstream/master
                 return layer
-        raise AttributeError("No attribute named %s" % item)
+        raise AttributeError(f"No attribute named {item}")
 
     @property
     def highest_layer(self) -> BaseLayer:

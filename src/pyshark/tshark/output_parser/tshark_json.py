@@ -58,10 +58,9 @@ class TsharkJsonParser(BaseTsharkOutputParser):
         commas, parenthesis).
         """
         if not self._tshark_version or self._tshark_version >= version.parse("3.0.0"):
-            return ("%s  },%s" % (os.linesep, os.linesep)).encode(), ("}%s]" % os.linesep).encode(), (
-                    1 + len(os.linesep))
+            return f"{os.linesep}  }},{os.linesep}".encode(), f"}}{os.linesep}]".encode(), 1 + len(os.linesep)
         else:
-            return ("}%s%s  ," % (os.linesep, os.linesep)).encode(), ("}%s%s]" % (os.linesep, os.linesep)).encode(), 1
+            return f"}}{os.linesep}{os.linesep}  ,".encode(), f"}}{os.linesep}{os.linesep}]".encode(), 1
 
 
 def duplicate_object_hook(ordered_pairs):

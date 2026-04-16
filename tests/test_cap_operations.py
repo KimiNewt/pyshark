@@ -17,6 +17,14 @@ def test_packet_callback_called_for_each_packet(lazy_simple_capture):
     assert mock_callback.call_count == 24
 
 
+def test_async_packet_callback_called_for_each_packet(lazy_simple_capture):
+    # Test cap has 24 packets
+    mock_callback = mock.AsyncMock()
+    lazy_simple_capture.apply_on_packets(mock_callback)
+    assert mock_callback.call_count == 24
+    mock_callback.assert_awaited()
+
+
 def test_apply_on_packet_stops_on_timeout(lazy_simple_capture):
     def wait(pkt):
         time.sleep(5)

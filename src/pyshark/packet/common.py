@@ -1,3 +1,9 @@
+import sys
+import functools
+
+import termcolor
+
+
 class Pickleable(object):
     """
     Base class that implements getstate/setstate, since most of the classes are overriding getattr.
@@ -24,11 +30,12 @@ class SlotsPickleable(object):
             setattr(self, key, val)
 
 
-class StrWriter:
-    """A class which mocks the py.io.TerminalWriter to write to an internal buffer"""
-
-    def __init__(self):
-        self.buffer = ""
-
-    def write(self, text, *_, **__):
-        self.buffer += text
+@functools.wraps(termcolor.colored)
+def colored(text, *args, **kwargs):
+    try:
+        enable_color = sys.stdout.isatty()
+    except (AttributeError, NotImplementedError, FileNotFoundError):
+        enable_color = False
+    if enable_color:
+        return termcolor.colored(text, *args, **kwargs)
+    return text

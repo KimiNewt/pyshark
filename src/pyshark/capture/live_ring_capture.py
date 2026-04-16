@@ -50,3 +50,8 @@ class LiveRingCapture(LiveCapture):
         params += ['-b', 'filesize:' + str(self.ring_file_size), '-b', 'files:' + str(self.num_ring_files),
                    '-w', self.ring_file_name, '-P', '-V']
         return params
+    
+    def _get_dumpcap_parameters(self):
+        params = super(LiveRingCapture, self)._get_dumpcap_parameters()
+        params += ['-P']
+        return params

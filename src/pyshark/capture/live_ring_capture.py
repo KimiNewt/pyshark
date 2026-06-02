@@ -28,7 +28,7 @@ class LiveRingCapture(LiveCapture):
         :param tshark_path: Path of the tshark binary
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
         :param capture_filter: Capture (wireshark) filter to use.
-        :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
+        :param disable_protocol: Tells tshark to remove a dissector for a specific protocol.
         :param use_ek: Uses tshark in EK JSON mode. It is faster than XML but has slightly less data.
         :param use_json: DEPRECATED. Use use_ek instead.
         :param custom_parameters:  A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}

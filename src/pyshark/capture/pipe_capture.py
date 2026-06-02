@@ -21,7 +21,7 @@ class PipeCapture(Capture):
         it attempt to decode any port 8888 traffic as HTTP. See tshark documentation for details.
         :param tshark_path: Path of the tshark binary
         :param override_prefs: A dictionary of tshark preferences to override, {PREFERENCE_NAME: PREFERENCE_VALUE, ...}.
-        :param disable_protocol: Tells tshark to remove a dissector for a specifc protocol.
+        :param disable_protocol: Tells tshark to remove a dissector for a specific protocol.
         :param custom_parameters: A dict of custom parameters to pass to tshark, i.e. {"--param": "value"}
         or else a list of parameters in the format ["--foo", "bar", "--baz", "foo"].
         """

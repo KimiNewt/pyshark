@@ -69,7 +69,7 @@ def psml_structure_from_xml(psml_structure):
 
 def packet_from_xml_packet(xml_pkt, psml_structure=None):
     """
-    Gets a TShark XML packet object or string, and returns a pyshark Packet objec.t
+    Gets a TShark XML packet object or string, and returns a pyshark Packet object.
 
     :param xml_pkt: str or xml object.
     :param psml_structure: a list of the fields in each packet summary in the psml data. If given, packets will

@@ -7,7 +7,9 @@ from unittest import mock
 
 import pytest
 
+import pyshark
 from pyshark.packet.packet_summary import PacketSummary
+from tests.conftest import example_pcap_path
 
 
 def test_packet_callback_called_for_each_packet(lazy_simple_capture):
@@ -60,17 +62,18 @@ def test_getting_packet_summary(simple_summary_capture):
     assert simple_summary_capture[0]._fields
 
 
-def _iterate_capture_object(cap_obj, q):
+def _iterate_capture_object(example_pcap_path, q):
+    cap_obj = pyshark.FileCapture(example_pcap_path, debug=True, only_summaries=True)
+    cap_obj.display_filter = "frame.len == 1"
     for _ in cap_obj:
         pass
     q.put(True)
 
 
-def test_iterate_empty_psml_capture(simple_summary_capture):
-    simple_summary_capture.display_filter = "frame.len == 1"
+def test_iterate_empty_psml_capture(example_pcap_path):
     q = Queue()
     p = Process(target=_iterate_capture_object,
-                args=(simple_summary_capture, q))
+                args=(example_pcap_path, q))
     p.start()
     p.join(2)
     try:

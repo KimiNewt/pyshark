@@ -168,6 +168,14 @@ class Capture:
 
     def _setup_eventloop(self):
         """Sets up a new eventloop as the current one according to the OS."""
+        if sys.version_info >= (3, 14):
+            try:
+                self.eventloop = asyncio.get_event_loop()
+            except RuntimeError:
+                self.eventloop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self.eventloop)
+            return
+
         if os.name == "nt":
             current_eventloop = asyncio.get_event_loop_policy().get_event_loop()
             if isinstance(current_eventloop, asyncio.ProactorEventLoop):

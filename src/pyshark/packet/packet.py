@@ -83,6 +83,8 @@ class Packet(Pickleable):
 
     @property
     def sniff_time(self) -> datetime.datetime:
+        if self.sniff_timestamp[-1] == 'Z':
+            return datetime.datetime.fromisoformat(self.sniff_timestamp)
         try:
             timestamp = float(self.sniff_timestamp)
         except ValueError:

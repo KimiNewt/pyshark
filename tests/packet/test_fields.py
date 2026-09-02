@@ -60,7 +60,7 @@ def test_layer_field_hex_value():
     test_int_value = "0x75BCD15"
     expected_value = 123456789
     test_layer_field = LayerField(value=test_int_value)
-    asserttest_layer_field.hex_value == expected_value
+    assert test_layer_field.hex_value == expected_value
 
 # Test Data - Layer Fields Container
 test_layer_field = LayerField(name="test_field", value={"test": "value"})

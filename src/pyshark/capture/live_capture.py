@@ -102,17 +102,29 @@ class LiveCapture(Capture):
 
     async def _get_tshark_process(self, packet_count=None, stdin=None):
         read, write = os.pipe()
+        try:
+            dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
 
-        dumpcap_params = [get_process_path(process_name="dumpcap", tshark_path=self.tshark_path)] + self._get_dumpcap_parameters()
+            self._log.debug("Creating Dumpcap subprocess with parameters: %s", " ".join(dumpcap_params))
+            dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
+                                                                   stderr=subprocess.PIPE)
+            # Dumpcap has inherited its copy of the write end, so the parent
+            # no longer needs it.
+            os.close(write)
+            write = None
+            self._create_stderr_handling_task(dumpcap_process.stderr)
+            self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
 
-        self._log.debug("Creating Dumpcap subprocess with parameters: %s", " ".join(dumpcap_params))
-        dumpcap_process = await asyncio.create_subprocess_exec(*dumpcap_params, stdout=write,
-                                                               stderr=subprocess.PIPE)
-        self._create_stderr_handling_task(dumpcap_process.stderr)
-        self._created_new_process(dumpcap_params, dumpcap_process, process_name="Dumpcap")
-
-        tshark = await super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=read)
-        return tshark
+            tshark = await super(LiveCapture, self)._get_tshark_process(packet_count=packet_count, stdin=read)
+            # Tshark has inherited its copy of the read end.
+            os.close(read)
+            read = None
+            return tshark
+        finally:
+            if read is not None:
+                os.close(read)
+            if write is not None:
+                os.close(write)
 
     # Backwards compatibility
     sniff = Capture.load_packets
